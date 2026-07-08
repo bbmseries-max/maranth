@@ -1,0 +1,376 @@
+{
+    "Category": [
+        {
+            "id": "5605",
+            "name": "Shkolla - Lojra"
+        },
+        {
+            "id": "5606",
+            "name": "Caj zesto - Rofimata"
+        },
+        {
+            "id": "5607",
+            "name": "Caj I ftohte - Cold Ice Tea"
+        },
+        {
+            "id": "5608",
+            "name": "XARTAKIA - Filtrakia"
+        },
+        {
+            "id": "5609",
+            "name": "Cikles - Karameles"
+        },
+        {
+            "id": "5610",
+            "name": "Keik kulurakia - Τυποποιημένα γλυκά"
+        },
+        {
+            "id": "5611",
+            "name": "Djath - Τυροκομικά"
+        },
+        {
+            "id": "5612",
+            "name": "Farmaci - Farmakeytika"
+        },
+        {
+            "id": "5613",
+            "name": "Φρέσκα λαχανικά - laxanika"
+        },
+        {
+            "id": "5614",
+            "name": "Φρέσκα φρούτα - Fruta"
+        },
+        {
+            "id": "5615",
+            "name": "Φρέσκες σαλάτες - Salates"
+        },
+        {
+            "id": "5616",
+            "name": "Fresko psomi"
+        },
+        {
+            "id": "5617",
+            "name": "Fisikos ximos - Froutopoto"
+        },
+        {
+            "id": "5618",
+            "name": "Xalvades - Taxinia"
+        },
+        {
+            "id": "5619",
+            "name": "Xartika kouzinas - Banjo"
+        },
+        {
+            "id": "5620",
+            "name": "Psomi tost - Tortilla"
+        },
+        {
+            "id": "5621",
+            "name": "Champagnes"
+        },
+        {
+            "id": "5622",
+            "name": "Idi kapnistou -Pipes - Anaptires"
+        },
+        {
+            "id": "5623",
+            "name": "Kurasan"
+        },
+        {
+            "id": "5624",
+            "name": "Sandwiches - Kria  - Ilios"
+        },
+        {
+            "id": "5625",
+            "name": "Rum - Tequila - Cognac - Liqueur - Aperitivo"
+        },
+        {
+            "id": "5626",
+            "name": "Whiskey - Vodka - Gin"
+        },
+        {
+            "id": "5627",
+            "name": "Zootrofes - Axesuar katikidion"
+        },
+        {
+            "id": "5628",
+            "name": "Alevri - Maja - Simigdhali"
+        },
+        {
+            "id": "5629",
+            "name": "Almira biskota - Rizogofretes"
+        },
+        {
+            "id": "5630",
+            "name": "Tzatziki - Salces Psigiu"
+        },
+        {
+            "id": "5631",
+            "name": "Anapsiktika"
+        },
+        {
+            "id": "5632",
+            "name": "Antivaktiridiaka Sanitary"
+        },
+        {
+            "id": "5633",
+            "name": "Aporipantika - Malaktika"
+        },
+        {
+            "id": "5635",
+            "name": "Veze - gjalp"
+        },
+        {
+            "id": "5636",
+            "name": "Karta - Typos"
+        },
+        {
+            "id": "5637",
+            "name": "Vafes - Jialistika papoutsion - Pati"
+        },
+        {
+            "id": "5638",
+            "name": "Vrefika proionta"
+        },
+        {
+            "id": "5639",
+            "name": "Galaktokomika"
+        },
+        {
+            "id": "5640",
+            "name": "Galaktokomika"
+        },
+        {
+            "id": "5641",
+            "name": "Glika Biskota"
+        },
+        {
+            "id": "5642",
+            "name": "Glikismata"
+        },
+        {
+            "id": "5643",
+            "name": "Dimitriaka - Mpares dimitriakon"
+        },
+        {
+            "id": "5644",
+            "name": "Idi zaxaroplastikis"
+        },
+        {
+            "id": "5645",
+            "name": "Eidi kathariotitas somatos - malion"
+        },
+        {
+            "id": "5646",
+            "name": "Idi kapnou - Poura - Nargile"
+        },
+        {
+            "id": "5647",
+            "name": "Eidi kapnou - Tsigara"
+        },
+        {
+            "id": "5648",
+            "name": "Idi kouzinas"
+        },
+        {
+            "id": "5649",
+            "name": "Idi Party"
+        },
+        {
+            "id": "5650",
+            "name": "Idi peripiisis malion"
+        },
+        {
+            "id": "5651",
+            "name": "Idi peripiisis somatos"
+        },
+        {
+            "id": "5652",
+            "name": "Idi prosopikis igiinis"
+        },
+        {
+            "id": "5653",
+            "name": "Idi prosopikis frontidas"
+        },
+        {
+            "id": "5654",
+            "name": "Idi raptikis"
+        },
+        {
+            "id": "5655",
+            "name": "Idi stomatikis igiinis"
+        },
+        {
+            "id": "5656",
+            "name": "Zahari - Glikantikes usies"
+        },
+        {
+            "id": "5657",
+            "name": "Zaxarodi"
+        },
+        {
+            "id": "5658",
+            "name": "Zimarika - Makaronia"
+        },
+        {
+            "id": "5659",
+            "name": "Isotonika - Energiaka pota"
+        },
+        {
+            "id": "5660",
+            "name": "Katharistika kuzinas"
+        },
+        {
+            "id": "5661",
+            "name": "Katharistika spitiu"
+        },
+        {
+            "id": "5662",
+            "name": "Kalson"
+        },
+        {
+            "id": "5663",
+            "name": "Kaseria"
+        },
+        {
+            "id": "5664",
+            "name": "Katepsigmena thalasina - laxanika"
+        },
+        {
+            "id": "5665",
+            "name": "Katepsigmena fagita - Proionta zimis"
+        },
+        {
+            "id": "5666",
+            "name": "Kafedes"
+        },
+        {
+            "id": "5667",
+            "name": "Kolonies - Eidi kalintikon"
+        },
+        {
+            "id": "5668",
+            "name": "Konserves"
+        },
+        {
+            "id": "5669",
+            "name": "Krasia"
+        },
+        {
+            "id": "5670",
+            "name": "Kremes galaktos"
+        },
+        {
+            "id": "5671",
+            "name": "Kritsinia - Friganies - Paximadia"
+        },
+        {
+            "id": "5672",
+            "name": "Ladi - Lemoni - Ksidi"
+        },
+        {
+            "id": "5673",
+            "name": "Bataries - Lampes - Ilektrologika"
+        },
+        {
+            "id": "5674",
+            "name": "Baharika - Alati"
+        },
+        {
+            "id": "5675",
+            "name": "Bires birra"
+        },
+        {
+            "id": "5676",
+            "name": "Nero"
+        },
+        {
+            "id": "5677",
+            "name": "Ksiri karpi - Apoksiramena fruta"
+        },
+        {
+            "id": "5678",
+            "name": "Oikiakos exoplismos"
+        },
+        {
+            "id": "5680",
+            "name": "Uza - Tsipoura"
+        },
+        {
+            "id": "5681",
+            "name": "Pagos - Karvouna - Pellet - Fiali ygraeriou"
+        },
+        {
+            "id": "5682",
+            "name": "Paidika giaourtia - Galata"
+        },
+        {
+            "id": "5683",
+            "name": "Pediki peripiisi"
+        },
+        {
+            "id": "5684",
+            "name": "Panes enilikon"
+        },
+        {
+            "id": "5685",
+            "name": "Panes morou"
+        },
+        {
+            "id": "5686",
+            "name": "Patatakia - Garidakia - Pop corn"
+        },
+        {
+            "id": "5687",
+            "name": "Pralina - Meli - Marmelada- Komposta"
+        },
+        {
+            "id": "5688",
+            "name": "Profilaktika - Durex"
+        },
+        {
+            "id": "5689",
+            "name": "Proteinouxa proionta"
+        },
+        {
+            "id": "5690",
+            "name": "Retsines"
+        },
+        {
+            "id": "5691",
+            "name": "Rizi - Ospria - Trahanas"
+        },
+        {
+            "id": "5692",
+            "name": "Saltses - Proionta magirikis"
+        },
+        {
+            "id": "5693",
+            "name": "Skoni kakao - Rofimata sokolatas"
+        },
+        {
+            "id": "5694",
+            "name": "Sokolatoeidi Cokollata"
+        },
+        {
+            "id": "5696",
+            "name": "Ekklisiastika"
+        },
+        {
+            "id": "5697",
+            "name": "Entomoapothitika"
+        },
+        {
+            "id": "5698",
+            "name": "Ergalia"
+        },
+        {
+            "id": "5699",
+            "name": "Alantika"
+        },
+        {
+            "id": "5700",
+            "name": "PAGOTA"
+        }
+    ]
+}

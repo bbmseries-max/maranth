@@ -1,0 +1,141 @@
+/* 🛒 The Outer Basket Wrapper Container */
+.shopping-basket-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Spans full height of the 100vh grid parent */
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden; /* Prevents container from stretching or breaking the screen */
+}
+
+/* 🏷️ Basket Header Layout Block */
+.basket-header {
+  padding: 16px;
+  background: #212529;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.basket-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 📜 Independent Scrollable Middle Area for Selected Order Lines */
+.basket-items-list {
+  flex: 1; /* Takes up all available space between header and footer */
+  overflow-y: auto; /* Adds clean scrollbar if customer buys many items */
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f8f9fa;
+}
+
+/* 🎫 Individual Row Layout inside the basket list */
+.basket-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #e3e6f0;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #212529;
+}
+
+.item-meta {
+  font-size: 12px;
+  color: #868e96;
+}
+
+/* 🔢 Quantity Controls block alignment */
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-qty {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  background: #ffffff;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-qty:hover { background: #e9ecef; }
+
+.qty-number {
+  font-weight: 700;
+  font-size: 14px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* 💰 Locked Bottom Total Checkout Panel */
+.basket-summary-footer {
+  padding: 16px;
+  background: #ffffff;
+  border-top: 2px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.total-price-tag {
+  font-size: 24px;
+  font-weight: 800;
+  color: #2b8a3e; /* Clear accounting green */
+}
+
+/* 🚀 Primary Action Payment Button */
+.btn-checkout-action {
+  width: 100%;
+  padding: 14px;
+  background: #2b8a3e;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.btn-checkout-action:hover {
+  background: #237032;
+}

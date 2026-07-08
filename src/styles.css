@@ -1,1 +1,29 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==========================================================================
+   🚨 GLOBAL OVERRIDE: FORCE CATEGORY BUTTONS VERTICAL
+   ========================================================================== */
+
+/* 1. Force the custom element tag to stretch to full width */
+app-category-list {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+}
+
+/* 2. Smash the horizontal row rules inside the category list template */
+app-category-list .horizontal-btn-row {
+  display: flex !important;
+  flex-direction: column !important; /* 🚀 Force layout row -> column */
+  flex-wrap: wrap !important;
+  width: 100% !important;            /* Span full 350px sidebar width */
+  max-width: 100% !important;
+  gap: 8px !important;               /* Clean vertical spacing */
+}
+
+/* 3. Re-adjust the buttons to stack like cards */
+app-category-list .scroll-btn-item {
+  display: block !important;
+  width: 100% !important;            /* Fill the layout box */
+  text-align: left !important;       /* Clean left alignment for retail screens */
+  box-sizing: border-box !important;
+  white-space: normal !important;    /* Let text wrap naturally down if long */
+}

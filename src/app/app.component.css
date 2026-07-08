@@ -1,0 +1,17 @@
+/* 🎯 Target and convert the horizontal container inside the category sidebar segment */
+.pos-sidebar .horizontal-btn-row {
+  display: flex !important;
+  flex-direction: column !important; /* 🚀 Forces them to stack top-to-bottom */
+  flex-wrap: wrap !important;        /* Allows natural vertical flow */
+  width: 100% !important;            /* Fits perfectly to your 350px sidebar track */
+  gap: 8px !important;               /* Clean vertical gap between options */
+}
+
+/* 🎯 Make sure the buttons expand beautifully to match the sidebar width */
+.pos-sidebar .scroll-btn-item {
+  display: block !important;
+  width: 100% !important;
+  text-align: left !important;       /* Aligns category text neatly to the left */
+  box-sizing: border-box !important;
+  white-space: normal !important;    /* Allows long category names to wrap nicely if needed */
+}
