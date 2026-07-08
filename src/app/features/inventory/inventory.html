@@ -1,0 +1,106 @@
+<div class="inventory-dashboard-container" style="padding: 20px; display: flex; flex-direction: column; gap: 20px; height: calc(100vh - 40px); box-sizing: border-box; background: #f8fafc; font-family: system-ui, sans-serif;">
+  
+  <header class="inventory-toolbar" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">
+      <h2 style="margin: 0; font-size: 20px; color: #1e293b; display: flex; align-items: center; gap: 8px;">📦 Inventory Hub</h2>
+      
+      <input type="text" [(ngModel)]="searchQuery" placeholder="Search barcode or product name..." style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 280px; font-size: 14px;">
+      
+      <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #64748b; cursor: pointer;">
+        <input type="checkbox" [(ngModel)]="showInactive"> Show Soft-Deleted / Inactive
+      </label>
+    </div>
+
+    <button type="button" (click)="prepareNewProduct()" style="background: #1cc88a; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;">
+      + Create New Product
+    </button>
+  </header>
+
+  <div class="workspace-split" style="display: flex; gap: 20px; flex-grow: 1; overflow: hidden;">
+    
+    <section class="grid-table-card" style="flex: 0 0 65%; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden;">
+      <div class="table-header-row" style="display: flex; background: #f1f5f9; padding: 12px; font-weight: bold; font-size: 13px; color: #475569; border-bottom: 1px solid #e2e8f0;">
+        <div style="flex: 2;">BARCODE / ID</div>
+        <div style="flex: 4;">ITEM DESCRIPTIVE NAME</div>
+        <div style="flex: 1.5; text-align: right;">STOCK</div>
+        <div style="flex: 1.5; text-align: right;">PRICE</div>
+        <div style="flex: 1.5; text-align: center;">STATUS</div>
+      </div>
+
+      <div class="table-body-scroll" style="flex-grow: 1; overflow-y: auto;">
+        @for (prod of managedProducts(); track prod.id) {
+          <div class="table-body-row" (click)="selectProductToEdit(prod)" [style.background]="selectedProduct()?.id === prod.id ? '#eff6ff' : 'transparent'" style="display: flex; padding: 12px; font-size: 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; align-items: center; transition: background 0.1s;">
+            <div style="flex: 2; font-family: monospace; color: #64748b;">{{ prod.id }}</div>
+            <div style="flex: 4; font-weight: 500; color: #0f172a;">{{ prod.name }}</div>
+            <div style="flex: 1.5; text-align: right; font-weight: bold;" [style.color]="prod.stockQuantity <= 5 ? '#e74a3b' : '#0f172a'">
+              {{ prod.stockQuantity }} un
+            </div>
+            <div style="flex: 1.5; text-align: right; font-weight: 600; color: #1cc88a;">
+              {{ prod.price | currency:'EUR':'symbol':'1.2-2' }}
+            </div>
+            <div style="flex: 1.5; text-align: center;">
+              <span [style.background]="prod.isActive !== false ? '#d4edda' : '#f8d7da'" [style.color]="prod.isActive !== false ? '#155724' : '#721c24'" style="padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">
+                {{ prod.isActive !== false ? 'ACTIVE' : 'INACTIVE' }}
+              </span>
+            </div>
+          </div>
+        } @empty {
+          <div style="text-align: center; color: #94a3b8; padding: 40px; font-size: 14px;">No configuration profiles found matching search criteria.</div>
+        }
+      </div>
+    </section>
+
+    <aside class="editor-panel-card" style="flex: 0 0 35%; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;">
+      
+      @if (selectedProduct() || isCreatingNew()) {
+        <h3 style="margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; color: #1e3a8a;">
+          {{ isCreatingNew() ? '✨ Add New Arrival Item' : '🛠️ Modify Stock Configuration' }}
+        </h3>
+
+        <form (ngSubmit)="saveProductChanges()" style="display: flex; flex-direction: column; gap: 15px; flex-grow: 1; overflow-y: auto;">
+          
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: bold; color: #475569;">Barcode Tracking Index (ID)</label>
+            <input type="text" [(ngModel)]="formProduct.id" name="prodId" [disabled]="!isCreatingNew()" placeholder="Scan or type barcode key..." style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: bold; color: #475569;">Descriptive Product Name</label>
+            <input type="text" [(ngModel)]="formProduct.name" name="prodName" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+          </div>
+
+          <div style="display: flex; gap: 15px;">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 12px; font-weight: bold; color: #475569;">Shelf Retail Price (€)</label>
+              <input type="number" step="0.01" [(ngModel)]="formProduct.price" name="prodPrice" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 12px; font-weight: bold; color: #475569;">Stock Volume Count</label>
+              <input type="number" [(ngModel)]="formProduct.stockQuantity" name="prodStock" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            </div>
+          </div>
+
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #1e293b; cursor: pointer; padding-top: 5px;">
+            <input type="checkbox" [(ngModel)]="formProduct.isActive" name="prodActive"> Mark item as Active / Sellable on checkout grid
+          </label>
+
+          <div style="margin-top: auto; padding-top: 20px; display: flex; gap: 10px;">
+            <button type="submit" style="flex: 1; background: #4e73df; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+              💾 Save Product Profile
+            </button>
+            <button type="button" (click)="selectedProduct.set(null); isCreatingNew.set(false)" style="background: #858796; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+              Cancel
+            </button>
+          </div>
+
+        </form>
+      } @else {
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; text-align: center; color: #94a3b8;">
+          <span style="font-size: 48px; margin-bottom: 10px;">📊</span>
+          <p style="font-size: 14px; margin: 0 20px;">Select a product card from the left registry stream grid to update quantities or edit prices, or click create to handle a completely new product arrival.</p>
+        </div>
+      }
+    </aside>
+
+  </div>
+</div>

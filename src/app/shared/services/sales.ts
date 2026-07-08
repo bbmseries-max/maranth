@@ -33,6 +33,21 @@ export class SalesService {
     return this.basket().reduce((acc, item) => acc + item.quantity, 0);
   });
 
+  // 2. Grand Total (Sum of all item prices * quantities - what the customer pays)
+  public grandTotal = computed(() => {
+    return this.basket().reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  });
+
+  // 3. Extract the 24% VAT amount from the grand total
+  public taxAmount = computed(() => {
+    return this.grandTotal() - (this.grandTotal() / 1.24);
+  });
+
+  // 4. Net Price (The baseline price before tax is extracted)
+  public netSubtotal = computed(() => {
+    return this.grandTotal() - this.taxAmount();
+  });
+
   public selectCategory(id: string): void {
     this.currentCategory.set(id);
     console.log(`Switched category view to ID: ${id}`);
@@ -70,22 +85,33 @@ export class SalesService {
   /**
    * 🛒 Add an item to the basket state using signals
    */
-  public addToBasket(product: Product): void {
-    const currentBasket = this.basket();
-    // Safely look up matching items using the primary key id field
-    const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
+public addToBasket(product: Product): void {
+  const currentBasket = this.basket();
+  // Safely look up matching items using the primary key id field
+  const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
 
-    if (existingIndex > -1) {
-      const updatedBasket = [...currentBasket];
-      updatedBasket[existingIndex] = {
-        ...updatedBasket[existingIndex],
-        quantity: updatedBasket[existingIndex].quantity + 1
-      };
-      this.basket.set(updatedBasket);
-    } else {
-      this.basket.set([...currentBasket, { product, quantity: 1 }]);
+  // 🔒 INVENTORY PROTECTION CONTROL
+  // Check if the item already exists in the cart and if adding more exceeds shelf availability
+  if (existingIndex > -1) {
+    const existingItem = currentBasket[existingIndex];
+    if (existingItem.quantity >= product.stockQuantity) {
+      alert(`⚠️ Cannot add more! Only ${product.stockQuantity} units of "${product.name}" are available in stock.`);
+      return; // Stop right here, don't update the basket signal
     }
   }
+
+  // 🛒 PROCEED TO UPDATE BASKET STATE SIGNAL
+  if (existingIndex > -1) {
+    const updatedBasket = [...currentBasket];
+    updatedBasket[existingIndex] = {
+      ...updatedBasket[existingIndex],
+      quantity: updatedBasket[existingIndex].quantity + 1
+    };
+    this.basket.set(updatedBasket);
+  } else {
+    this.basket.set([...currentBasket, { product, quantity: 1 }]);
+  }
+}
 
   /**
    * 🔍 Look up code strings from physical barcode readers
@@ -104,6 +130,22 @@ export class SalesService {
     }
     return false;
   }
+
+/**
+ * 💳 Processes checkout transaction, resetting terminal values
+ */
+public processPayment(paymentMethod: string): void {
+  if (this.basket().length === 0) {
+    alert('🛒 Your basket is currently empty.');
+    return;
+  }
+
+  // Display a quick confirmation modal receipt 
+  alert(`✅ Sale Successful via ${paymentMethod}!\nTotal Collected: €${this.grandTotal().toFixed(2)}`);
+  
+  // Wipe out the basket cleanly for the next customer trace
+  this.basket.set([]);
+}
 
   public clearBasket(): void {
     this.basket.set([]);

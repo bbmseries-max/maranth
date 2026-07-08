@@ -1,41 +1,21 @@
-<div class="shopping-basket-container">
-  
-  <div class="basket-header">
-    <h3>Current Sale</h3>
-    <span>Lines: {{ basketItems().length }}</span>
-  </div>
-
-  <div class="basket-items-list">
-    @for (item of basketItems(); track item.product.id) {
-      <div class="basket-item-row">
-        <div class="item-details">
-          <span class="item-title">{{ item.product.name }}</span>
-          <span class="item-meta">
-            {{ item.product.price | currency:'EUR':'symbol':'1.2-2' }} each
-          </span>
-        </div>
-        
-        <div class="quantity-controls">
-          <button type="button" class="btn-qty" (click)="decreaseQuantity(item)">-</button>
-          <span class="qty-number">{{ item.quantity }}</span>
-          <button type="button" class="btn-qty" (click)="increaseQuantity(item)">+</button>
-        </div>
-      </div>
-    } @empty {
-      <div style="text-align: center; color: #adb5bd; padding-top: 40px; font-size: 14px;">
-        🛒 Basket is empty.<br>Click products to add.
-      </div>
-    }
-  </div>
-
-  <div class="basket-summary-footer">
-    <div class="total-row">
-      <span class="total-label">Grand Total:</span>
-      <span class="total-price-tag">{{ totalAmount() | currency:'EUR':'symbol':'1.2-2' }}</span>
+<div class="basket-summary-footer">
+    
+    <div class="total-row-breakdown" style="display: flex; justify-content: space-between; font-size: 13px; color: #6c757d; margin-bottom: 4px;">
+      <span>Subtotal (Net):</span>
+      <span>{{ salesService.netSubtotal() | currency:'EUR':'symbol':'1.2-2' }}</span>
     </div>
+
+    <div class="total-row-breakdown" style="display: flex; justify-content: space-between; font-size: 13px; color: #6c757d; margin-bottom: 8px;">
+      <span>VAT (24%):</span>
+      <span>{{ salesService.taxAmount() | currency:'EUR':'symbol':'1.2-2' }}</span>
+    </div>
+
+    <div class="total-row" style="border-top: 1px dashed #dee2e6; padding-top: 8px; margin-bottom: 12px;">
+      <span class="total-label">Grand Total:</span>
+      <span class="total-price-tag">{{ salesService.grandTotal() | currency:'EUR':'symbol':'1.2-2' }}</span>
+    </div>
+
     <button type="button" class="btn-checkout-action" [disabled]="basketItems().length === 0" (click)="processCheckout()">
       💶 Complete Sale (Pay)
     </button>
   </div>
-
-</div>

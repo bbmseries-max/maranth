@@ -49,6 +49,11 @@
   box-sizing: border-box;
 }
 
+.back-to-catalog-btn:hover {
+  background: #2e59d9 !important;
+  box-shadow: 0 2px 6px rgba(78, 115, 223, 0.25);
+}
+
 /* ==========================================================================
    📦 REUSABLE CONTAINER MODULES
    ========================================================================== */
@@ -72,7 +77,7 @@
   flex-grow: 1;
   overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
   padding-top: 10px;
 }
@@ -100,6 +105,23 @@
   font-size: 11px; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; align-self: flex-start; margin-top: 8px;
 }
 
+/* Individual Product Cards */
+.product-item-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  height: 150px;
+  max-height: 150px;
+  min-height: 150px;
+  box-sizing: border-box;
+}
+
 /* ==========================================================================
    🏢 ACTIVE FORM INPUT WORKBENCH UTILITIES
    ========================================================================== */
@@ -107,7 +129,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 8px;
-  font-size: 13px;
+  font-size: 16px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 4px;
@@ -147,3 +169,10 @@
 }
 .supplier-modal-row:hover { background: #f8fafc; }
 .selected-row { border-color: #4e73df; background: #eff6ff !important; }
+
+/* Showcase Mini Cards Styling */
+.showcase-mini-card:hover {
+  transform: translateY(-2px);
+  border-color: #4e73df !important;
+  box-shadow: 0 4px 8px rgba(78, 115, 223, 0.1);
+}

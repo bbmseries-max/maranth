@@ -57,32 +57,75 @@
 
   </aside>
 
-  <main class="pos-products-grid-container">
+ <main class="pos-products-grid-container" style="position: relative;">
+
+  @if (currentSupplier() !== 'ALL') {
+    <div class="supplier-matrix-overlay">
+      
+      <div class="overlay-nav-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #eff6ff; padding: 10px; border-radius: 6px; border: 1px solid #bfdbfe;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="back-to-catalog-btn" (click)="selectSupplier('ALL')" style="background: #4e73df; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+            &larr; Back to Catalog
+          </button>
+          <span style="font-size: 14px; font-weight: 700; color: #1e3a8a;">
+            Showing items exclusively from: {{ getSelectedSupplierName().replace('Company: ', '') }}
+          </span>
+        </div>
+        <span class="status-badge active-mode" style="background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">
+          Supplier View Locked
+        </span>
+      </div>
+
+      <div class="supplier-rows-container" style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="supplier-row-header" style="font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">
+          📦 Supplier Inventory Batch Tracks
+        </div>
+        
+        <div class="supplier-horizontal-track" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+          @for (prod of products(); track prod.id) {
+            @if (isProductLinkedToActiveSupplier(prod)) {
+              <div class="product-item-card" (click)="handleProductClick(prod)" style="flex: 0 0 calc(16.66% - 10px); min-width: 145px; box-sizing: border-box; height: 130px;">
+                <div class="prod-details">
+                  <span class="prod-name">{{ prod.name }}</span>
+                  <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+                </div>
+                <div class="prod-stock-badge" [class.low-stock]="prod.stockQuantity <= 5">
+                  Stock: {{ prod.stockQuantity }}
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+    </div>
+  } @else {
+
     <div class="products-header">
       <h2>Products Matrix Display</h2>
     </div>
     
     <div class="grid-layout-scroll">
       @for (prod of filteredProducts(); track prod.id) {
-    <div class="product-item-card" (click)="handleProductClick(prod)">
-      <div class="prod-details">
-        <span class="prod-name">{{ prod.name }}</span>
-        <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
-      </div>
-      
-      <div class="prod-supplier-tag" style="font-size: 10px; color: #4e73df; font-weight: 600; margin-top: 4px; background: #eaecf1; padding: 2px 5px; border-radius: 3px; align-self: flex-start;">
-        🚚 {{ getProductSupplierName(prod) }}
-      </div>
-
-      <div class="prod-stock-badge" [class.low-stock]="prod.stockQuantity <= 5">
-        Stock: {{ prod.stockQuantity }}
-      </div>
-    </div>
+        <div class="product-item-card" (click)="handleProductClick(prod)">
+          <div class="prod-details">
+            <span class="prod-name">{{ prod.name }}</span>
+            <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="prod-supplier-tag" style="font-size: 10px; color: #4e73df; font-weight: 600; margin-top: 4px; background: #eaecf1; padding: 2px 5px; border-radius: 3px; align-self: flex-start;">
+            🚚 {{ getProductSupplierName(prod) }}
+          </div>
+          <div class="prod-stock-badge" [class.low-stock]="prod.stockQuantity <= 5">
+            Stock: {{ prod.stockQuantity }}
+          </div>
+        </div>
       } @empty {
         <div class="empty-grid-msg">No active products match selected filter keys.</div>
       }
     </div>
-  </main>
+
+  }
+</main>
 
   <aside class="pos-sidebar-right">
     <app-shopping-basket></app-shopping-basket>

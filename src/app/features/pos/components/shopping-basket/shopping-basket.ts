@@ -10,7 +10,7 @@ import { SalesService, BasketItem } from '../../../../shared/services/sales';
   styleUrls: ['./shopping-basket.css']
 })
 export class ShoppingBasketComponent {
-  private salesService = inject(SalesService);
+  public salesService = inject(SalesService);
 
   // 🎯 This maps the service's "basket" to your component's "basketItems"
   public basketItems = this.salesService.basket;   

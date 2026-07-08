@@ -1,5 +1,5 @@
-import { Component, HostListener, inject, OnInit, signal, computed } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common'; // 🚀 Added CurrencyPipe explicitly
+import { Component, HostListener, inject, OnInit, signal, computed, effect } from '@angular/core';
+import { CommonModule, CurrencyPipe } from '@angular/common'; 
 import { SalesService } from '../../shared/services/sales'; 
 import { Product, Category, Supplier } from '../../shared/services/pos-data.models';
 
@@ -12,7 +12,7 @@ import { ShoppingBasketComponent } from './components/shopping-basket/shopping-b
   standalone: true,
   imports: [
     CommonModule, 
-    CurrencyPipe,             // 🚀 Ensures product pricing doesn't turn your HTML template red
+    CurrencyPipe,             
     CategoryListComponent,    
     ShoppingBasketComponent   
   ],
@@ -25,7 +25,7 @@ export class PosComponent implements OnInit {
   // 📦 Component UI State Signals
   public categories = signal<Category[]>([]);
   public suppliers = signal<Supplier[]>([]);      
-  public products = signal<Product[]>([]);
+  public products = signal<Product[]>(this.loadInitialProducts());
   public currentSupplier = signal<string>('ALL');
 
   // Modal State Trigger
@@ -34,6 +34,29 @@ export class PosComponent implements OnInit {
   // Scanner Buffers
   private barcodeBuffer: string = '';
   private lastKeyTime: number = Date.now();
+
+  // 🎯 FIXED: Clean closure for the disk fallback parser method
+  private loadInitialProducts(): Product[] {
+    const savedData = localStorage.getItem('maranth_inventory');
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (e) {
+        console.error('Failed to parse local inventory state, resetting...', e);
+      }
+    }
+    return []; // Returns blank slate which gets populated by your stream payload on init
+  }
+
+  // 🛠️ CONSTRUCTOR ADDITION: Listens to signal changes and updates LocalStorage automatically!
+  constructor() {
+    effect(() => {
+      const currentList = this.products();
+      if (currentList && currentList.length > 0) {
+        localStorage.setItem('maranth_inventory', JSON.stringify(currentList));
+      }
+    });
+  }
 
   // 🎭 INTERACTION MANAGEMENT METHODS
   public openSupplierModal(): void {
@@ -61,14 +84,10 @@ export class PosComponent implements OnInit {
    */
   public getActiveSupplierField(fieldName: string): string {
     const activeId = this.currentSupplier();
-    if (activeId === 'ALL') {
-      return '';
-    }
+    if (activeId === 'ALL') return '';
     
     const activeCompany = this.suppliers().find(s => s.id?.toString() === activeId.toString());
-    if (!activeCompany) {
-      return '';
-    }
+    if (!activeCompany) return '';
 
     const companyData = activeCompany as any;
     return companyData[fieldName] ? companyData[fieldName].toString() : '';
@@ -137,11 +156,16 @@ export class PosComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    // Only fetch JSON files if localStorage hasn't been set up yet!
     this.salesService.loadStoreInventory().subscribe({
       next: (data) => {
         this.categories.set(data.categories);
         this.suppliers.set(data.suppliers);
-        this.products.set(data.products);
+        
+        // Safety lock: if storage already has records, don't overwrite them with default JSON stock levels
+        if (!localStorage.getItem('maranth_inventory')) {
+          this.products.set(data.products);
+        }
       },
       error: (err) => console.error('Error loading inventory dataset:', err)
     });
@@ -152,47 +176,69 @@ export class PosComponent implements OnInit {
     console.log(`Switched supplier filter to: ${id}`);
   }
 
+  /**
+   * 🛒 Handles product selection, manages inventory levels, and updates the basket
+   */
   public handleProductClick(product: Product): void {
+    if (product.stockQuantity <= 0) {
+      alert(`⚠️ ${product.name} is completely out of stock!`);
+      return;
+    }
+
+    this.products.update(allProducts => {
+      return allProducts.map(p => {
+        if (p.id === product.id) {
+          return { ...p, stockQuantity: p.stockQuantity - 1 };
+        }
+        return p;
+      });
+    });
+
     this.salesService.addToBasket(product);
   }
 
-  /**
- * 🏷️ Resolves which company owns a product without forcing strict grid filtering
- */
-public getProductSupplierName(product: Product): string {
-  // 1. If your product gets a supplierId/companyId field later:
-  const prodAny = product as any;
-  const sId = prodAny.supplierId || prodAny.companyId;
-  
-  if (sId) {
-    const match = this.suppliers().find(s => s.id?.toString() === sId.toString());
-    if (match) return match.name;
+  public getProductSupplierName(product: Product): string {
+    const prodAny = product as any;
+    const sId = prodAny.supplierId || prodAny.companyId;
+    
+    if (sId) {
+      const match = this.suppliers().find(s => s.id?.toString() === sId.toString());
+      if (match) return match.name;
+    }
+
+    const idNum = parseInt(product.id || '0', 10);
+    if (idNum % 3 === 0) return 'Cliper Hellas SA';
+    if (idNum % 3 === 1) return 'Global Imports Ltd';
+    
+    return 'General Supplier';
   }
 
-  // 2. Fallback Demo Mapping: Assigning suppliers dynamically based on category or ID ranges 
-  // so you can see it working right now with your current data!
-  const idNum = parseInt(product.id || '0', 10);
-  if (idNum % 3 === 0) return 'Cliper Hellas SA';
-  if (idNum % 3 === 1) return 'Global Imports Ltd';
-  
-  return 'General Supplier';
-}
+  public isProductLinkedToActiveSupplier(product: Product): boolean {
+    const activeSupplierId = this.currentSupplier();
+    if (activeSupplierId === 'ALL') return false;
 
-  /**
-   * 📡 GLOBAL BARCODE HARDWARE INTERCEPTOR
-   */
+    const prodAny = product as any;
+    const prodSupplierId = prodAny.supplierId || prodAny.companyId;
+    if (prodSupplierId) {
+      return prodSupplierId.toString() === activeSupplierId.toString();
+    }
+
+    const idNum = parseInt(product.id || '0', 10);
+    let assignedMockId = 'ALL';
+    
+    if (idNum % 3 === 0) assignedMockId = '1'; 
+    if (idNum % 3 === 1) assignedMockId = '2'; 
+
+    return assignedMockId === activeSupplierId.toString();
+  }
+
   @HostListener('window:keydown', ['$event'])
   handleGlobalKeyboard(event: KeyboardEvent) {
     const currentTime = Date.now();
     const target = event.target as HTMLElement;
 
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-      return;
-    }
-
-    if (['Shift', 'Control', 'Alt', 'CapsLock', 'Meta'].includes(event.key)) {
-      return;
-    }
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+    if (['Shift', 'Control', 'Alt', 'CapsLock', 'Meta'].includes(event.key)) return;
 
     if (currentTime - this.lastKeyTime > 200) {
       this.barcodeBuffer = '';
