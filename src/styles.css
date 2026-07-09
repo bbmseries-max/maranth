@@ -27,3 +27,16 @@ app-category-list .scroll-btn-item {
   box-sizing: border-box !important;
   white-space: normal !important;    /* Let text wrap naturally down if long */
 }
+
+/* 🎯 Active Navigation Router Highlight Mappings */
+.nav-links-cluster a:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9 !important;
+}
+
+.nav-links-cluster a.active-nav-tab {
+  background: #38bdf8 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 4px rgba(56, 189, 248, 0.2);
+}

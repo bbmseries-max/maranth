@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import('./features/reports/reports').then(m => m.ReportsComponent)
 
 export const routes: Routes = [
   // 1. Root default fallback path auto-redirects directly to the Cashier Screen
@@ -18,6 +19,10 @@ export const routes: Routes = [
   { 
     path: 'inventory', 
     loadComponent: () => import('./features/inventory/inventory').then(m => m.InventoryComponent)
+  },
+  { 
+    path: 'reports', 
+    loadComponent: () => import('./features/reports/reports').then(m => m.ReportsComponent)
   },
 
   // 4. Wildcard catch-all safety redirect

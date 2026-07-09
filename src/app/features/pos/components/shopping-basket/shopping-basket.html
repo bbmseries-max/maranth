@@ -1,21 +1,46 @@
-<div class="basket-summary-footer">
+<div class="basket-items-viewport" style="display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; margin-bottom: 16px;">
+  
+  @for (item of salesService.basket(); track item.product.id) {
+  <div class="basket-item-row" style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 6px;">
     
-    <div class="total-row-breakdown" style="display: flex; justify-content: space-between; font-size: 13px; color: #6c757d; margin-bottom: 4px;">
-      <span>Subtotal (Net):</span>
-      <span>{{ salesService.netSubtotal() | currency:'EUR':'symbol':'1.2-2' }}</span>
+    <div style="display: flex; flex-direction: column; gap: 2px; flex: 1;">
+      <span style="font-weight: 600; color: #1e293b; font-size: 14px;">{{ item.product.name }}</span>
+      <span style="font-size: 12px; color: #64748b;">
+        {{ item.product.price | currency:'EUR':'symbol':'1.2-2' }} each
+      </span>
     </div>
 
-    <div class="total-row-breakdown" style="display: flex; justify-content: space-between; font-size: 13px; color: #6c757d; margin-bottom: 8px;">
-      <span>VAT (24%):</span>
-      <span>{{ salesService.taxAmount() | currency:'EUR':'symbol':'1.2-2' }}</span>
+    <div class="quantity-control-cluster" style="display: flex; align-items: center; gap: 8px; margin-right: 16px; background: #f1f5f9; padding: 2px 6px; border-radius: 20px;">
+      <button type="button" (click)="salesService.removeFromBasket(item.product)"
+              style="background: transparent; border: none; color: #475569; font-weight: bold; font-size: 14px; cursor: pointer; padding: 2px 6px;">
+        ➖
+      </button>
+      
+      <span style="font-weight: bold; color: #0f172a; font-size: 13px; min-width: 18px; text-align: center;">
+        {{ item.quantity }}
+      </span>
+      
+      <button type="button" (click)="salesService.addToBasket(item.product)"
+              style="background: transparent; border: none; color: #475569; font-weight: bold; font-size: 14px; cursor: pointer; padding: 2px 6px;">
+        ➕
+      </button>
     </div>
 
-    <div class="total-row" style="border-top: 1px dashed #dee2e6; padding-top: 8px; margin-bottom: 12px;">
-      <span class="total-label">Grand Total:</span>
-      <span class="total-price-tag">{{ salesService.grandTotal() | currency:'EUR':'symbol':'1.2-2' }}</span>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-weight: bold; color: #0f172a; font-size: 14px; min-width: 60px; text-align: right;">
+        {{ (item.product.price * item.quantity) | currency:'EUR':'symbol':'1.2-2' }}
+      </span>
     </div>
 
-    <button type="button" class="btn-checkout-action" [disabled]="basketItems().length === 0" (click)="processCheckout()">
-      💶 Complete Sale (Pay)
-    </button>
   </div>
+}
+
+</div>
+
+<!-- Paste your footer code directly below the loop view -->
+<div class="basket-summary-footer">
+  <!-- ... your existing totals and checkout button ... -->
+  <button type="button" class="btn-checkout-action" [disabled]="salesService.basket().length === 0" (click)="processCheckout()">
+    💶 Complete Sale (Pay)
+  </button>
+</div>

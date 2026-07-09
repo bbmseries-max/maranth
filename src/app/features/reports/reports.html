@@ -1,0 +1,99 @@
+<div class="reports-dashboard-wrapper" style="padding: 24px; font-family: system-ui, sans-serif; background: #f8fafc; height: calc(100vh - 110px); overflow-y: auto;">
+  
+  <div class="metrics-row-grid" style="display: flex; gap: 20px; margin-bottom: 24px;">
+    
+    <div class="kpi-card" style="flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #3b82f6;">
+      <div style="font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Gross Revenue</div>
+      <div style="font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 4px;">{{ totalRevenue() | currency:'EUR' }}</div>
+    </div>
+
+    <div class="kpi-card" style="flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #10b981;">
+      <div style="font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Cash Drawer Total</div>
+      <div style="font-size: 28px; font-weight: 700; color: #0f766e; margin-top: 4px;">{{ cashRevenue() | currency:'EUR' }}</div>
+    </div>
+
+    <div class="kpi-card" style="flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #8b5cf6;">
+      <div style="font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Card Settlements</div>
+      <div style="font-size: 28px; font-weight: 700; color: #6d28d9; margin-top: 4px;">{{ cardRevenue() | currency:'EUR' }}</div>
+    </div>
+
+    <div class="kpi-card" style="flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #f59e0b;">
+      <div style="font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Completed Tickets</div>
+      <div style="font-size: 28px; font-weight: 700; color: #b45309; margin-top: 4px;">{{ totalSalesCount() }} Transactions</div>
+    </div>
+
+  </div>
+
+  <div class="main-split-layout" style="display: flex; gap: 24px; align-items: flex-start;">
+    
+    <div class="ledger-table-container" style="flex: 1.5; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; color: #0f172a; font-size: 16px;">Journal Ledger Archive</h3>
+        <button (click)="clearAllLedgerData()" style="background: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+          ⚠️ Clear All History
+        </button>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+        <thead>
+          <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 600;">
+            <th style="padding: 12px 8px;">Ticket ID</th>
+            <th style="padding: 12px 8px;">Timestamp</th>
+            <th style="padding: 12px 8px;">Payment</th>
+            <th style="padding: 12px 8px; text-align: right;">Collected Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tx of salesService.transactions(); track tx.id) {
+            <tr (click)="selectTxn(tx.id)" [style.background]="selectedTxnId() === tx.id ? '#f0fdf4' : 'transparent'" style="border-bottom: 1px solid #f1f5f9; color: #334155; cursor: pointer; transition: background 0.1s ease;">
+              <td style="padding: 12px 8px; font-weight: 600; color: #2563eb;">{{ tx.id }}</td>
+              <td style="padding: 12px 8px;">{{ tx.timestamp | date:'shortTime' }} ({{ tx.timestamp | date:'dd/MM' }})</td>
+              <td style="padding: 12px 8px;"><span [style.background]="tx.paymentMethod === 'CASH' ? '#ccfbf1' : '#e0e7ff'" [style.color]="tx.paymentMethod === 'CASH' ? '#115e59' : '#3730a3'" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">{{ tx.paymentMethod }}</span></td>
+              <td style="padding: 12px 8px; text-align: right; font-weight: 700;">{{ tx.grandTotal | currency:'EUR' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" style="text-align: center; color: #94a3b8; padding: 48px 0;">No completed point of sale transaction receipts discovered inside this journal loop.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="receipt-inspector-panel" style="flex: 1; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; border: 1px dashed #cbd5e1; min-height: 300px;">
+      <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">Itemized Ticket Auditor</h3>
+
+      @if (selectedTxnDetails(); as tx) {
+        <div style="background: #fafafa; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 12px;">
+            <span>Ref: **{{ tx.id }}**</span>
+            <span>{{ tx.timestamp | date:'medium' }}</span>
+          </div>
+
+          <div style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 12px;">
+            @for (item of tx.items; track item.product.id) {
+              <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; color: #334155;">
+                <span>{{ item.product.name }} (x{{ item.quantity }})</span>
+                <span style="font-weight: 500;">{{ (item.product.price * item.quantity) | currency:'EUR' }}</span>
+              </div>
+            }
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #64748b; text-align: right;">
+            <div>Net Net Base: {{ tx.subtotal | currency:'EUR' }}</div>
+            <div>Computed VAT (24%): {{ tx.taxAmount | currency:'EUR' }}</div>
+            <div style="font-size: 16px; font-weight: bold; color: #0f172a; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px;">
+              Paid Total: <span style="color: #10b981;">{{ tx.grandTotal | currency:'EUR' }}</span>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div style="text-align: center; color: #94a3b8; padding-top: 80px; font-size: 14px; line-height: 1.5;">
+          Select any closed ticket from the archive log to audit line item metrics or review cash margins.
+        </div>
+      }
+    </div>
+
+  </div>
+
+</div>

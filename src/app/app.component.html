@@ -1,1 +1,33 @@
-<router-outlet></router-outlet>
+<div class="main-app-container" style="display: flex; flex-direction: column; height: 100vh; font-family: system-ui, sans-serif; background: #f8fafc;">
+  
+  <nav class="global-navbar" style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 0 24px; height: 56px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    
+    <div class="nav-branding" style="color: white; font-size: 18px; font-weight: bold; letter-spacing: 0.5px;">
+      🏪 MARANTH <span style="color: #38bdf8; font-size: 12px; font-weight: normal; vertical-align: super; margin-left: 4px;">POS v1.0</span>
+    </div>
+
+    <div class="nav-links-cluster" style="display: flex; gap: 8px; height: 100%; align-items: center;">
+      
+      <a routerLink="/pos" routerLinkActive="active-nav-tab" [routerLinkActiveOptions]="{exact: true}" 
+         style="color: #94a3b8; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; transition: all 0.15s ease; display: flex; align-items: center; gap: 6px;">
+        🛒 Cashier Register
+      </a>
+
+      <a routerLink="/inventory" routerLinkActive="active-nav-tab" 
+         style="color: #94a3b8; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; transition: all 0.15s ease; display: flex; align-items: center; gap: 6px;">
+        📦 Stock Inventory
+      </a>
+
+    </div>
+
+    <div class="nav-status-indicator" style="display: flex; align-items: center; gap: 6px; color: #34d399; font-size: 12px; font-weight: 500; background: rgba(52, 211, 153, 0.1); padding: 4px 10px; border-radius: 20px;">
+      <span style="width: 6px; height: 6px; background: #34d399; border-radius: 50%;"></span> Terminal Online
+    </div>
+
+  </nav>
+
+  <main class="app-view-viewport" style="flex-grow: 1; overflow: hidden;">
+    <router-outlet></router-outlet>
+  </main>
+
+</div>
