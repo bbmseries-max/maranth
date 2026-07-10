@@ -62,10 +62,10 @@
 .pos-main-layout {
   display: flex !important;
   flex-direction: row !important;
-  flex: 1 !important; /* Fills remaining height below header */
+  flex: 1 !important; 
   width: 100% !important;
-  padding: 12px;
-  gap: 12px;
+  padding: 12px; /* ⚠️ Adds 24px extra space horizontally */
+  gap: 12px;     /* ⚠️ Adds 24px extra space between the three panels */
   overflow: hidden !important;
   box-sizing: border-box;
 }

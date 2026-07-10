@@ -9,7 +9,8 @@
         "purchasePrice": 0.52,
         "taxRate": 1.24,
         "isActive": true,
-        "notes": "test"
+        "notes": "test",
+        "isWeighted": true
     },
     "1": {
         "id": "14115",
@@ -24318,7 +24319,8 @@
         "stockQuantity": 13,
         "purchasePrice": 0.8,
         "taxRate": 1.13,
-        "isActive": true
+        "isActive": true,
+        "isWeighted": true
     },
     "2125": {
         "id": "21196",
@@ -32209,7 +32211,8 @@
         "stockQuantity": 10,
         "purchasePrice": 0.6,
         "taxRate": 1.13,
-        "isActive": true
+        "isActive": true,
+        "isWeighted": true
     },
     "2822": {
         "id": "21918",

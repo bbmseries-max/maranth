@@ -24,6 +24,7 @@ export interface Product {
   purchasePrice: number;
   taxRate: number;
   isActive: boolean;
+  isWeighted?: boolean;
   expire?: string;
   notes?: string;
 }

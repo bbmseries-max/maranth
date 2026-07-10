@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, computed } from '@angular/core';
+import { Component, inject, OnInit, computed, signal } from '@angular/core'; // 🚀 Added signal
 import { CommonModule, CurrencyPipe } from '@angular/common'; 
 import { SalesService } from '../../shared/services/sales'; 
 import { Product } from '../../shared/services/pos-data.models';
@@ -25,7 +25,10 @@ interface OrderableProduct extends Product {
 export class PosComponent implements OnInit {
   public salesService = inject(SalesService);
 
-  // 🚀 1. Builds the flat, category-sequenced list of loose items
+  // 🚀 Track typed search queries or fallback scans
+  public searchQuery = signal<string>('');
+
+  // 1. Existing flat list catalog grouping logic (unchanged structural behavior)
   public sequentialCatalogProducts = computed(() => {
     const looseItems = this.salesService.products().filter(p => {
       return !p.barcode || p.barcode.toString().trim() === '';
@@ -41,53 +44,30 @@ export class PosComponent implements OnInit {
       });
       let categoryName = matchedCat ? matchedCat.name : '';
 
-      // 📝 2. MANUAL DICTIONARY OVERRIDES (Hides the raw IDs and replaces them perfectly!)
       if (!categoryName) {
         switch (cleanId) {
-          case '5605':
-            categoryName = 'Shkolla - Lojra';
-            break;
-          case '5619':
-            categoryName = 'Xartika kouzinas - Banjo';
-            break;
-          case '5614':
-            categoryName = 'Freska Fruta';
-            break;
-          case '5613':
-            categoryName = 'Freska laxanika';
-            break;
-          case '5636':
-            categoryName = 'Karta ananeosis';
-            break;
-          case '5606':
-            categoryName = 'Caj zesto - Rofimata';
-            break;
-          case '5609':
-            categoryName = 'Cikles - Karameles';
-            break;
-            case '5622':
-            categoryName = 'Idi kapnistou -Pipes - Anaptires';
-            break;
-          case '5627':
-            categoryName = 'Zootrofes - Axesuar katikidion';
-            break;
-          case '5635':
-            categoryName = 'Veze';
-            break;
-          default:
-            categoryName = cleanId ? `Category ${cleanId}` : 'General Items';
-            break;
+          case '5605': categoryName = 'Shkolla - Lojra'; break;
+          case '5619': categoryName = 'Xartika kouzinas - Banjo'; break;
+          case '5614': categoryName = 'Freska Fruta'; break;
+          case '5613': categoryName = 'Freska laxanika'; break;
+          case '5636': categoryName = 'Karta ananeosis'; break;
+          case '5606': categoryName = 'Caj zesto - Rofimata'; break;
+          case '5609': categoryName = 'Cikles - Karameles'; break;
+          case '5622': categoryName = 'Idi kapnistou -Pipes - Anaptires'; break;
+          case '5627': categoryName = 'Zootrofes - Axesuar katikidion'; break;
+          case '5635': categoryName = 'Veze'; break;
+          default: categoryName = cleanId ? `Category ${cleanId}` : 'General Items'; break;
         }
       }
       
-      // Change this inside your items.map block:
       return {
+        ...product,
         id: product.id,
         name: product.name,
         price: product.price,
         barcode: product.barcode,
         categoryId: product.categoryId,
-        // Bind the active, changing properties through a direct getter property!
+        isWeighted: product.isWeighted,
         get stockQuantity() { return product.stockQuantity; },
         displayCategoryName: categoryName,
         isFirstOfCategory: false
@@ -95,19 +75,77 @@ export class PosComponent implements OnInit {
     });
 
     items.sort((a, b) => a.displayCategoryName.localeCompare(b.displayCategoryName));
+    return items;
+  });
 
+  // 🚀 Updated: Filters against ALL products when searching by name, or falls back to loose items catalog
+  public filteredCatalogProducts = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    let baseItems: OrderableProduct[] = [];
+
+    if (query !== '') {
+      // 🔍 1. If searching, look through EVERY product in the store database!
+      const matchedSourceProducts = this.salesService.products().filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.id.toString().includes(query) ||
+        p.barcode?.toString().includes(query)
+      );
+
+      baseItems = matchedSourceProducts.map(product => {
+        const prodCatId = product.categoryId || (product as any).category_id;
+        const cleanId = prodCatId?.toString().trim();
+        
+        // Lookup category name for dynamic group line headers
+        const matchedCat = this.salesService.categories().find(c => 
+          (c.id || (c as any).category_id)?.toString().trim() === cleanId
+        );
+        let categoryName = matchedCat ? matchedCat.name : '';
+        if (!categoryName) {
+          switch (cleanId) {
+            case '5605': categoryName = 'Shkolla - Lojra'; break;
+            case '5619': categoryName = 'Xartika kouzinas - Banjo'; break;
+            case '5614': categoryName = 'Freska Fruta'; break;
+            case '5613': categoryName = 'Freska laxanika'; break;
+            case '5636': categoryName = 'Karta ananeosis'; break;
+            case '5606': categoryName = 'Caj zesto - Rofimata'; break;
+            case '5609': categoryName = 'Cikles - Karameles'; break;
+            case '5622': categoryName = 'Idi kapnistou -Pipes - Anaptires'; break;
+            case '5627': categoryName = 'Zootrofes - Axesuar katikidion'; break;
+            case '5635': categoryName = 'Veze'; break;
+            default: categoryName = cleanId ? `Category ${cleanId}` : 'Search Matches'; break;
+          }
+        }
+
+        return {
+          ...product,
+          displayCategoryName: categoryName,
+          isFirstOfCategory: false,
+          get stockQuantity() { return product.stockQuantity; }
+        } as OrderableProduct;
+      });
+
+    } else {
+      // 📁 2. If search input is blank, show the standard loose products catalog as usual
+      baseItems = this.sequentialCatalogProducts();
+    }
+
+    // Sort alphabetically by the category grouping lines
+    baseItems.sort((a, b) => a.displayCategoryName.localeCompare(b.displayCategoryName));
+
+    // Recalculate dynamic divider split lines cleanly
     let currentCategorySeen = '';
-    items.forEach(item => {
+    const finalItems = baseItems.map(item => ({ ...item, isFirstOfCategory: false }));
+    
+    finalItems.forEach(item => {
       if (item.displayCategoryName !== currentCategorySeen) {
         item.isFirstOfCategory = true;
         currentCategorySeen = item.displayCategoryName;
       }
     });
 
-    return items;
+    return finalItems;
   });
 
-  // 🚀 2. OnInit lifecycle hook
   ngOnInit(): void {
     if (this.salesService.products().length === 0) {
       this.salesService.loadStoreInventory().subscribe(res => {
@@ -118,8 +156,23 @@ export class PosComponent implements OnInit {
     }
   }
 
-  // 🚀 3. Click handler (This resolves the ngtsc(2339) error!)
   public handleProductClick(product: Product): void {
     this.salesService.addToBasket(product);
+  }
+
+  // 🚀 3. Handle barcode scanner vs text lookups
+  public onSearchSubmit(value: string): void {
+    const cleanValue = value.trim();
+    if (!cleanValue) return;
+
+    // Is it a barcode scan or ID direct match? Try looking it up first
+    const wasScanned = this.salesService.lookupAndScanBarcode(cleanValue);
+
+    if (wasScanned) {
+      this.searchQuery.set(''); // Clear search grid filter if item successfully flies into basket
+    } else {
+      // If it's not a direct barcode match, filter the grid view for the text input phrase instead
+      this.searchQuery.set(cleanValue);
+    }
   }
 }

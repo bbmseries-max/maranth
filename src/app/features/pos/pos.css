@@ -1,3 +1,7 @@
+/* ==========================================================================
+   📦 MAIN WINDOW GRID SETUP
+   ========================================================================== */
+
 .pos-container {
   display: flex !important;
   flex-direction: column !important;
@@ -13,23 +17,17 @@
   justify-content: space-between !important;
   align-items: center !important;
   height: 60px !important;
+  min-height: 60px !important;
   background: #1e293b;
   padding: 0 20px;
   border-bottom: 1px solid #334155;
   box-sizing: border-box;
 }
 
-.brand-logo { font-size: 20px; font-weight: 800; color: #38bdf8; letter-spacing: 0.05em; }
-.system-tag { margin-left: 10px; font-size: 11px; background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; }
-.header-right { display: flex; gap: 12px; }
-.header-btn { display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; }
-.btn-reports { background: #2563eb; color: white; }
-.btn-inventory { background: #334155; color: #cbd5e1; }
-
 .pos-main-layout {
   display: flex !important;
   flex-direction: row !important;
-  flex: 1 !important;
+  flex: 1 !important; 
   width: 100% !important;
   padding: 12px;
   gap: 12px;
@@ -37,7 +35,26 @@
   box-sizing: border-box;
 }
 
-.pos-col {
+/* ==========================================================================
+   📐 3-PANEL COLUMN DISTRIBUTION (Eliminates the right gap entirely)
+   ========================================================================== */
+
+/* Left Navigation Sidebar Column */
+.pos-sidebar-panel {
+  flex: 0 0 20% !important; 
+  width: 20% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* Right Basket Panel Column */
+.checkout-basket-panel { 
+  flex: 0 0 30% !important; 
+  width: 30% !important; 
   display: flex !important;
   flex-direction: column !important;
   background: #ffffff;
@@ -47,58 +64,48 @@
   box-sizing: border-box;
 }
 
-.main-catalog-panel  { flex: 0 0 70% !important; width: 70% !important; }
-.checkout-basket-panel { flex: 0 0 30% !important; width: 30% !important; }
-
-.col-header { padding: 16px; font-weight: 700; font-size: 16px; color: #1e293b; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
-.col-header-basket { padding: 16px; font-weight: 700; font-size: 16px; color: #ffffff; background: #0f172a; }
-
-/* 🌟 Fluid wrapping flow container */
-.fluid-flex-grid-scroll {
+/* Center Catalog - Fluid auto-fill behavior absorbs extra space */
+.main-catalog-panel { 
+  flex: 1 1 auto !important; 
+  width: auto !important; 
   display: flex !important;
-  flex-wrap: wrap !important;
-  align-content: flex-start;
+  flex-direction: column !important;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  overflow: hidden !important; /* 🛑 Clamps the content inside */
+  box-sizing: border-box;
+}
+
+/* 🚀 NEW VIEWPORT WRAPPER: Handles the vertical scroll axis safely */
+.catalog-scroll-viewport {
+  flex: 1 !important;
+  overflow-y: auto !important; /* 📜 The scrollbar generates cleanly right here! */
+  width: 100%;
+}
+
+/* Updated Grid: Drops full responsibility for the scroll up to its parent wrapper container */
+.grid-layout-scroll {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 12px;
+  padding: 16px;
+}
+
+/* ==========================================================================
+   🖼️ INTERNAL CATALOG COMPONENT LAYOUTS
+   ========================================================================== */
+
+.grid-layout-scroll {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
   gap: 12px;
   padding: 16px;
   overflow-y: auto !important;
   flex: 1 !important;
 }
 
-/* 🎯 This element spans 100% width, breaking the product line to show the category row and line! */
-.category-divider-row {
-  flex: 0 0 100% !important;
-  width: 100% !important;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 20px;
-}
-
-.category-divider-row.no-margin-top {
-  margin-top: 4px;
-}
-
-.category-row-label {
-  font-size: 14px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.category-row-line {
-  flex: 1 !important;
-  display: block !important;
-  height: 2px !important;
-  border: none !important;
-  background-color: #e2e8f0 !important; /* A clean light grey line */
-  margin: 0 !important;
-}
-
-/* Product Card sizing calculated beautifully to simulate a clean 4-column layout */
 .product-item-card {
-  flex: 0 0 calc(25% - 9px) !important; /* Perfect 4 cards across layout line */
-  box-sizing: border-box;
   border: 1px solid #e2e8f0;
   padding: 16px;
   border-radius: 8px;
@@ -109,11 +116,7 @@
   background: #fff;
 }
 
-
-
-.product-item-card:hover { background: #f8fafc; border-color: #2563eb; }
-.prod-name { font-weight: 600; color: #1e293b; font-size: 14px; }
-.prod-price { font-weight: 700; color: #2563eb; margin-top: 4px; }
-.prod-stock-badge { margin-top: 12px; font-size: 11px; color: #16a34a; background: #f0fdf4; padding: 3px 8px; border-radius: 4px; align-self: flex-start; }
-.prod-stock-badge.low-stock { color: #dc2626; background: #fef2f2; }
-.empty-msg { padding: 40px; text-align: center; color: #64748b; font-size: 14px; width: 100%; }
+.product-item-card:hover { 
+  background: #f8fafc; 
+  border-color: #2563eb;
+}

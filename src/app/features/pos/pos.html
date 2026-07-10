@@ -1,10 +1,9 @@
 <div class="pos-container">
   
-  <!-- 🧭 TOP HEADER BAR -->
   <header class="pos-header">
     <div class="header-left">
       <span class="brand-logo">🍊 MARANTH</span>
-      <span class="system-tag">POS v2.0</span>
+      <span class="system-tag">POS System v2.0</span>
     </div>
     <div class="header-right">
       <a routerLink="/reports" class="header-btn btn-reports">📊 Sales Reports</a>
@@ -12,51 +11,92 @@
     </div>
   </header>
 
-  <!-- 🖥️ TWO-COLUMN MAIN WORKSPACE -->
   <div class="pos-main-layout">
     
-    <!-- 🔵 COLUMN 1: CONTINUOUS CAT-ORDERED FLOW (70% Width) -->
-    <section class="pos-col main-catalog-panel">
-      <div class="col-header">Loose Products Catalog</div>
+    <aside class="pos-sidebar-panel" style="display: flex; flex-direction: column; height: 100%; color: #fff;">
+  
+  <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase;">Register Controls</div>
+  <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+    <button (click)="salesService.clearBasket()" style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;">
+      🗑️ Clear Current Sale
+    </button>
+    <button style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;">
+      ⏸️ Suspend (Hold) Order
+    </button>
+  </div>
+
+  <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase;">Catalog Filters</div>
+  <div class="sidebar-scroll-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+    
+    <button (click)="searchQuery.set('')" style="background: #334155; color: #f8fafc; border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer;">
+      🌐 Show All Items
+    </button>
+
+    @for (cat of salesService.categories(); track cat.id) {
+      <button (click)="searchQuery.set(cat.name)" style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s;">
+        📁 {{ cat.name }}
+      </button>
+    }
+  </div>
+
+</aside>
+
+  <section class="main-catalog-panel">
       
-      <div class="fluid-flex-grid-scroll">
-        @for (prod of sequentialCatalogProducts(); track prod.id; let idx = $index) {
-          
-          <!-- Dynamic Inline Row Breaker & Label -->
-          @if (prod.isFirstOfCategory) {
-            <div class="category-divider-row" [class.no-margin-top]="idx === 0">
-              <span class="category-row-label">📁 {{ prod.displayCategoryName }}</span>
-              <div class="category-row-line"></div>
+      <div class="search-action-bar" style="background: #ffffff; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; flex: 0 0 auto;">
+        <div class="search-input-wrapper" style="display: flex; align-items: center; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 6px; padding: 4px 12px;">
+          <span style="font-size: 16px; color: #94a3b8; margin-right: 8px;">🔍</span>
+          <input 
+            #searchInput
+            type="text" 
+            placeholder="Scan barcode or type product name to search..." 
+            (keydown.enter)="onSearchSubmit(searchInput.value); searchInput.value = ''"
+            style="border: none; background: transparent; outline: none; width: 100%; height: 36px; font-size: 15px; font-weight: 500; color: #1e293b;"
+            autocomplete="off"
+            autofocus
+          />
+          <span style="font-size: 11px; color: #94a3b8; font-weight: 600; white-space: nowrap; background: #e2e8f0; padding: 3px 6px; border-radius: 4px;">Press [ENTER]</span>
+        </div>
+      </div>
+
+      <div class="catalog-scroll-viewport">
+        <div class="grid-layout-scroll">
+          @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
+            
+            @if (prod.isFirstOfCategory) {
+              <div class="category-divider-row" style="grid-column: 1 / -1; display: flex; align-items: center; margin-top: 12px; margin-bottom: 4px;">
+                <span style="font-weight: 700; font-size: 13px; color: #64748b; text-transform: uppercase; background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">
+                  📁 {{ prod.displayCategoryName }}
+                </span>
+              </div>
+            }
+
+            <div class="product-item-card" (click)="handleProductClick(prod)">
+              <div class="prod-details" style="display: flex; flex-direction: column; gap: 4px;">
+                <span class="prod-name">{{ prod.name }}</span>
+                <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+              </div>
+
+              @let liveProduct = salesService.products().find(p => p.id === prod.id);
+              @let liveStock = liveProduct ? liveProduct.stockQuantity : prod.stockQuantity;
+
+              <div class="prod-stock-badge" [class.low-stock]="liveStock <= 5">
+                Stock: {{ liveStock }} {{ prod.isWeighted ? 'kg' : 'pcs' }}
+              </div>
+            </div>
+
+          } @empty {
+            <div class="empty-msg" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #64748b;">
+              ⚠️ No items match your search.
             </div>
           }
-
-          <!-- Standard Product Item Card -->
-          <div class="product-item-card" (click)="handleProductClick(prod)">
-            <div class="prod-details">
-              <span class="prod-name">{{ prod.name }}</span>
-              <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
-            </div>
-
-            <!-- 🚀 REAL-TIME STOCK INJECTOR -->
-            <!-- We read directly from the main signal array inside the template so Angular redraws it live -->
-            @let liveProduct = salesService.products().find(p => p.id === prod.id);
-            @let liveStock = liveProduct ? liveProduct.stockQuantity : prod.stockQuantity;
-
-            <div class="prod-stock-badge" [class.low-stock]="liveStock <= 5">
-              Stock: {{ liveStock }}
-            </div>
-          </div>
-
-        } @empty {
-          <div class="empty-msg">No loose products configured in inventory.</div>
-        }
+        </div>
       </div>
     </section>
 
-    <!-- 🟡 COLUMN 2: ACTIVE BASKET (30% Width) -->
-    <section class="pos-col checkout-basket-panel">
+    <section class="checkout-basket-panel">
       <div class="col-header-basket">
-        <span>🛒 Current Order</span>
+        <span>🛒 Current Order Balance</span>
       </div>
       <app-shopping-basket></app-shopping-basket>
     </section>

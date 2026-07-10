@@ -133,27 +133,55 @@ export class SalesService {
     const liveProduct = this.products().find(p => p.id === product.id) || product;
     const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
 
-    if (liveProduct.stockQuantity <= 0) {
+   if (liveProduct.stockQuantity <= 0) {
       alert(`⚠️ ${liveProduct.name} is completely out of stock!`);
       return;
+    }
+
+    // ⚖️ EXTRA-SAFE DETECTION (Handles both true and "true")
+    const isProductWeighted = liveProduct.isWeighted === true || 
+                              (liveProduct.isWeighted as any) === 'true';
+
+    let weightInput = 1; 
+
+    if (isProductWeighted) {
+      // 🚀 Prompt runs safely here!
+      const userInput = prompt(`⚖️ Enter weight in KG for "${liveProduct.name}":`, '0.500');
+      
+      if (userInput === null) return; // Cancel button clicked safely
+      
+      weightInput = parseFloat(userInput);
+
+      if (isNaN(weightInput) || weightInput <= 0) {
+        alert('⚠️ Invalid weight entered. Please use a number greater than 0.');
+        return;
+      }
+
+      if (weightInput > liveProduct.stockQuantity) {
+        alert(`⚠️ Not enough stock! You entered ${weightInput} kg, but only ${liveProduct.stockQuantity} kg is available.`);
+        return;
+      }
     }
 
     // Update active shopping basket
     if (existingIndex > -1) {
       const updatedBasket = [...currentBasket];
+      const incrementAmount = isProductWeighted ? weightInput : 1;
+      
       updatedBasket[existingIndex] = {
         ...updatedBasket[existingIndex],
-        quantity: updatedBasket[existingIndex].quantity + 1
+        quantity: updatedBasket[existingIndex].quantity + incrementAmount
       };
       this.basket.set(updatedBasket);
     } else {
-      this.basket.set([...currentBasket, { product: liveProduct, quantity: 1 }]);
+      this.basket.set([...currentBasket, { product: liveProduct, quantity: weightInput }]);
     }
 
-    // 🚀 Subtract 1 from inventory live on card selection
+    // Subtract from inventory counts live
+    const deduction = isProductWeighted ? weightInput : 1;
     this.products.update(allProducts => 
       allProducts.map(prod => prod.id === product.id 
-        ? { ...prod, stockQuantity: Math.max(0, prod.stockQuantity - 1) } 
+        ? { ...prod, stockQuantity: parseFloat((prod.stockQuantity - deduction).toFixed(3)) } 
         : prod
       )
     );
@@ -185,10 +213,14 @@ export class SalesService {
   }
 
   public lookupAndScanBarcode(barcode: string): boolean {
+    const cleanBarcode = barcode?.toString().trim();
+    if (!cleanBarcode) return false;
+
+    // Find the exact item matching by barcode, id, or sku
     const matchedProduct = this.products().find(p => 
-      p.id?.toString() === barcode || 
-      (p as any).barcode === barcode || 
-      (p as any).sku === barcode
+      p.barcode?.toString().trim() === cleanBarcode || 
+      p.id?.toString().trim() === cleanBarcode || 
+      (p as any).sku?.toString().trim() === cleanBarcode
     );
 
     if (matchedProduct) {
