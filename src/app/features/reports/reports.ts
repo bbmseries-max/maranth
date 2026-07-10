@@ -20,15 +20,24 @@ export class ReportsComponent {
 
   public totalSalesCount = computed(() => this.salesService.transactions().length);
 
+  // 💵 Cash Revenue (Fixed Case Match)
   public cashRevenue = computed(() => {
     return this.salesService.transactions()
-      .filter(tx => tx.paymentMethod === 'CASH')
+      .filter(tx => tx.paymentMethod === 'Cash') // 🚀 'Cash' matches Service Type
       .reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
+  // 💳 Card Revenue (Fixed Case Match)
   public cardRevenue = computed(() => {
     return this.salesService.transactions()
-      .filter(tx => tx.paymentMethod === 'CARD')
+      .filter(tx => tx.paymentMethod === 'Card') // 🚀 'Card' matches Service Type
+      .reduce((sum, tx) => sum + tx.grandTotal, 0);
+  });
+
+  // 🏦 Debit Revenue (Added missing channel)
+  public debitRevenue = computed(() => {
+    return this.salesService.transactions()
+      .filter(tx => tx.paymentMethod === 'Debit') // 🚀 Tracks 'Debit' sales
       .reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 

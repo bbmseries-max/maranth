@@ -48,7 +48,7 @@
             <tr (click)="selectTxn(tx.id)" [style.background]="selectedTxnId() === tx.id ? '#f0fdf4' : 'transparent'" style="border-bottom: 1px solid #f1f5f9; color: #334155; cursor: pointer; transition: background 0.1s ease;">
               <td style="padding: 12px 8px; font-weight: 600; color: #2563eb;">{{ tx.id }}</td>
               <td style="padding: 12px 8px;">{{ tx.timestamp | date:'shortTime' }} ({{ tx.timestamp | date:'dd/MM' }})</td>
-              <td style="padding: 12px 8px;"><span [style.background]="tx.paymentMethod === 'CASH' ? '#ccfbf1' : '#e0e7ff'" [style.color]="tx.paymentMethod === 'CASH' ? '#115e59' : '#3730a3'" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">{{ tx.paymentMethod }}</span></td>
+              <td style="padding: 12px 8px;"><span [style.background]="tx.paymentMethod === 'Cash' ? '#ccfbf1' : '#e0e7ff'" [style.color]="tx.paymentMethod === 'Cash' ? '#115e59' : '#3730a3'" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">{{ tx.paymentMethod }}</span></td>
               <td style="padding: 12px 8px; text-align: right; font-weight: 700;">{{ tx.grandTotal | currency:'EUR' }}</td>
             </tr>
           } @empty {
@@ -93,6 +93,7 @@
         </div>
       }
     </div>
+    
 
   </div>
 

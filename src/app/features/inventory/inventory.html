@@ -12,9 +12,10 @@
        (keydown.enter)="handleBarcodeScan(barcodeInput.value)"
        style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; max-width: 300px;" />
 
-<!-- ❌ Clear Filter Button (Optional but handy!) -->
 @if (searchQuery()) {
-  <button type="button" (click)="handleBarcodeScan('')" style="margin-left: 8px; color: #ef4444; background: none; border: none; cursor: pointer;">
+  <button type="button" 
+          (click)="handleBarcodeScan(''); barcodeInput.value = ''" 
+          style="margin-left: 8px; color: #ef4444; background: none; border: none; cursor: pointer;">
     Clear Filter
   </button>
 }

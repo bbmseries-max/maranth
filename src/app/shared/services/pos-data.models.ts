@@ -28,6 +28,15 @@ export interface Product {
   notes?: string;
 }
 
+export interface BasketItem {
+  productId: string;
+  productName: string;
+  price: number;
+  quantity: number;
+  taxRate: number; // 🚀 Add this line (e.g., 24, 13, or 6)
+  // ... keep any other existing fields like barcode or unit
+}
+
 export interface SupplierJsonData {
   [key: string]: Supplier;
 }

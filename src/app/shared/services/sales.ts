@@ -16,7 +16,7 @@ export interface TransactionRecord {
   subtotal: number;
   taxAmount: number;
   grandTotal: number;
-  paymentMethod: string;
+  paymentMethod: 'Cash' | 'Card' | 'Debit';
 }
 
 @Injectable({
@@ -30,14 +30,13 @@ export class SalesService {
   private productsUrl = 'assets/data/products.json';
   
   // 📜 JOURNAL SIGNALS
-  public transactions = signal<TransactionRecord[]>(this.loadInitialTransactions());
   public basket = signal<BasketItem[]>([]);
   public currentCategory = signal<string>('ALL');
   public products = signal<Product[]>(this.loadInitialProducts());
   public categories = signal<Category[]>([]);
   public suppliers = signal<Supplier[]>([]);
-  
-
+  public transactions = signal<TransactionRecord[]>(this.loadInitialTransactions()); 
+  public selectedPaymentMethod: 'Cash' | 'Card' | 'Debit' = 'Cash';
 
   private loadInitialTransactions(): TransactionRecord[] {
     const saved = localStorage.getItem('maranth_sales_history');
@@ -63,7 +62,7 @@ export class SalesService {
     return []; 
   }
 
-  // 🛠️ CONSTRUCTOR (Keeps local storage synced perfectly)
+  // 🛠️ CONSTRUCTOR
   constructor() {
     effect(() => {
       const currentList = this.products();
@@ -75,7 +74,7 @@ export class SalesService {
     effect(() => {
       localStorage.setItem('maranth_sales_history', JSON.stringify(this.transactions()));
     });
-  } // 🚀 Bracket alignment fixed!
+  }
 
   // 📈 FINANCIAL COMPUTED METRICS
   public subtotal = computed(() => {
@@ -102,9 +101,6 @@ export class SalesService {
     this.currentCategory.set(id);
   }
 
-  /**
-   * Fetches data assets concurrently and normalizes everything safely into flat lists
-   */
   public loadStoreInventory(): Observable<{ categories: Category[], suppliers: Supplier[], products: Product[] }> {
     return forkJoin({
       categoriesData: this.http.get<any>(this.categoriesUrl), 
@@ -132,28 +128,17 @@ export class SalesService {
     );
   }
 
-  /**
-   * 🛒 Add an item to the basket state using signals
-   */
   public addToBasket(product: Product): void {
     const currentBasket = this.basket();
-    
     const liveProduct = this.products().find(p => p.id === product.id) || product;
     const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
 
-    if (existingIndex > -1) {
-      const existingItem = currentBasket[existingIndex];
-      if (existingItem.quantity >= liveProduct.stockQuantity) {
-        alert(`⚠️ Cannot add more! Only ${liveProduct.stockQuantity} units of "${liveProduct.name}" are available in stock.`);
-        return; 
-      }
-    } else {
-      if (liveProduct.stockQuantity <= 0) {
-        alert(`⚠️ ${liveProduct.name} is completely out of stock!`);
-        return;
-      }
+    if (liveProduct.stockQuantity <= 0) {
+      alert(`⚠️ ${liveProduct.name} is completely out of stock!`);
+      return;
     }
 
+    // Update active shopping basket
     if (existingIndex > -1) {
       const updatedBasket = [...currentBasket];
       updatedBasket[existingIndex] = {
@@ -164,11 +149,16 @@ export class SalesService {
     } else {
       this.basket.set([...currentBasket, { product: liveProduct, quantity: 1 }]);
     }
+
+    // 🚀 Subtract 1 from inventory live on card selection
+    this.products.update(allProducts => 
+      allProducts.map(prod => prod.id === product.id 
+        ? { ...prod, stockQuantity: Math.max(0, prod.stockQuantity - 1) } 
+        : prod
+      )
+    );
   }
 
-  /**
-   * 🗑️ Removes an item or drops its quantity count out of the basket state completely
-   */
   public removeFromBasket(product: Product): void {
     const currentBasket = this.basket();
     const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
@@ -178,24 +168,22 @@ export class SalesService {
       const item = updatedBasket[existingIndex];
 
       if (item.quantity > 1) {
-        // Drop the item quantity by one unit
-        updatedBasket[existingIndex] = {
-          ...item,
-          quantity: item.quantity - 1
-        };
+        updatedBasket[existingIndex] = { ...item, quantity: item.quantity - 1 };
       } else {
-        // If only 1 unit remains, cut the whole line out of the active index array
         updatedBasket.splice(existingIndex, 1);
       }
-
       this.basket.set(updatedBasket);
-      console.log(`Removed a unit of "${product.name}" from checkout basket.`);
+
+      // 🚀 Return 1 unit back to live stock counts instantly
+      this.products.update(allProducts =>
+        allProducts.map(prod => prod.id === product.id 
+          ? { ...prod, stockQuantity: prod.stockQuantity + 1 } 
+          : prod
+        )
+      );
     }
   }
 
-  /**
-   * 🔍 Look up code strings from physical barcode readers
-   */
   public lookupAndScanBarcode(barcode: string): boolean {
     const matchedProduct = this.products().find(p => 
       p.id?.toString() === barcode || 
@@ -211,16 +199,15 @@ export class SalesService {
   }
 
   /**
-   * 💳 Processes checkout transaction, deducting final stock numbers safely
+   * 💳 Processes checkout transaction cleanly
    */
-  public processPayment(paymentMethod: string): void {
+  public processPayment(paymentMethod: 'Cash' | 'Card' | 'Debit'): void {
     const activeBasket = this.basket();
     if (activeBasket.length === 0) {
       alert('🛒 Your basket is currently empty.');
       return;
     }
 
-    // 📦 1. Create a detailed permanent historical receipt record
     const newReceipt: TransactionRecord = {
       id: 'TXN-' + Math.floor(100000 + Math.random() * 900000), 
       timestamp: new Date(),
@@ -234,26 +221,23 @@ export class SalesService {
     // Append new receipt to history logs
     this.transactions.update(history => [newReceipt, ...history]);
 
-    // 📉 2. Drop real inventory values down permanently
-    this.products.update(allProducts => {
-      return allProducts.map(prod => {
-        const basketItem = activeBasket.find(item => item.product.id === prod.id);
-        if (basketItem) {
-          return {
-            ...prod,
-            stockQuantity: Math.max(0, prod.stockQuantity - basketItem.quantity)
-          };
-        }
-        return prod;
-      });
-    });
-
     alert(`✅ Sale Successful via ${paymentMethod}!\nTotal Collected: €${this.grandTotal().toFixed(2)}`);
-    this.basket.set([]);
+    this.basket.set([]); // Safely flushes the transaction cart state
   }
 
   public clearBasket(): void {
+    const activeBasket = this.basket();
+    
+    // 🚀 Return all quantities back to inventory tracking before flushing
+    this.products.update(allProducts => {
+      return allProducts.map(prod => {
+        const basketItem = activeBasket.find(item => item.product.id === prod.id);
+        return basketItem 
+          ? { ...prod, stockQuantity: prod.stockQuantity + basketItem.quantity } 
+          : prod;
+      });
+    });
+
     this.basket.set([]);
-    console.log('Shopping basket cleared successfully.');
   }
 }

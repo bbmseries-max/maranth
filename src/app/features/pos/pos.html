@@ -1,159 +1,65 @@
 <div class="pos-container">
   
-  <aside class="pos-sidebar-left">
+  <!-- 🧭 TOP HEADER BAR -->
+  <header class="pos-header">
+    <div class="header-left">
+      <span class="brand-logo">🍊 MARANTH</span>
+      <span class="system-tag">POS v2.0</span>
+    </div>
+    <div class="header-right">
+      <a routerLink="/reports" class="header-btn btn-reports">📊 Sales Reports</a>
+      <a routerLink="/inventory" class="header-btn btn-inventory">📦 Manage Inventory</a>
+    </div>
+  </header>
+
+  <!-- 🖥️ TWO-COLUMN MAIN WORKSPACE -->
+  <div class="pos-main-layout">
     
-    <div class="sidebar-segment">
-      <div class="segment-header">
-        <h3>Company Filter</h3>
-      </div>
+    <!-- 🔵 COLUMN 1: CONTINUOUS CAT-ORDERED FLOW (70% Width) -->
+    <section class="pos-col main-catalog-panel">
+      <div class="col-header">Loose Products Catalog</div>
       
-      <div class="supplier-trigger-wrapper" style="padding: 10px 0;">
-        <button type="button" class="scroll-btn-item trigger-btn" (click)="openSupplierModal()" style="width: 100%; text-align: left;">
-          🏢 {{ getSelectedSupplierName() }}
-        </button>
-      </div>
-
-      <div class="company-preview-panel" style="margin-top: 10px; border-top: 1px dashed #d1d3e2; padding-top: 10px;">
-        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <h4 style="margin: 0; font-size: 11px; color: #4e73df; text-transform: uppercase;">Profile Workbench</h4>
-          @if (currentSupplier() !== 'ALL') {
-            <span class="status-badge active-mode" style="background: #d4edda; color: #155724; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold;">Editing</span>
-          } @else {
-            <span class="status-badge passive-mode" style="background: #e2e3e5; color: #383d41; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold;">Empty</span>
-          }
-        </div>
-
-        @if (currentSupplier() !== 'ALL') {
-          <div class="panel-body-form">
-            <div class="form-field-group" style="margin-bottom: 8px;">
-              <label style="display: block; font-size: 11px; color: #6e707e; font-weight: 600; margin-bottom: 3px;">Company Name</label>
-              <input type="text" #nameInput [value]="getActiveSupplierField('name')" (input)="updateActiveSupplierField('name', nameInput.value)" class="active-management-input" style="width:100%; box-sizing:border-box; padding:6px; font-size:13px; border:1px solid #d1d3e2; border-radius:4px;" />
-            </div>
-
-            <div class="form-field-group" style="margin-bottom: 8px;">
-              <label style="display: block; font-size: 11px; color: #6e707e; font-weight: 600; margin-bottom: 3px;">Notes / Data</label>
-              <textarea #notesInput rows="2" [value]="getActiveSupplierField('notes')" (input)="updateActiveSupplierField('notes', notesInput.value)" class="active-management-textarea" style="width:100%; box-sizing:border-box; padding:6px; font-size:13px; border:1px solid #d1d3e2; border-radius:4px; resize:none;"></textarea>
-            </div>
-
-            <div class="management-actions-row" style="display: flex; gap: 8px; margin-top: 10px;">
-              <button type="button" class="mgmt-btn save-btn" (click)="saveCompanyChanges()" style="flex:1; padding:6px; font-weight:bold; font-size:11px; border:none; border-radius:4px; background:#1cc88a; color:white; cursor:pointer;">💾 Save</button>
-              <button type="button" class="mgmt-btn delete-btn" (click)="deleteActiveCompany()" style="flex:1; padding:6px; font-weight:bold; font-size:11px; border:none; border-radius:4px; background:#e74a3b; color:white; cursor:pointer;">🗑️ Delete</button>
-            </div>
-          </div>
-        } @else {
-          <div class="empty-management-state" style="padding: 10px; text-align: center; color: #858796; font-size: 12px; line-height: 1.4;">
-            Choose a supplier above to unlock instant editing tools.
-          </div>
-        }
-      </div>
-    </div>
-
-    <div class="sidebar-segment category-section" style="margin-top: 15px;">
-      <div class="segment-header">
-        <h3>Categories</h3>
-      </div>
-      <app-category-list [categories]="categories()"></app-category-list>
-    </div>
-
-  </aside>
-
-  <main class="pos-products-grid-container" style="position: relative;">
-
-    @if (currentSupplier() !== 'ALL') {
-      <div class="supplier-matrix-overlay">
-        
-        <div class="overlay-nav-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #eff6ff; padding: 10px; border-radius: 6px; border: 1px solid #bfdbfe;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <button type="button" class="back-to-catalog-btn" (click)="selectSupplier('ALL')" style="background: #4e73df; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer;">
-              &larr; Back to Catalog
-            </button>
-            <span style="font-size: 14px; font-weight: 700; color: #1e3a8a;">
-              Showing items exclusively from: {{ getSelectedSupplierName().replace('Company: ', '') }}
-            </span>
-          </div>
-          <span class="status-badge active-mode" style="background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">
-            Supplier View Locked
-          </span>
-        </div>
-
-        <div class="supplier-rows-container" style="display: flex; flex-direction: column; gap: 20px;">
-          <div class="supplier-row-header" style="font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">
-            📦 Supplier Inventory Batch Tracks
-          </div>
+      <div class="fluid-flex-grid-scroll">
+        @for (prod of sequentialCatalogProducts(); track prod.id; let idx = $index) {
           
-          <div class="supplier-horizontal-track" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
-            @for (prod of salesService.products(); track prod.id) {
-              @if (isProductLinkedToActiveSupplier(prod)) {
-                <div class="product-item-card" (click)="handleProductClick(prod)" style="flex: 0 0 calc(16.66% - 10px); min-width: 145px; box-sizing: border-box; height: 130px;">
-                  <div class="prod-details">
-                    <span class="prod-name">{{ prod.name }}</span>
-                    <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
-                  </div>
-                  <div class="prod-stock-badge" [class.low-stock]="prod.stockQuantity <= 5">
-                    Stock: {{ prod.stockQuantity }}
-                  </div>
-                </div>
-              }
-            }
-          </div>
-        </div>
+          <!-- Dynamic Inline Row Breaker & Label -->
+          @if (prod.isFirstOfCategory) {
+            <div class="category-divider-row" [class.no-margin-top]="idx === 0">
+              <span class="category-row-label">📁 {{ prod.displayCategoryName }}</span>
+              <div class="category-row-line"></div>
+            </div>
+          }
 
-      </div>
-    } @else {
-
-      <div class="products-header">
-        <h2>Products Matrix Display</h2>
-      </div>
-      
-      <div class="grid-layout-scroll">
-        @for (prod of filteredProducts(); track prod.id) {
+          <!-- Standard Product Item Card -->
           <div class="product-item-card" (click)="handleProductClick(prod)">
             <div class="prod-details">
               <span class="prod-name">{{ prod.name }}</span>
               <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
             </div>
-            <div class="prod-supplier-tag" style="font-size: 10px; color: #4e73df; font-weight: 600; margin-top: 4px; background: #eaecf1; padding: 2px 5px; border-radius: 3px; align-self: flex-start;">
-              🚚 {{ getProductSupplierName(prod) }}
-            </div>
-            <div class="prod-stock-badge" [class.low-stock]="prod.stockQuantity <= 5">
-              Stock: {{ prod.stockQuantity }}
+
+            <!-- 🚀 REAL-TIME STOCK INJECTOR -->
+            <!-- We read directly from the main signal array inside the template so Angular redraws it live -->
+            @let liveProduct = salesService.products().find(p => p.id === prod.id);
+            @let liveStock = liveProduct ? liveProduct.stockQuantity : prod.stockQuantity;
+
+            <div class="prod-stock-badge" [class.low-stock]="liveStock <= 5">
+              Stock: {{ liveStock }}
             </div>
           </div>
+
         } @empty {
-          <div class="empty-grid-msg">No active products match selected filter keys.</div>
+          <div class="empty-msg">No loose products configured in inventory.</div>
         }
       </div>
+    </section>
 
-    }
-  </main>
-
-  <aside class="pos-sidebar-right">
-    <app-shopping-basket></app-shopping-basket>
-  </aside>
-
-</div>
-
-@if (isSupplierModalOpen()) {
-  <div class="pos-modal-overlay" (click)="closeSupplierModal()">
-    <div class="pos-modal-card" (click)="$event.stopPropagation()">
-      
-      <div class="modal-header">
-        <h2>Select a Company</h2>
-        <button class="close-x-btn" (click)="closeSupplierModal()">&times;</button>
+    <!-- 🟡 COLUMN 2: ACTIVE BASKET (30% Width) -->
+    <section class="pos-col checkout-basket-panel">
+      <div class="col-header-basket">
+        <span>🛒 Current Order</span>
       </div>
+      <app-shopping-basket></app-shopping-basket>
+    </section>
 
-      <div class="modal-body">
-        <div class="supplier-modal-row" [class.selected-row]="currentSupplier() === 'ALL'" (click)="selectSupplierFromModal('ALL')">
-          <span class="supplier-row-name">✨ Show All Companies (Reset Filter)</span>
-        </div>
-
-        @for (sup of suppliers(); track sup.id) {
-          <div class="supplier-modal-row" [class.selected-row]="currentSupplier() === sup.id" (click)="selectSupplierFromModal(sup.id)">
-            <span class="supplier-row-name">🏢 {{ sup.name }}</span>
-          </div>
-        }
-      </div>
-
-    </div>
   </div>
-}
+</div>

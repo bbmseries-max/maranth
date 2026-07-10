@@ -40,7 +40,12 @@
 <!-- Paste your footer code directly below the loop view -->
 <div class="basket-summary-footer">
   <!-- ... your existing totals and checkout button ... -->
-  <button type="button" class="btn-checkout-action" [disabled]="salesService.basket().length === 0" (click)="processCheckout()">
-    💶 Complete Sale (Pay)
-  </button>
+ <div style="margin-bottom: 16px; background: #f1f5f9; padding: 12px; border-radius: 8px;">
+  <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #334155;">Select Payment Method:</label>
+ <div style="display: flex; gap: 10px;">
+  <button (click)="salesService.processPayment('Cash')">💵 Cash</button>
+  <button (click)="salesService.processPayment('Card')">💳 Card</button>
+  <button (click)="salesService.processPayment('Debit')">🏦 Debit</button>
+</div>
+</div>
 </div>

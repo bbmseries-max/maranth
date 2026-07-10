@@ -1,42 +1,171 @@
-/* ==========================================================================
-   🚨 GLOBAL OVERRIDE: FORCE CATEGORY BUTTONS VERTICAL
-   ========================================================================== */
-
-/* 1. Force the custom element tag to stretch to full width */
-app-category-list {
+/* Base Container - Forces full screen width and height */
+.pos-container {
   display: flex !important;
   flex-direction: column !important;
-  width: 100% !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  background-color: #0f172a;
+  overflow: hidden !important;
+  box-sizing: border-box;
 }
 
-/* 2. Smash the horizontal row rules inside the category list template */
-app-category-list .horizontal-btn-row {
+/* 🧭 Top Header Bar Styling */
+.pos-header {
   display: flex !important;
-  flex-direction: column !important; /* 🚀 Force layout row -> column */
-  flex-wrap: wrap !important;
-  width: 100% !important;            /* Span full 350px sidebar width */
-  max-width: 100% !important;
-  gap: 8px !important;               /* Clean vertical spacing */
+  justify-content: space-between !important;
+  align-items: center !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  background: #1e293b;
+  padding: 0 20px;
+  border-bottom: 1px solid #334155;
+  box-sizing: border-box;
 }
 
-/* 3. Re-adjust the buttons to stack like cards */
-app-category-list .scroll-btn-item {
-  display: block !important;
-  width: 100% !important;            /* Fill the layout box */
-  text-align: left !important;       /* Clean left alignment for retail screens */
-  box-sizing: border-box !important;
-  white-space: normal !important;    /* Let text wrap naturally down if long */
+.brand-logo {
+  font-size: 20px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
 }
 
-/* 🎯 Active Navigation Router Highlight Mappings */
-.nav-links-cluster a:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #f1f5f9 !important;
+.system-tag {
+  margin-left: 10px;
+  font-size: 11px;
+  background: #334155;
+  color: #94a3b8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
 }
 
-.nav-links-cluster a.active-nav-tab {
-  background: #38bdf8 !important;
-  color: #0f172a !important;
-  font-weight: 600 !important;
-  box-shadow: 0 2px 4px rgba(56, 189, 248, 0.2);
+.header-right {
+  display: flex;
+  gap: 12px;
 }
+
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-reports { background: #2563eb; color: white; }
+.btn-inventory { background: #334155; color: #cbd5e1; }
+
+/* 🖥️ Main Workspace Row Layout */
+.pos-main-layout {
+  display: flex !important;
+  flex-direction: row !important;
+  flex: 1 !important; /* Fills remaining height below header */
+  width: 100% !important;
+  padding: 12px;
+  gap: 12px;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+/* 🗂️ Panel 1: Vertical Sidebar Column */
+.pos-sidebar-panel {
+  flex: 0 0 20% !important; /* Fixed 20% width */
+  width: 20% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.panel-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.sidebar-scroll-box {
+  flex: 1 !important;
+  overflow-y: auto;
+  width: 100%;
+}
+
+/* White card columns */
+.pos-col {
+  display: flex !important;
+  flex-direction: column !important;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+/* Panel Width Distributions */
+.main-catalog-panel  { flex: 0 0 50% !important; width: 50% !important; }
+.checkout-basket-panel { flex: 0 0 30% !important; width: 30% !important; }
+
+.col-header {
+  padding: 16px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.col-header-basket {
+  padding: 16px;
+  font-weight: 700;
+  font-size: 16px;
+  color: #ffffff;
+  background: #0f172a;
+}
+
+/* Middle Panel Product Grid Grid Scroll */
+.grid-layout-scroll {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto !important;
+  flex: 1 !important;
+}
+
+.product-item-card {
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #fff;
+}
+
+.product-item-card:hover { 
+  background: #f8fafc; 
+  border-color: #2563eb;
+}
+
+.prod-name { font-weight: 600; color: #1e293b; font-size: 14px; }
+.prod-price { font-weight: 700; color: #2563eb; margin-top: 4px; }
+
+.prod-stock-badge {
+  margin-top: 12px;
+  font-size: 11px;
+  color: #16a34a;
+  background: #f0fdf4;
+  padding: 3px 8px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.prod-stock-badge.low-stock { color: #dc2626; background: #fef2f2; }
+.empty-msg { padding: 40px; text-align: center; color: #64748b; font-size: 14px; }

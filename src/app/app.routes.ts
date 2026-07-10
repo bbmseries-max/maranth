@@ -24,6 +24,10 @@ export const routes: Routes = [
     path: 'reports', 
     loadComponent: () => import('./features/reports/reports').then(m => m.ReportsComponent)
   },
+  { 
+    path: 'sales-reports', 
+    loadComponent: () => import('./features/reports/sales-reports').then(m => m.SalesReportsComponent) 
+  },
 
   // 4. Wildcard catch-all safety redirect
   { 
