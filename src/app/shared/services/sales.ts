@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Category, SupplierJsonData, ProductJsonData, Supplier, Product } from './pos-data.models';
+import { Category, Supplier, Product } from './pos-data.models';
 
 export interface BasketItem {
   product: Product;
@@ -29,7 +29,7 @@ export class SalesService {
   private suppliersUrl = 'assets/data/companies.json'; 
   private productsUrl = 'assets/data/products.json';
   
-  // 📜 JOURNAL SIGNALS
+  // 📜 SYSTEM STATE SIGNALS
   public basket = signal<BasketItem[]>([]);
   public currentCategory = signal<string>('ALL');
   public products = signal<Product[]>(this.loadInitialProducts());
@@ -37,6 +37,9 @@ export class SalesService {
   public suppliers = signal<Supplier[]>([]);
   public transactions = signal<TransactionRecord[]>(this.loadInitialTransactions()); 
   public selectedPaymentMethod: 'Cash' | 'Card' | 'Debit' = 'Cash';
+  
+  // 🚀 SUSPEND ORDER MEMORY TRACE
+  public suspendedBasket = signal<BasketItem[] | null>(null);
 
   private loadInitialTransactions(): TransactionRecord[] {
     const saved = localStorage.getItem('maranth_sales_history');
@@ -62,7 +65,7 @@ export class SalesService {
     return []; 
   }
 
-  // 🛠️ CONSTRUCTOR
+  // 🛠️ AUTOMATED DISK STORAGE SYNCERS
   constructor() {
     effect(() => {
       const currentList = this.products();
@@ -133,22 +136,17 @@ export class SalesService {
     const liveProduct = this.products().find(p => p.id === product.id) || product;
     const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
 
-   if (liveProduct.stockQuantity <= 0) {
+    if (liveProduct.stockQuantity <= 0) {
       alert(`⚠️ ${liveProduct.name} is completely out of stock!`);
       return;
     }
 
-    // ⚖️ EXTRA-SAFE DETECTION (Handles both true and "true")
-    const isProductWeighted = liveProduct.isWeighted === true || 
-                              (liveProduct.isWeighted as any) === 'true';
-
+    const isProductWeighted = liveProduct.isWeighted === true || (liveProduct.isWeighted as any) === 'true';
     let weightInput = 1; 
 
     if (isProductWeighted) {
-      // 🚀 Prompt runs safely here!
       const userInput = prompt(`⚖️ Enter weight in KG for "${liveProduct.name}":`, '0.500');
-      
-      if (userInput === null) return; // Cancel button clicked safely
+      if (userInput === null) return; 
       
       weightInput = parseFloat(userInput);
 
@@ -163,7 +161,6 @@ export class SalesService {
       }
     }
 
-    // Update active shopping basket
     if (existingIndex > -1) {
       const updatedBasket = [...currentBasket];
       const incrementAmount = isProductWeighted ? weightInput : 1;
@@ -177,7 +174,6 @@ export class SalesService {
       this.basket.set([...currentBasket, { product: liveProduct, quantity: weightInput }]);
     }
 
-    // Subtract from inventory counts live
     const deduction = isProductWeighted ? weightInput : 1;
     this.products.update(allProducts => 
       allProducts.map(prod => prod.id === product.id 
@@ -185,6 +181,7 @@ export class SalesService {
         : prod
       )
     );
+    this.saveBasketToStorage();
   }
 
   public removeFromBasket(product: Product): void {
@@ -195,28 +192,85 @@ export class SalesService {
       const updatedBasket = [...currentBasket];
       const item = updatedBasket[existingIndex];
 
-      if (item.quantity > 1) {
+      const liveProduct = this.products().find(p => p.id === product.id) || product;
+      const isProductWeighted = liveProduct.isWeighted === true || (liveProduct.isWeighted as any) === 'true';
+      const stepBackAmount = isProductWeighted ? item.quantity : 1;
+
+      if (!isProductWeighted && item.quantity > 1) {
         updatedBasket[existingIndex] = { ...item, quantity: item.quantity - 1 };
       } else {
         updatedBasket.splice(existingIndex, 1);
       }
       this.basket.set(updatedBasket);
 
-      // 🚀 Return 1 unit back to live stock counts instantly
       this.products.update(allProducts =>
         allProducts.map(prod => prod.id === product.id 
-          ? { ...prod, stockQuantity: prod.stockQuantity + 1 } 
+          ? { ...prod, stockQuantity: parseFloat((prod.stockQuantity + stepBackAmount).toFixed(3)) } 
           : prod
         )
       );
+      this.saveBasketToStorage();
     }
+  }
+
+  // ==========================================================================
+  // ⚡ SYSTEM ACTIONS SIDEBAR SERVICES
+  // ==========================================================================
+
+  /**
+   * 🗑️ Action 1: Clear Current Sale
+   * Flushes checkout basket and returns quantities safely back to inventory.
+   */
+  public clearBasket(): void {
+    const activeBasket = this.basket();
+    
+    this.products.update(allProducts => {
+      return allProducts.map(prod => {
+        const basketItem = activeBasket.find(item => item.product.id === prod.id);
+        return basketItem 
+          ? { ...prod, stockQuantity: parseFloat((prod.stockQuantity + basketItem.quantity).toFixed(3)) } 
+          : prod;
+      });
+    });
+
+    this.basket.set([]);
+    this.saveBasketToStorage();
+  }
+
+  /**
+   * ⏸️ Action 2: Suspend (Hold) Order
+   * Park active transaction items. Does NOT return stock to inventory.
+   */
+  public suspendOrder(): void {
+    const currentItems = this.basket();
+    if (currentItems.length === 0) return;
+
+    this.suspendedBasket.set(currentItems);
+    this.basket.set([]); 
+    this.saveBasketToStorage();
+  }
+
+  /**
+   * ▶️ Action 3: Recall Order
+   * Restores items parked back onto layout panel frame.
+   */
+  public recallOrder(): void {
+    const savedItems = this.suspendedBasket();
+    if (!savedItems) return;
+
+    this.basket.set([...this.basket(), ...savedItems]);
+    this.suspendedBasket.set(null); 
+    this.saveBasketToStorage();
+  }
+
+  private saveBasketToStorage(): void {
+    localStorage.setItem('maranth_active_basket', JSON.stringify(this.basket()));
   }
 
   public lookupAndScanBarcode(barcode: string): boolean {
     const cleanBarcode = barcode?.toString().trim();
     if (!cleanBarcode) return false;
 
-    // Find the exact item matching by barcode, id, or sku
     const matchedProduct = this.products().find(p => 
       p.barcode?.toString().trim() === cleanBarcode || 
       p.id?.toString().trim() === cleanBarcode || 
@@ -235,10 +289,7 @@ export class SalesService {
    */
   public processPayment(paymentMethod: 'Cash' | 'Card' | 'Debit'): void {
     const activeBasket = this.basket();
-    if (activeBasket.length === 0) {
-      alert('🛒 Your basket is currently empty.');
-      return;
-    }
+    if (activeBasket.length === 0) return;
 
     const newReceipt: TransactionRecord = {
       id: 'TXN-' + Math.floor(100000 + Math.random() * 900000), 
@@ -250,26 +301,10 @@ export class SalesService {
       paymentMethod: paymentMethod
     };
 
-    // Append new receipt to history logs
     this.transactions.update(history => [newReceipt, ...history]);
-
     alert(`✅ Sale Successful via ${paymentMethod}!\nTotal Collected: €${this.grandTotal().toFixed(2)}`);
-    this.basket.set([]); // Safely flushes the transaction cart state
-  }
-
-  public clearBasket(): void {
-    const activeBasket = this.basket();
     
-    // 🚀 Return all quantities back to inventory tracking before flushing
-    this.products.update(allProducts => {
-      return allProducts.map(prod => {
-        const basketItem = activeBasket.find(item => item.product.id === prod.id);
-        return basketItem 
-          ? { ...prod, stockQuantity: prod.stockQuantity + basketItem.quantity } 
-          : prod;
-      });
-    });
-
-    this.basket.set([]);
+    this.basket.set([]); 
+    this.saveBasketToStorage();
   }
 }
