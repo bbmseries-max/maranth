@@ -1,7 +1,62 @@
+<!-- Custom POS Overlay Dialog Frame -->
+<!-- Custom POS Overlay Dialog Frame -->
+@if (salesService.activeModal(); as modal) {
+  <div class="pos-modal-overlay is-active">
+    <div class="pos-modal-window">
+      
+      <div class="pos-modal-header" 
+           [class.warning-header]="modal.type === 'warning'"
+           [class.success-header]="modal.type === 'success'">
+        {{ modal.title }}
+      </div>
+      
+      <div class="pos-modal-body" style="white-space: pre-line;">
+        <p>{{ modal.message }}</p>
+        
+        @if (modal.type === 'prompt') {
+          <input 
+            #weightInput
+            type="number" 
+            class="pos-modal-input" 
+            [value]="modal.value" 
+            (input)="modal.value = weightInput.value"
+            step="0.001"
+            autofocus
+          />
+        }
+      </div>
+      
+      <div class="pos-modal-footer">
+    <!-- ⚖️ PROMPT MODE (e.g., Entering Weight): Show exactly ONE Cancel and ONE Confirm button -->
+  @if (salesService.activeModal()?.type === 'prompt') {
+    <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.activeModal.set(null)">
+      Cancel
+    </button>
+    <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">
+      Confirm
+    </button>
+  }
+
+  <!-- ⚠️ WARNING / SUCCESS MODE (e.g., Out of Stock): Show exactly ONE Dismiss button -->
+  @if (salesService.activeModal()?.type === 'warning' || salesService.activeModal()?.type === 'success') {
+    <button class="pos-modal-btn pos-modal-btn-danger" (click)="modal.onConfirm(modal.value)">
+      Dismiss
+    </button>
+  }
+      </div>
+
+    </div>
+  </div>
+}
+
 <div class="pos-container">
   
   <header class="pos-header">
     <div class="header-left">
+   <button class="pos-admin-btn" (click)="salesService.linkCloudFolder()">
+  🔗 Link to Google Drive folder
+</button>
+
       <span class="brand-logo">🍊 MARANTH</span>
       <span class="system-tag">POS System v2.0</span>
     </div>
@@ -121,6 +176,9 @@
       </div>
       <app-shopping-basket></app-shopping-basket>
     </section>
+
+    <!-- Put this in your settings panel or layout footer temporarily -->
+
 
   </div>
 </div>

@@ -19,6 +19,15 @@ export interface TransactionRecord {
   paymentMethod: 'Cash' | 'Card' | 'Debit';
 }
 
+// 📦 MODAL SYSTEM INTERFACE STRUCT
+export interface PosModalConfig {
+  type: 'warning' | 'prompt' | 'success';
+  title: string;
+  message: string;
+  value: string;
+  onConfirm: (value: string) => void;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -37,7 +46,14 @@ export class SalesService {
   public suppliers = signal<Supplier[]>([]);
   public transactions = signal<TransactionRecord[]>(this.loadInitialTransactions()); 
   public selectedPaymentMethod: 'Cash' | 'Card' | 'Debit' = 'Cash';
+
+  // Save the folder connection token in memory
+  private directoryHandle: any = null;
+  public isSyncing = signal<boolean>(false);
   
+  // 👓 SHIFT-FRIENDLY DIALOG ENGINE SIGNAL
+  public activeModal = signal<PosModalConfig | null>(null);
+
   // 🚀 SUSPEND ORDER MEMORY TRACE
   public suspendedBasket = signal<BasketItem[] | null>(null);
 
@@ -136,48 +152,78 @@ export class SalesService {
     const liveProduct = this.products().find(p => p.id === product.id) || product;
     const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
 
+    // 1️⃣ Out of Stock Verification
     if (liveProduct.stockQuantity <= 0) {
-      alert(`⚠️ ${liveProduct.name} is completely out of stock!`);
+      this.activeModal.set({
+        type: 'warning',
+        title: '⚠️ Stock Exhausted',
+        message: `${liveProduct.name} is completely out of stock!`,
+        value: '',
+        onConfirm: () => this.activeModal.set(null)
+      });
       return;
     }
 
     const isProductWeighted = liveProduct.isWeighted === true || (liveProduct.isWeighted as any) === 'true';
-    let weightInput = 1; 
 
+    // 2️⃣ Weighted Scales Intercept Mode
     if (isProductWeighted) {
-      const userInput = prompt(`⚖️ Enter weight in KG for "${liveProduct.name}":`, '0.500');
-      if (userInput === null) return; 
-      
-      weightInput = parseFloat(userInput);
+      this.activeModal.set({
+        type: 'prompt',
+        title: '⚖️ Weigh Item',
+        message: `Enter weight in KG for "${liveProduct.name}":`,
+        value: '0.500',
+        onConfirm: (userInput) => {
+          const weightInput = parseFloat(userInput);
 
-      if (isNaN(weightInput) || weightInput <= 0) {
-        alert('⚠️ Invalid weight entered. Please use a number greater than 0.');
-        return;
-      }
+          if (isNaN(weightInput) || weightInput <= 0) {
+            this.activeModal.set({
+              type: 'warning',
+              title: '⚠️ Invalid Weight',
+              message: 'Please use a weight number greater than 0.',
+              value: '',
+              onConfirm: () => this.activeModal.set(null)
+            });
+            return;
+          }
 
-      if (weightInput > liveProduct.stockQuantity) {
-        alert(`⚠️ Not enough stock! You entered ${weightInput} kg, but only ${liveProduct.stockQuantity} kg is available.`);
-        return;
-      }
+          if (weightInput > liveProduct.stockQuantity) {
+            this.activeModal.set({
+              type: 'warning',
+              title: '⚠️ Stock Deficit',
+              message: `Not enough stock! You entered ${weightInput} kg, but only ${liveProduct.stockQuantity} kg is available.`,
+              value: '',
+              onConfirm: () => this.activeModal.set(null)
+            });
+            return;
+          }
+
+          this.executeBasketAddition(liveProduct, weightInput, existingIndex, currentBasket);
+          this.activeModal.set(null); // Safely collapse window panel frame
+        }
+      });
+    } else {
+      // 3️⃣ Standard Discrete Item Mode
+      this.executeBasketAddition(liveProduct, 1, existingIndex, currentBasket);
     }
+  }
 
+  // Helper utility to safely increment inventory array states 
+  private executeBasketAddition(liveProduct: Product, amount: number, existingIndex: number, currentBasket: BasketItem[]): void {
     if (existingIndex > -1) {
       const updatedBasket = [...currentBasket];
-      const incrementAmount = isProductWeighted ? weightInput : 1;
-      
       updatedBasket[existingIndex] = {
         ...updatedBasket[existingIndex],
-        quantity: updatedBasket[existingIndex].quantity + incrementAmount
+        quantity: updatedBasket[existingIndex].quantity + amount
       };
       this.basket.set(updatedBasket);
     } else {
-      this.basket.set([...currentBasket, { product: liveProduct, quantity: weightInput }]);
+      this.basket.set([...currentBasket, { product: liveProduct, quantity: amount }]);
     }
 
-    const deduction = isProductWeighted ? weightInput : 1;
     this.products.update(allProducts => 
-      allProducts.map(prod => prod.id === product.id 
-        ? { ...prod, stockQuantity: parseFloat((prod.stockQuantity - deduction).toFixed(3)) } 
+      allProducts.map(prod => prod.id === liveProduct.id 
+        ? { ...prod, stockQuantity: parseFloat((prod.stockQuantity - amount).toFixed(3)) } 
         : prod
       )
     );
@@ -217,10 +263,6 @@ export class SalesService {
   // ⚡ SYSTEM ACTIONS SIDEBAR SERVICES
   // ==========================================================================
 
-  /**
-   * 🗑️ Action 1: Clear Current Sale
-   * Flushes checkout basket and returns quantities safely back to inventory.
-   */
   public clearBasket(): void {
     const activeBasket = this.basket();
     
@@ -237,10 +279,6 @@ export class SalesService {
     this.saveBasketToStorage();
   }
 
-  /**
-   * ⏸️ Action 2: Suspend (Hold) Order
-   * Park active transaction items. Does NOT return stock to inventory.
-   */
   public suspendOrder(): void {
     const currentItems = this.basket();
     if (currentItems.length === 0) return;
@@ -250,10 +288,6 @@ export class SalesService {
     this.saveBasketToStorage();
   }
 
-  /**
-   * ▶️ Action 3: Recall Order
-   * Restores items parked back onto layout panel frame.
-   */
   public recallOrder(): void {
     const savedItems = this.suspendedBasket();
     if (!savedItems) return;
@@ -284,9 +318,6 @@ export class SalesService {
     return false;
   }
 
-  /**
-   * 💳 Processes checkout transaction cleanly
-   */
   public processPayment(paymentMethod: 'Cash' | 'Card' | 'Debit'): void {
     const activeBasket = this.basket();
     if (activeBasket.length === 0) return;
@@ -302,9 +333,113 @@ export class SalesService {
     };
 
     this.transactions.update(history => [newReceipt, ...history]);
-    alert(`✅ Sale Successful via ${paymentMethod}!\nTotal Collected: €${this.grandTotal().toFixed(2)}`);
+    
+    // 💳 ERGONOMIC PAYMENT COMPLETED DIALOG OVERLAY
+    this.activeModal.set({
+      type: 'success',
+      title: '✅ Sale Successful',
+      message: `Transaction verified via ${paymentMethod}.\nTotal Collected: €${this.grandTotal().toFixed(2)}`,
+      value: '',
+      onConfirm: () => this.activeModal.set(null)
+    });
     
     this.basket.set([]); 
     this.saveBasketToStorage();
+
+    // 🔄 BACKGROUND EXPORT AT TRANSACTION COMPLETION
+  // This automatically updates the file in your Google Drive folder on every checkout!
+  if (this.directoryHandle) {
+    this.exportDailyLogToFolder();
   }
+  }
+
+/**
+   * 🗺️ STEP 1: Link the App to your Google Drive Desktop Folder
+   * Run this once (e.g., click a "Link Sync Folder" button in your settings layout)
+   */
+  public async linkCloudFolder(): Promise<boolean> {
+    try {
+      // Opens a native folder-picker window
+      this.directoryHandle = await (window as any).showDirectoryPicker({
+        mode: 'readwrite'
+      });
+      
+      this.activeModal.set({
+        type: 'success',
+        title: '🔗 Folder Linked!',
+        message: 'Connected perfectly to your local cloud sync folder.',
+        value: '',
+        onConfirm: () => this.activeModal.set(null)
+      });
+      return true;
+    } catch (err) {
+      console.error('Folder selection cancelled or rejected:', err);
+      return false;
+    }
+  }
+
+  /**
+   * 💾 STEP 2: Generate & Save the Daily File Directly to the Cloud Sync Folder
+   */
+  public async exportDailyLogToFolder(): Promise<void> {
+    // If they haven't linked the folder yet this session, prompt them to choose it
+    if (!this.directoryHandle) {
+      this.activeModal.set({
+        type: 'warning',
+        title: '📂 Link Folder Required',
+        message: 'Please select your local Google Drive folder destination first.',
+        value: '',
+        onConfirm: async () => {
+          this.activeModal.set(null);
+          await this.linkCloudFolder();
+        }
+      });
+      return;
+    }
+
+    this.isSyncing.set(true);
+
+    try {
+      const todayString = new Date().toISOString().split('T')[0]; // "2026-07-10"
+      const fileName = `sales_report_${todayString}.json`;
+
+      // 1. Filter out today's transactions
+      const todayLabel = new Date().toDateString();
+      const todaysSales = this.transactions().filter(
+        t => new Date(t.timestamp).toDateString() === todayLabel
+      );
+
+      // 2. Generate file payload content
+      const fileContent = JSON.stringify(todaysSales, null, 2);
+
+      // 3. Create or replace the file in your Google Drive folder layout stream
+      const fileHandle = await this.directoryHandle.getFileHandle(fileName, { create: true });
+      const writableStream = await fileHandle.createWritable();
+      
+      await writableStream.write(fileContent);
+      await writableStream.close(); // Saves it to the disk path
+
+      this.activeModal.set({
+        type: 'success',
+        title: '☁️ Report Saved',
+        message: `File "${fileName}" written to local storage. Google Drive will sync it immediately!`,
+        value: '',
+        onConfirm: () => this.activeModal.set(null)
+      });
+
+    } catch (error) {
+      console.error('Failed to write to folder:', error);
+      this.activeModal.set({
+        type: 'warning',
+        title: '❌ Write Error',
+        message: 'Could not save file. Make sure the folder is available and not open in another app.',
+        value: '',
+        onConfirm: () => this.activeModal.set(null)
+      });
+    } finally {
+      this.isSyncing.set(false);
+    }
+  }
+
+
 }

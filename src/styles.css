@@ -1,3 +1,25 @@
+:root {
+  /* 👓 Eye-Strain Defense Backgrounds */
+  --pos-bg-main: #f3f4f6;       /* Soft, desaturated neutral light-gray background */
+  --pos-bg-card: #ffffff;       /* Clean crisp canvas white for contrast */
+  --pos-bg-dark: #0f172a;       /* Deep matte charcoal (never harsh pitch black) */
+  --pos-bg-sidebar: #1e293b;    /* Slate blue-gray to frame control groups safely */
+  
+  /* 🏷️ Shift-Friendly Text Colors */
+  --text-primary: #1e293b;      /* Soft dark charcoal for product titles */
+  --text-muted: #64748b;        /* Quiet cool gray for minor labels or stock weights */
+  
+  /* ⚡ Functional Action Accent Colors (Low-saturation, easy on the eyes) */
+  --accent-primary: #0284c7;    /* Slate-ocean blue for primary searches and filters */
+  --accent-success: #16a34a;    /* Sage green for standard safe actions / in-stock */
+  --accent-warning: #eab308;    /* Soft amber gold for holds and warnings */
+  --accent-danger: #e11d48;     /* Muted raspberry crimson for clearing/deleting */
+  
+  /* 🪟 Interactive States */
+  --border-light: #e2e8f0;       /* Calm border lines separating grid spaces */
+  --hover-tint: #f8fafc;         /* Soft background flash indicating a mouse or finger hover */
+}
+
 /* Base Container - Forces full screen width and height */
 .pos-container {
   display: flex !important;

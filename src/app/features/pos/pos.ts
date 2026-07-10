@@ -28,6 +28,15 @@ export class PosComponent implements OnInit {
   // 🚀 Track typed search queries or fallback scans
   public searchQuery = signal<string>('');
 
+  public showModal = signal<boolean>(false);
+  public modalType = signal<'warning' | 'prompt'>('warning');
+  public modalTitle = signal<string>('');
+  public modalMessage = signal<string>('');
+  public modalInputValue = signal<string>('');
+
+  // Storage for the action to execute when "Confirm" is clicked
+  private modalConfirmCallback: ((value?: string) => void) | null = null;
+
   // 1. Existing flat list catalog grouping logic (unchanged structural behavior)
   public sequentialCatalogProducts = computed(() => {
     const looseItems = this.salesService.products().filter(p => {
@@ -175,4 +184,39 @@ export class PosComponent implements OnInit {
       this.searchQuery.set(cleanValue);
     }
   }
+// Custom controller to open our sleek modal instead of native popups
+  public openPosModal(
+    type: 'warning' | 'prompt', 
+    title: string, 
+    message: string, 
+    defaultValue = '',
+    onConfirm?: (value?: string) => void
+  ) {
+    this.modalType.set(type);
+    this.modalTitle.set(title);
+    this.modalMessage.set(message);
+    this.modalInputValue.set(defaultValue);
+    this.modalConfirmCallback = onConfirm || null;
+    
+    // Open modal with a tiny delay to allow the CSS transition animation trigger
+    this.showModal.set(true);
+  }
+
+  public handleModalConfirm() {
+    if (this.modalConfirmCallback) {
+      if (this.modalType() === 'prompt') {
+        this.modalConfirmCallback(this.modalInputValue());
+      } else {
+        this.modalConfirmCallback();
+      }
+    }
+    this.closePosModal();
+  }
+
+  public closePosModal() {
+    this.showModal.set(false);
+    this.modalConfirmCallback = null;
+  }
+
+
 }
