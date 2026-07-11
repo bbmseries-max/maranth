@@ -1,48 +1,53 @@
 <!-- Custom POS Overlay Dialog Frame -->
-<!-- Custom POS Overlay Dialog Frame -->
 @if (salesService.activeModal(); as modal) {
   <div class="pos-modal-overlay is-active">
     <div class="pos-modal-window">
       
+      <!-- Styled Header Section based on Modal Type -->
       <div class="pos-modal-header" 
            [class.warning-header]="modal.type === 'warning'"
            [class.success-header]="modal.type === 'success'">
         {{ modal.title }}
       </div>
       
+      <!-- Modal Main Content Body -->
       <div class="pos-modal-body" style="white-space: pre-line;">
         <p>{{ modal.message }}</p>
         
+        <!-- 🎯 Dynamic Input: Safely handles both Numbers and Dates -->
         @if (modal.type === 'prompt') {
           <input 
             #weightInput
-            type="number" 
+            [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" 
             class="pos-modal-input" 
             [value]="modal.value" 
             (input)="modal.value = weightInput.value"
-            step="0.001"
+            [attr.step]="modal.title?.includes('Date') ? null : '0.001'"
             autofocus
           />
         }
       </div>
       
+      <!-- Dynamic Layout Button Footer Row -->
       <div class="pos-modal-footer">
-    <!-- ⚖️ PROMPT MODE (e.g., Entering Weight): Show exactly ONE Cancel and ONE Confirm button -->
-  @if (salesService.activeModal()?.type === 'prompt') {
-    <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.activeModal.set(null)">
-      Cancel
-    </button>
-    <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">
-      Confirm
-    </button>
-  }
+        
+        <!-- ⚖️ PROMPT MODE: Show Cancel + Confirm buttons -->
+        @if (modal.type === 'prompt') {
+          <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.activeModal.set(null)">
+            Cancel
+          </button>
+          <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">
+            Confirm
+          </button>
+        }
 
-  <!-- ⚠️ WARNING / SUCCESS MODE (e.g., Out of Stock): Show exactly ONE Dismiss button -->
-  @if (salesService.activeModal()?.type === 'warning' || salesService.activeModal()?.type === 'success') {
-    <button class="pos-modal-btn pos-modal-btn-danger" (click)="modal.onConfirm(modal.value)">
-      Dismiss
-    </button>
-  }
+        <!-- ⚠️ WARNING / SUCCESS MODE: Show exactly ONE Close button -->
+        @if (modal.type === 'warning' || modal.type === 'success') {
+          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.activeModal.set(null)">
+            Dismiss
+          </button>
+        }
+        
       </div>
 
     </div>

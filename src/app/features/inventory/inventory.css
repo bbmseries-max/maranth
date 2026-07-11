@@ -1,0 +1,12 @@
+.inventory-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Splitting the space: 2 parts list, 1 part form */
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .inventory-container {
+    grid-template-columns: 1fr; /* Drop side-by-side layout on smaller viewports */
+  }
+}

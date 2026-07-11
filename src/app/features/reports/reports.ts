@@ -10,8 +10,12 @@ import { SalesService } from '../../shared/services/sales';
   styleUrls: ['./reports.css']
 })
 export class ReportsComponent {
+  
   public salesService = inject(SalesService);
   public selectedTxnId = signal<string | null>(null);
+
+  protected readonly Math = Math;
+  
 
   // 📈 Financial Metrics Summary Analytics
   public totalRevenue = computed(() => {
@@ -56,4 +60,7 @@ export class ReportsComponent {
       this.selectedTxnId.set(null);
     }
   }
+
+ 
+
 }

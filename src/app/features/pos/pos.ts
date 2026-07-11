@@ -2,6 +2,7 @@ import { Component, inject, OnInit, computed, signal } from '@angular/core'; // 
 import { CommonModule, CurrencyPipe } from '@angular/common'; 
 import { SalesService } from '../../shared/services/sales'; 
 import { Product } from '../../shared/services/pos-data.models';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket'; 
 
@@ -17,7 +18,8 @@ interface OrderableProduct extends Product {
     CommonModule, 
     CurrencyPipe,              
     RouterLink,
-    ShoppingBasketComponent   
+    ShoppingBasketComponent,
+    FormsModule
   ],
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']

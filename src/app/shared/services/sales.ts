@@ -28,10 +28,20 @@ export interface PosModalConfig {
   onConfirm: (value: string) => void;
 }
 
+export interface HourlyMetric {
+  hour: number;
+  hourLabel: string;
+  revenue: number;
+  ticketCount: number;
+  averageTicketSize: number;
+  intensityPercentage: number; // Used to calculate heatmap color depth (0-100)
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class SalesService {
+  
   private http = inject(HttpClient);
 
   private categoriesUrl = 'assets/data/categories.json';
@@ -81,6 +91,139 @@ export class SalesService {
     return []; 
   }
 
+  // 1. Add this signal to track global blocking alerts across your tabs
+  public activeExpiryAlert = signal<{ name: string; date: string } | null>(null);
+
+  // 🎯 UNIFIED ADD TO BASKET METHOD (CLEANED FROM DUPLICATES)
+  public addToBasket(product: Product): void {
+    const liveProduct = this.products().find(p => p.id === product.id) || product;
+    const currentBasket = this.basket();
+    const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
+
+    // 🔴 1️⃣ EXPIRATION INTERCEPT PROMPT (ONLY THIS TYPE PROMPTS FOR A DATE)
+    if (liveProduct.expire) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const expiryDate = new Date(liveProduct.expire);
+      expiryDate.setHours(0, 0, 0, 0);
+
+      if (expiryDate < today) {
+        this.activeModal.set({
+          type: 'prompt', 
+          title: '🗓️ Update Expiration Date',
+          message: `"${liveProduct.name}" is marked expired. Enter a new expiration date to update inventory and proceed:`,
+          value: liveProduct.expire, 
+          onConfirm: (newDateString) => {
+            const trimmedDate = newDateString?.trim();
+            
+            if (!trimmedDate || isNaN(new Date(trimmedDate).getTime())) {
+              return; 
+            }
+
+            // Update master state inventory list array
+            this.products.update(allProducts =>
+              allProducts.map(p => p.id === liveProduct.id ? { ...p, expire: trimmedDate } : p)
+            );
+
+            // Close the modal state tracking window instantly
+            this.activeModal.set(null);
+
+            // ✅ CRITICAL FIX: Bypass the recursive loop entirely. 
+            // Forward the updated product model straight into processing.
+            const freshlyUpdatedProduct = { ...liveProduct, expire: trimmedDate };
+            const isProductWeighted = freshlyUpdatedProduct.isWeighted === true || (freshlyUpdatedProduct.isWeighted as any) === 'true';
+
+            if (isProductWeighted) {
+              this.executeBasketAddition(freshlyUpdatedProduct, 0.500, existingIndex, currentBasket);
+            } else {
+              this.executeBasketAddition(freshlyUpdatedProduct, 1, existingIndex, currentBasket);
+            }
+          }
+        });
+        return; 
+      }
+    }
+
+    // 🟡 2️⃣ STANDARD WARNING (NO INPUT ELEMENT DISPLAYED HERE)
+    if (liveProduct.stockQuantity <= 0) {
+      this.activeModal.set({
+        type: 'warning', 
+        title: '⚠️ Stock Exhausted',
+        message: `${liveProduct.name} is completely out of stock!`,
+        value: '',
+        onConfirm: () => this.activeModal.set(null)
+      });
+      return;
+    }
+
+    const isProductWeighted = liveProduct.isWeighted === true || (liveProduct.isWeighted as any) === 'true';
+
+    // ⚖️ 3️⃣ WEIGHTSCALE PROMPT MODAL
+    if (isProductWeighted) {
+      this.activeModal.set({
+        type: 'prompt',
+        title: '⚖️ Weigh Item',
+        message: `Enter weight in KG for "${liveProduct.name}":`,
+        value: '0.500',
+        onConfirm: (userInput) => {
+          const weightInput = parseFloat(userInput);
+          if (isNaN(weightInput) || weightInput <= 0) {
+            this.activeModal.set({
+              type: 'warning',
+              title: '⚠️ Invalid Weight',
+              message: 'Please use a weight number greater than 0.',
+              value: '',
+              onConfirm: () => this.activeModal.set(null)
+            });
+            return;
+          }
+          if (weightInput > liveProduct.stockQuantity) {
+            this.activeModal.set({
+              type: 'warning',
+              title: '⚠️ Stock Deficit',
+              message: `Not enough stock! You entered ${weightInput} kg, but only ${liveProduct.stockQuantity} kg is available.`,
+              value: '',
+              onConfirm: () => this.activeModal.set(null)
+            });
+            return;
+          }
+          this.executeBasketAddition(liveProduct, weightInput, existingIndex, currentBasket);
+          this.activeModal.set(null); 
+        }
+      });
+    } else {
+      this.executeBasketAddition(liveProduct, 1, existingIndex, currentBasket);
+    }
+  }
+
+  // Alias linking older components pointing to addProductToBasket cleanly to our primary function
+  public addProductToBasket(product: Product): void {
+    this.addToBasket(product);
+  }
+
+  // Helper utility to safely increment inventory array states 
+  private executeBasketAddition(liveProduct: Product, amount: number, existingIndex: number, currentBasket: BasketItem[]): void {
+    if (existingIndex > -1) {
+      const updatedBasket = [...currentBasket];
+      updatedBasket[existingIndex] = {
+        ...updatedBasket[existingIndex],
+        quantity: updatedBasket[existingIndex].quantity + amount
+      };
+      this.basket.set(updatedBasket);
+    } else {
+      this.basket.set([...currentBasket, { product: liveProduct, quantity: amount }]);
+    }
+
+    this.products.update(allProducts => 
+      allProducts.map(prod => prod.id === liveProduct.id 
+        ? { ...prod, stockQuantity: parseFloat((prod.stockQuantity - amount).toFixed(3)) } 
+        : prod
+      )
+    );
+    this.saveBasketToStorage();
+  }
+
   // 🛠️ AUTOMATED DISK STORAGE SYNCERS
   constructor() {
     effect(() => {
@@ -94,6 +237,8 @@ export class SalesService {
       localStorage.setItem('maranth_sales_history', JSON.stringify(this.transactions()));
     });
   }
+
+  
 
   // 📈 FINANCIAL COMPUTED METRICS
   public subtotal = computed(() => {
@@ -147,89 +292,6 @@ export class SalesService {
     );
   }
 
-  public addToBasket(product: Product): void {
-    const currentBasket = this.basket();
-    const liveProduct = this.products().find(p => p.id === product.id) || product;
-    const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
-
-    // 1️⃣ Out of Stock Verification
-    if (liveProduct.stockQuantity <= 0) {
-      this.activeModal.set({
-        type: 'warning',
-        title: '⚠️ Stock Exhausted',
-        message: `${liveProduct.name} is completely out of stock!`,
-        value: '',
-        onConfirm: () => this.activeModal.set(null)
-      });
-      return;
-    }
-
-    const isProductWeighted = liveProduct.isWeighted === true || (liveProduct.isWeighted as any) === 'true';
-
-    // 2️⃣ Weighted Scales Intercept Mode
-    if (isProductWeighted) {
-      this.activeModal.set({
-        type: 'prompt',
-        title: '⚖️ Weigh Item',
-        message: `Enter weight in KG for "${liveProduct.name}":`,
-        value: '0.500',
-        onConfirm: (userInput) => {
-          const weightInput = parseFloat(userInput);
-
-          if (isNaN(weightInput) || weightInput <= 0) {
-            this.activeModal.set({
-              type: 'warning',
-              title: '⚠️ Invalid Weight',
-              message: 'Please use a weight number greater than 0.',
-              value: '',
-              onConfirm: () => this.activeModal.set(null)
-            });
-            return;
-          }
-
-          if (weightInput > liveProduct.stockQuantity) {
-            this.activeModal.set({
-              type: 'warning',
-              title: '⚠️ Stock Deficit',
-              message: `Not enough stock! You entered ${weightInput} kg, but only ${liveProduct.stockQuantity} kg is available.`,
-              value: '',
-              onConfirm: () => this.activeModal.set(null)
-            });
-            return;
-          }
-
-          this.executeBasketAddition(liveProduct, weightInput, existingIndex, currentBasket);
-          this.activeModal.set(null); // Safely collapse window panel frame
-        }
-      });
-    } else {
-      // 3️⃣ Standard Discrete Item Mode
-      this.executeBasketAddition(liveProduct, 1, existingIndex, currentBasket);
-    }
-  }
-
-  // Helper utility to safely increment inventory array states 
-  private executeBasketAddition(liveProduct: Product, amount: number, existingIndex: number, currentBasket: BasketItem[]): void {
-    if (existingIndex > -1) {
-      const updatedBasket = [...currentBasket];
-      updatedBasket[existingIndex] = {
-        ...updatedBasket[existingIndex],
-        quantity: updatedBasket[existingIndex].quantity + amount
-      };
-      this.basket.set(updatedBasket);
-    } else {
-      this.basket.set([...currentBasket, { product: liveProduct, quantity: amount }]);
-    }
-
-    this.products.update(allProducts => 
-      allProducts.map(prod => prod.id === liveProduct.id 
-        ? { ...prod, stockQuantity: parseFloat((prod.stockQuantity - amount).toFixed(3)) } 
-        : prod
-      )
-    );
-    this.saveBasketToStorage();
-  }
-
   public removeFromBasket(product: Product): void {
     const currentBasket = this.basket();
     const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
@@ -258,10 +320,6 @@ export class SalesService {
       this.saveBasketToStorage();
     }
   }
-
-  // ==========================================================================
-  // ⚡ SYSTEM ACTIONS SIDEBAR SERVICES
-  // ==========================================================================
 
   public clearBasket(): void {
     const activeBasket = this.basket();
@@ -334,7 +392,6 @@ export class SalesService {
 
     this.transactions.update(history => [newReceipt, ...history]);
     
-    // 💳 ERGONOMIC PAYMENT COMPLETED DIALOG OVERLAY
     this.activeModal.set({
       type: 'success',
       title: '✅ Sale Successful',
@@ -346,20 +403,58 @@ export class SalesService {
     this.basket.set([]); 
     this.saveBasketToStorage();
 
-    // 🔄 BACKGROUND EXPORT AT TRANSACTION COMPLETION
-  // This automatically updates the file in your Google Drive folder on every checkout!
-  if (this.directoryHandle) {
-    this.exportDailyLogToFolder();
-  }
+    if (this.directoryHandle) {
+      this.exportDailyLogToFolder();
+    }
   }
 
-/**
-   * 🗺️ STEP 1: Link the App to your Google Drive Desktop Folder
-   * Run this once (e.g., click a "Link Sync Folder" button in your settings layout)
-   */
+  public hourlyHeatmapMetrics = computed<HourlyMetric[]>(() => {
+  const allTxns = this.transactions();
+  
+  // 1️⃣ Initialize an empty 24-hour bracket array
+  const hourlyMap = Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    hourLabel: `${i.toString().padStart(2, '0')}:00`,
+    revenue: 0,
+    ticketCount: 0,
+    averageTicketSize: 0,
+    intensityPercentage: 0
+  }));
+
+  // 2️⃣ Bucket transactions into their respective hours
+  let maxRevenueInAnyHour = 0;
+  
+  allTxns.forEach(tx => {
+    const txDate = new Date(tx.timestamp);
+    const hour = txDate.getHours(); // Returns 0-23
+    
+    if (hour >= 0 && hour < 24) {
+      hourlyMap[hour].revenue += tx.grandTotal;
+      hourlyMap[hour].ticketCount += 1;
+    }
+  });
+
+  // 3️⃣ Calculate Averages and Peak Intensities
+  hourlyMap.forEach(slot => {
+    if (slot.ticketCount > 0) {
+      slot.averageTicketSize = slot.revenue / slot.ticketCount;
+      if (slot.revenue > maxRevenueInAnyHour) {
+        maxRevenueInAnyHour = slot.revenue;
+      }
+    }
+  });
+
+  // 4️⃣ Assign a percentage relative to your peak hour for the CSS heatmap color engine
+  return hourlyMap.map(slot => ({
+    ...slot,
+    intensityPercentage: maxRevenueInAnyHour > 0 
+      ? Math.round((slot.revenue / maxRevenueInAnyHour) * 100) 
+      : 0
+  }));
+});
+
   public async linkCloudFolder(): Promise<boolean> {
     try {
-      // Opens a native folder-picker window
       this.directoryHandle = await (window as any).showDirectoryPicker({
         mode: 'readwrite'
       });
@@ -378,11 +473,7 @@ export class SalesService {
     }
   }
 
-  /**
-   * 💾 STEP 2: Generate & Save the Daily File Directly to the Cloud Sync Folder
-   */
   public async exportDailyLogToFolder(): Promise<void> {
-    // If they haven't linked the folder yet this session, prompt them to choose it
     if (!this.directoryHandle) {
       this.activeModal.set({
         type: 'warning',
@@ -400,24 +491,19 @@ export class SalesService {
     this.isSyncing.set(true);
 
     try {
-      const todayString = new Date().toISOString().split('T')[0]; // "2026-07-10"
+      const todayString = new Date().toISOString().split('T')[0];
       const fileName = `sales_report_${todayString}.json`;
-
-      // 1. Filter out today's transactions
       const todayLabel = new Date().toDateString();
       const todaysSales = this.transactions().filter(
         t => new Date(t.timestamp).toDateString() === todayLabel
       );
 
-      // 2. Generate file payload content
       const fileContent = JSON.stringify(todaysSales, null, 2);
-
-      // 3. Create or replace the file in your Google Drive folder layout stream
       const fileHandle = await this.directoryHandle.getFileHandle(fileName, { create: true });
       const writableStream = await fileHandle.createWritable();
       
       await writableStream.write(fileContent);
-      await writableStream.close(); // Saves it to the disk path
+      await writableStream.close();
 
       this.activeModal.set({
         type: 'success',
@@ -440,6 +526,4 @@ export class SalesService {
       this.isSyncing.set(false);
     }
   }
-
-
 }
