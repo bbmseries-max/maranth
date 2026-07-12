@@ -15,6 +15,9 @@ export class InventoryComponent implements OnInit {
   // ⚡ Global State Services
   public salesService = inject(SalesService);
 
+  // In your component.ts
+  readonly suppliersList = computed(() => Object.values(this.salesService.suppliers()));
+
   // 🔍 Add this at the top with your other UI Workbench states
   public activeTab = signal<'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS'>('PRODUCTS');
   public showExpirationGrid = signal<boolean>(false);
@@ -25,7 +28,10 @@ export class InventoryComponent implements OnInit {
 
   // 📂 Dataset Collections
   public categories = signal<Category[]>([]);
+  public editingCategory = signal<Category | null>(null);
   public suppliers = signal<Supplier[]>([]);
+  public selectedSupplier = signal<Supplier | null>(null); // 🟢 FIX: Add this missing signal!
+  public isCreatingNew = signal<boolean>(false);
 
   // 🔍 UI Workbench Filters State
   public searchQuery = signal<string>('');
@@ -34,7 +40,6 @@ export class InventoryComponent implements OnInit {
   
   // 🎯 Active Selection States
   public selectedProduct = signal<Product | null>(null);
-  public isCreatingNew = signal<boolean>(false);
 
   // 📅 Expiration Forecast Control Window Parameters
   public showForecastOverlay = signal<boolean>(false);
@@ -124,8 +129,11 @@ public clearAllWorkbenches(): void {
 // ========================================================
 public selectCategoryToEdit(cat: Category): void {
   this.isCreatingNew.set(false);
+  this.editingCategory.set(cat); // 🏢 Keep track of selection
   this.formCategory = { ...cat, isActive: cat.isActive !== false };
 }
+
+
 
 public prepareNewCategory(): void {
   this.isCreatingNew.set(true);
@@ -163,14 +171,24 @@ public saveCategoryChanges(): void {
 // ========================================================
 public selectSupplierToEdit(sup: Supplier): void {
   this.isCreatingNew.set(false);
+  this.selectedSupplier.set(sup); // 🚚 Keep track of selection
   this.formSupplier = { 
     id: sup.id, 
     name: sup.name, 
     contact: sup.contact || '', 
     phone: sup.phone || '', 
     notes: sup.notes || '', 
-    isActive: sup.isActive !== false 
+    isActive: sup.isActive !== false
   };
+}
+
+/**
+ * 🔍 Resolves a supplier's business name from its unique database key ID code
+ */
+public getSupplierName(supplierId: string | undefined): string {
+  if (!supplierId) return 'Unassigned';
+  const match = this.suppliers().find(s => s.id === supplierId);
+  return match ? match.name : 'Unknown Supplier';
 }
 
 public prepareNewSupplier(): void {
@@ -196,6 +214,10 @@ public saveSupplierChanges(): void {
   });
 
   this.clearAllWorkbenches();
+  this.isCreatingNew.set(false);
+  this.selectedProduct.set(null);
+  this.editingCategory.set(null); // 🧼 Reset
+  this.selectedSupplier.set(null); // 🧼 Reset
   alert('📋 Supplier directory updated successfully!');
 }
 

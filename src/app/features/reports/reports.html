@@ -155,6 +155,39 @@
 
 </div>
 
+<!-- 🎛️ INVENTORY FILTER ACTIONS BAR -->
+<div class="filter-actions-bar" style="background: white; padding: 16px 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; gap: 16px; align-items: center;">
+  <div style="font-size: 13px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">
+    🎛️ Filter Inventory:
+  </div>
+  
+  <!-- Category ID Dropdown Selector -->
+  <div>
+    <select 
+      [value]="selectedCategoryId()" 
+      (change)="selectedCategoryId.set($any($event.target).value)"
+      style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; font-size: 13px; font-weight: 500; cursor: pointer; outline: none;"
+    >
+      @for (cat of categoriesList(); track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Supplier ID Dropdown Selector -->
+  <div>
+    <select 
+      [value]="selectedSupplierId()" 
+      (change)="selectedSupplierId.set($any($event.target).value)"
+      style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; font-size: 13px; font-weight: 500; cursor: pointer; outline: none;"
+    >
+      @for (sup of suppliersList(); track sup.id) {
+        <option [value]="sup.id">{{ sup.name }}</option>
+      }
+    </select>
+  </div>
+</div>
+
   <!-- 3️⃣ MAIN SPLIT LAYOUT (LEDGER & STICKY AUDITOR) -->
   <div class="main-split-layout" style="display: flex; gap: 24px; align-items: flex-start;">
     
