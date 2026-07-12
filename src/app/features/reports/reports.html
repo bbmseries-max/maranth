@@ -39,7 +39,7 @@
         >
           <div 
             [style.height.%]="slot.intensityPercentage"
-            [style.background]="slot.intensityPercentage === 0 ? '#f1f5f9' : 'rgba(59, 130, 246, ' + (0.15 + (slot.intensityPercentage / 100) * 0.85) + ')'"
+            [style.background]="getHeatmapBg(slot.intensityPercentage)" 
             style="border-radius: 4px 4px 0 0; transition: all 0.2s ease; width: 100%; min-height: 4px;"
             (mouseenter)="$any($event.target).style.filter = 'brightness(0.9)'"
             (mouseleave)="$any($event.target).style.filter = 'none'"
@@ -76,6 +76,84 @@
       </div>
     </div>
   </div>
+
+  <!-- 4️⃣ NEW SECTION: Z-REPORT & PRODUCT PERFORMANCE GRID -->
+<div class="analytics-split-row" style="display: flex; gap: 24px; margin-bottom: 24px; align-items: flex-start;">
+  
+  <!-- LEFT PANEL: Daily Z-Report Closer Card -->
+  <div class="z-report-card" style="flex: 1; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-top: 4px solid #0f172a;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div>
+        <h3 style="margin: 0; color: #0f172a; font-size: 16px;">📋 Terminal Z-Report</h3>
+        <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">End-of-day financial reconciliation audits</p>
+      </div>
+      <button (click)="printZReport()" style="background: #0f172a; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.1s;">
+        🖨️ Print Z-Report
+      </button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: #334155;">
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+        <span style="color: #64748b;">Gross Taxable Sales:</span>
+        <span style="font-weight: 600;">{{ totalRevenue() | currency:'EUR' }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+        <span style="color: #64748b;">Tax pool liability (24% VAT):</span>
+        <span style="font-weight: 600; color: #b45309;">{{ (totalRevenue() * 0.1935) | currency:'EUR' }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
+        <span style="color: #64748b;">Net Sales (Excl. VAT):</span>
+        <span style="font-weight: 600;">{{ (totalRevenue() * 0.8065) | currency:'EUR' }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; margin-top: 4px; background: #f8fafc; padding: 10px; border-radius: 8px;">
+        <span style="font-weight: bold; color: #1e293b;">Total Drawer Cash drops:</span>
+        <span style="font-weight: bold; color: #0f766e;">{{ cashRevenue() | currency:'EUR' }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 8px 0; background: #f8fafc; padding: 10px; border-radius: 8px;">
+        <span style="font-weight: bold; color: #1e293b;">Total Electronic Settlements:</span>
+        <span style="font-weight: bold; color: #6d28d9;">{{ cardRevenue() | currency:'EUR' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Product Leaderboard & Stock Warnings -->
+  <div class="product-leaderboard-card" style="flex: 1.5; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 16px;">🏆 Product Velocity & Performance</h3>
+    
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+      <thead>
+        <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 11px;">
+          <th style="padding: 8px 4px;">Product Item Name</th>
+          <th style="padding: 8px 4px; text-align: center;">Units Moved</th>
+          <th style="padding: 8px 4px; text-align: right;">Gross Revenue</th>
+          <th style="padding: 8px 4px; text-align: right;">Stock Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of salesService.topSellingProducts(); track item.id) {
+          <tr style="border-bottom: 1px solid #f1f5f9; color: #334155;">
+            <td style="padding: 10px 4px; font-weight: 500;">{{ item.name }}</td>
+            <td style="padding: 10px 4px; text-align: center; font-weight: bold; color: #1e293b;">{{ item.unitsSold }}</td>
+            <td style="padding: 10px 4px; text-align: right; color: #2563eb; font-weight: 600;">{{ item.totalRevenue | currency:'EUR' }}</td>
+            <td style="padding: 10px 4px; text-align: right;">
+             <td style="padding: 10px 4px; text-align: right;">
+  <span [style.background]="item.stockQuantity <= 5 ? '#fef2f2' : '#f0fdf4'" 
+        [style.color]="item.stockQuantity <= 5 ? '#991b1b' : '#166534'" 
+        style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+    {{ item.stockQuantity }} left {{ item.stockQuantity <= 5 ? '⚠️' : '✓' }}
+  </span>
+</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" style="text-align: center; color: #94a3b8; padding: 32px 0;">No raw inventory product tracking metrics computed yet.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+</div>
 
   <!-- 3️⃣ MAIN SPLIT LAYOUT (LEDGER & STICKY AUDITOR) -->
   <div class="main-split-layout" style="display: flex; gap: 24px; align-items: flex-start;">

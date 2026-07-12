@@ -526,4 +526,28 @@ export class SalesService {
       this.isSyncing.set(false);
     }
   }
+
+ topSellingProducts() {
+  const productMap: { [key: string]: { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number } } = {};
+
+  this.transactions().forEach(tx => {
+    tx.items.forEach(lineItem => {
+      const prod = lineItem.product;
+      if (!productMap[prod.id]) {
+        productMap[prod.id] = {
+          id: prod.id,
+          name: prod.name,
+          unitsSold: 0,
+          totalRevenue: 0,
+          stockQuantity: prod.stockQuantity ?? 0 // Using your exact property name here!
+        };
+      }
+      productMap[prod.id].unitsSold += lineItem.quantity;
+      productMap[prod.id].totalRevenue += (prod.price * lineItem.quantity);
+    });
+  });
+
+  return Object.values(productMap).sort((a, b) => b.totalRevenue - a.totalRevenue);
+}
+
 }

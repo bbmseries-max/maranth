@@ -78,20 +78,22 @@
   <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
   <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
     
-    <button 
-      (click)="salesService.clearBasket()" 
-      [disabled]="salesService.basket().length === 0"
-      style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left; opacity: salesService.basket().length === 0 ? 0.5 : 1;">
-      🗑️ Clear Current Sale
-    </button>
-    
-    @if (!salesService.suspendedBasket()) {
-      <button 
-        (click)="salesService.suspendOrder()" 
-        [disabled]="salesService.basket().length === 0"
-        style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left; opacity: salesService.basket().length === 0 ? 0.5 : 1;">
-        ⏸️ Suspend (Hold) Order
-      </button>
+<button 
+  (click)="salesService.clearBasket()" 
+  [disabled]="salesService.basket().length === 0"
+  style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
+  [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
+  🗑️ Clear Current Sale
+</button>
+
+@if (!salesService.suspendedBasket()) {
+  <button 
+    (click)="salesService.suspendOrder()" 
+    [disabled]="salesService.basket().length === 0"
+    style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
+    [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
+    ⏸️ Suspend Order
+  </button>
     } @else {
       <button 
         (click)="salesService.recallOrder()" 

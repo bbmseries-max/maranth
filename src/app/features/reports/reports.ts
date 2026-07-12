@@ -61,6 +61,10 @@ export class ReportsComponent {
     }
   }
 
- 
-
+  getHeatmapBg(intensity: number): string {
+  if (intensity === 0) return '#f1f5f9'; // Zero sales (Light Slate)
+  if (intensity > 75)   return '#ef4444'; // Red-hot peak velocity
+  if (intensity > 45)   return '#f97316'; // Orange steady mid-day flow
+  return '#3b82f6';                       // Standard active blue traffic
+ }
 }
