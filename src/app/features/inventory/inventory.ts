@@ -27,6 +27,7 @@ export class InventoryComponent implements OnInit {
   public formSupplier = { id: '', name: '', contact: '', phone: '', notes: '', isActive: true };
 
   // 📂 Dataset Collections
+  public products = signal<Product[]>([]);
   public categories = signal<Category[]>([]);
   public editingCategory = signal<Category | null>(null);
   public suppliers = signal<Supplier[]>([]);
@@ -480,5 +481,43 @@ public saveSupplierChanges(): void {
   public toggleProductStatus(): void {
     this.formProduct.isActive = !this.formProduct.isActive;
     this.saveProductChanges();
-  }  
+  }
+
+// 📊 Advanced Analytics Matrix for Supplier Reports
+public supplierReportSummary = computed(() => {
+  const allProducts = this.salesService.products();
+  const allSuppliers = this.suppliers();
+  const today = new Date();
+  
+  // Create an automatic map for every supplier record
+  return allSuppliers.map(sup => {
+    const matchingProducts = allProducts.filter(p => (p as any).supplierId === sup.id);
+    
+    // 1. Calculate critical low stock items
+    const lowStockItems = matchingProducts.filter(p => {
+      const minWarning = (p as any).minStockWarning !== undefined ? (p as any).minStockWarning : 5;
+      return (p.stockQuantity || 0) <= minWarning && p.isActive !== false;
+    });
+
+    // 2. Calculate items already expired or nearing date lines
+    const criticalExpiryItems = matchingProducts.filter(p => {
+      if (!p.expire) return false;
+      const expDate = new Date(p.expire);
+      const timeDiff = expDate.getTime() - today.getTime();
+      const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      return daysLeft <= 30; // Flag anything expiring within 30 days
+    });
+
+    return {
+      supplierId: sup.id,
+      supplierName: sup.name,
+      totalCatalogCount: matchingProducts.length,
+      orderRequiredCount: lowStockItems.length,
+      expiryRiskCount: criticalExpiryItems.length,
+      lowStockProducts: lowStockItems,
+      atRiskProducts: criticalExpiryItems
+    };
+  });
+});
+
 }
