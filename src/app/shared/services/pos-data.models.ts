@@ -39,6 +39,7 @@ export interface Supplier {
 export interface BasketItem {
   product: Product;
   quantity: number;
+  isRefund?: boolean;
 }
 
 export interface TransactionRecord {
@@ -49,4 +50,12 @@ export interface TransactionRecord {
   taxAmount: number;
   grandTotal: number;
   paymentMethod: 'Cash' | 'Card' | 'Debit';
+}
+
+export interface POSModal {
+  type: 'warning' | 'success' | 'prompt';
+  title: string;
+  message: string;
+  value: string;
+  onConfirm: (val: string) => void;
 }

@@ -1,16 +1,5 @@
 import { Injectable, signal, computed, effect } from '@angular/core';
-import { Product, BasketItem, Category, Supplier, TransactionRecord } from './pos-data.models';
-
-// ⭐ Re-export all blueprints so other components can safely import them from here!
-export * from './pos-data.models';
-
-export interface POSModal {
-  type: 'warning' | 'success' | 'prompt';
-  title: string;
-  message: string;
-  value?: any;
-  onConfirm?: (val?: any) => void;
-}
+import { Product, BasketItem, Category, Supplier, TransactionRecord, POSModal } from './pos-data.models';
 
 const DEFAULT_CATEGORIES: Category[] = [
   { id: '5605', name: 'Shkolla - Lojra', isActive: true },
@@ -43,7 +32,10 @@ const DEFAULT_PRODUCTS: Product[] = [
   providedIn: 'root'
 })
 export class SalesService {
+  // ⭐ Authorized Users Memory (Now with Roles!)
+  public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier'}[]>([]);
   public currentCashier = signal<string | null>(localStorage.getItem('maranth_active_cashier') || null);
+  public currentRole = signal<'admin' | 'cashier' | null>(localStorage.getItem('maranth_active_role') as any || null);
   
   public basket = signal<BasketItem[]>([]);
   public suspendedBasket = signal<BasketItem[] | null>(null);
@@ -53,17 +45,26 @@ export class SalesService {
   public categories = signal<Category[]>([]);
   public suppliers = signal<Supplier[]>([]);
 
-  public activeModal = signal<POSModal | null>(null);
+  public isRefundMode = signal<boolean>(false);
   public highlightedItemId = signal<string | null>(null);
+  public activeModal = signal<POSModal | null>(null);
 
   constructor() {
-    // 1. Load Data from Memory
+    const loadedUsers = this.loadFromStorage('maranth_cashiers', [{username: 'admin', pin: '1234', role: 'admin'}]);
+    
+    // Safety check: Upgrade any old accounts that were created before we added roles!
+    const upgradedUsers = loadedUsers.map((u: any) => ({
+      ...u, 
+      role: u.role || (u.username.toLowerCase() === 'admin' ? 'admin' : 'cashier')
+    }));
+    this.registeredCashiers.set(upgradedUsers);
+    
     this.products.set(this.loadFromStorage('maranth_inventory', DEFAULT_PRODUCTS));
     this.categories.set(this.loadFromStorage('maranth_categories', DEFAULT_CATEGORIES));
     this.suppliers.set(this.loadFromStorage('maranth_suppliers', DEFAULT_SUPPLIERS));
     this.transactions.set(this.loadFromStorage('maranth_transactions', []));
 
-    // 2. Setup Auto-Save Effects
+    effect(() => localStorage.setItem('maranth_cashiers', JSON.stringify(this.registeredCashiers())));
     effect(() => localStorage.setItem('maranth_inventory', JSON.stringify(this.products())));
     effect(() => localStorage.setItem('maranth_categories', JSON.stringify(this.categories())));
     effect(() => localStorage.setItem('maranth_suppliers', JSON.stringify(this.suppliers())));
@@ -75,7 +76,6 @@ export class SalesService {
     if (saved) {
       try { 
         const parsed = JSON.parse(saved); 
-        // Break the empty LocalStorage trap!
         if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(fallback) && fallback.length > 0) {
           return fallback;
         }
@@ -85,14 +85,34 @@ export class SalesService {
     return fallback;
   }
 
+  public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier'): boolean {
+    const existingUsers = this.registeredCashiers();
+    const userExists = existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase());
+    
+    if (userExists) {
+      return false; 
+    }
+
+    this.registeredCashiers.update(users => [...users, { username, pin, role }]);
+    return true; 
+  }
+
   public loginCashier(name: string): void {
-    this.currentCashier.set(name);
-    localStorage.setItem('maranth_active_cashier', name);
+    const user = this.registeredCashiers().find(u => u.username.toLowerCase() === name.toLowerCase());
+    const role = user ? user.role : 'cashier';
+    const finalName = user ? user.username : name;
+
+    this.currentCashier.set(finalName);
+    this.currentRole.set(role);
+    localStorage.setItem('maranth_active_cashier', finalName);
+    localStorage.setItem('maranth_active_role', role);
   }
 
   public logoutCashier(): void {
     this.currentCashier.set(null);
+    this.currentRole.set(null);
     localStorage.removeItem('maranth_active_cashier');
+    localStorage.removeItem('maranth_active_role');
   }
 
   public getCategoryName(categoryId: string | undefined): string {
@@ -117,7 +137,10 @@ export class SalesService {
   }
 
   public netSubtotal = computed(() => {
-    return this.basket().reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+    return this.basket().reduce((acc, item) => {
+      const lineTotal = item.product.price * item.quantity;
+      return acc + (item.isRefund ? -lineTotal : lineTotal);
+    }, 0);
   });
   public subtotal = this.netSubtotal;
 
@@ -134,12 +157,15 @@ export class SalesService {
     return this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0);
   });
 
-  public addToBasket(product: Product): void {
+  public addToBasket(product: Product, forceRefundState?: boolean): void {
     this.highlightedItemId.set(product.id);
     setTimeout(() => this.highlightedItemId.set(null), 500);
 
+    const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
+
     this.basket.update((currentBasket) => {
-      const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
+      // Find item matching BOTH the product ID and the Refund State!
+      const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRef);
       const incrementStep = product.isWeighted ? 0.100 : 1;
 
       if (existingIndex > -1) {
@@ -152,14 +178,14 @@ export class SalesService {
         return updatedBasket;
       } else {
         const initialQuantity = product.isWeighted ? 0.500 : 1;
-        return [...currentBasket, { product, quantity: initialQuantity }];
+        return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
       }
     });
   }
 
-  public removeFromBasket(product: Product): void {
+  public removeFromBasket(product: Product, isRefund: boolean = false): void {
     this.basket.update((currentBasket) => {
-      const existingIndex = currentBasket.findIndex(item => item.product.id === product.id);
+      const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRefund);
       if (existingIndex === -1) return currentBasket;
 
       const updatedBasket = [...currentBasket];
@@ -168,7 +194,7 @@ export class SalesService {
       const newQuantity = parseFloat((existingItem.quantity - decrementStep).toFixed(3));
 
       if (newQuantity <= 0 || (product.isWeighted && newQuantity < 0.100)) {
-        return updatedBasket.filter(item => item.product.id !== product.id);
+        return updatedBasket.filter((_, idx) => idx !== existingIndex);
       } else {
         updatedBasket[existingIndex] = {
           ...existingItem,
@@ -181,6 +207,56 @@ export class SalesService {
 
   public clearBasket(): void {
     this.basket.set([]);
+  }
+
+  public processPayment(method: 'Cash' | 'Card' | 'Debit'): void {
+    const currentBasket = this.basket();
+    if (currentBasket.length === 0) return;
+
+    const receipt: TransactionRecord = {
+      id: 'TX-' + Math.random().toString(36).substring(2, 11).toUpperCase(),
+      timestamp: new Date().toISOString(),
+      items: [...currentBasket],
+      subtotal: parseFloat(this.netSubtotal().toFixed(2)),
+      taxAmount: parseFloat(this.taxAmount().toFixed(2)),
+      grandTotal: parseFloat(this.grandTotal().toFixed(2)),
+      paymentMethod: method
+    };
+
+    // Update real inventory stock dynamically!
+    this.products.update(prods => {
+      const updated = [...prods];
+      currentBasket.forEach(item => {
+        const index = updated.findIndex(p => p.id === item.product.id);
+        if (index > -1) {
+          // If refund, ADD back to shelf. If sale, SUBTRACT from shelf.
+          const change = item.isRefund ? item.quantity : -item.quantity;
+          updated[index] = { 
+            ...updated[index], 
+            stockQuantity: parseFloat((updated[index].stockQuantity + change).toFixed(3)) 
+          };
+        }
+      });
+      return updated;
+    });
+
+    this.transactions.update(logs => [receipt, ...logs]);
+    this.clearBasket();
+    this.isRefundMode.set(false);
+    
+    this.activeModal.set({
+      type: 'success', 
+      title: '✅ Transaction Processed', 
+      message: `Ticket ${receipt.id} processed €${receipt.grandTotal.toFixed(2)} via ${method}.`, 
+      value: '', 
+      onConfirm: () => this.activeModal.set(null)
+    });
+
+    setTimeout(() => {
+      if (this.activeModal()?.title === '✅ Transaction Processed') {
+        this.activeModal.set(null);
+      }
+    }, 2000);
   }
 
   public suspendOrder(): void {
@@ -214,38 +290,6 @@ export class SalesService {
     }
   }
 
-  public processPayment(method: 'Cash' | 'Card' | 'Debit'): void {
-    const currentBasket = this.basket();
-    if (currentBasket.length === 0) return;
-
-    const receipt: TransactionRecord = {
-      id: 'TX-' + Math.random().toString(36).substring(2, 11).toUpperCase(),
-      timestamp: new Date().toISOString(),
-      items: [...currentBasket],
-      subtotal: parseFloat(this.netSubtotal().toFixed(2)),
-      taxAmount: parseFloat(this.taxAmount().toFixed(2)),
-      grandTotal: parseFloat(this.grandTotal().toFixed(2)),
-      paymentMethod: method
-    };
-
-    this.transactions.update(logs => [receipt, ...logs]);
-    this.clearBasket();
-
-    this.activeModal.set({
-      type: 'success', 
-      title: '✅ Payment Successful', 
-      message: `Ticket ${receipt.id} processed €${receipt.grandTotal.toFixed(2)} via ${method}.`, 
-      value: '', 
-      onConfirm: () => this.activeModal.set(null)
-    });
-
-    setTimeout(() => {
-      if (this.activeModal()?.title === '✅ Payment Successful') {
-        this.activeModal.set(null);
-      }
-    }, 2000);
-  }
-
   public topSellingProducts = computed(() => {
     const itemsMap = new Map<string, { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number }>();
     
@@ -257,8 +301,9 @@ export class SalesService {
           });
         }
         const stats = itemsMap.get(item.product.id)!;
-        stats.unitsSold += item.quantity;
-        stats.totalRevenue += item.product.price * item.quantity;
+        const effectiveQuantity = item.isRefund ? -item.quantity : item.quantity;
+        stats.unitsSold += effectiveQuantity;
+        stats.totalRevenue += (item.product.price * effectiveQuantity);
       });
     });
     

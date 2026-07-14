@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { SalesService, BasketItem } from '../../../../shared/services/sales';
+import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { SalesService } from '../../../../shared/services/sales';
+import { BasketItem } from '../../../../shared/services/pos-data.models'
 
 @Component({
   selector: 'app-shopping-basket',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CurrencyPipe, DecimalPipe],
   templateUrl: './shopping-basket.html',
   styleUrls: ['./shopping-basket.css']
 })

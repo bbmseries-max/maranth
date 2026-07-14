@@ -10,12 +10,15 @@
     <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'PRODUCTS'" [class.app-btn-secondary]="activeTab() !== 'PRODUCTS'" (click)="switchTab('PRODUCTS')">
       📦 Stock Inventory
     </button>
-    <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'CATEGORIES'" [class.app-btn-secondary]="activeTab() !== 'CATEGORIES'" (click)="switchTab('CATEGORIES')">
-      🗂️ Categories Matrix
-    </button>
-    <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'SUPPLIERS'" [class.app-btn-secondary]="activeTab() !== 'SUPPLIERS'" (click)="switchTab('SUPPLIERS')">
-      🚚 Supplier Directory
-    </button>
+    
+    @if (salesService.currentRole() === 'admin') {
+      <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'CATEGORIES'" [class.app-btn-secondary]="activeTab() !== 'CATEGORIES'" (click)="switchTab('CATEGORIES')">
+        🗂️ Categories Matrix
+      </button>
+      <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'SUPPLIERS'" [class.app-btn-secondary]="activeTab() !== 'SUPPLIERS'" (click)="switchTab('SUPPLIERS')">
+        🚚 Supplier Directory
+      </button>
+    }
   </div>
 
   <!-- Main Unified Layout Frame Container -->

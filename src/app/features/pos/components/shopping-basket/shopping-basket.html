@@ -28,7 +28,10 @@
             
             <!-- 📋 Product Info Details -->
             <div class="item-details">
-              <span class="item-name">{{ item.product.name }}</span>
+              <span class="item-name">
+                @if (item.isRefund) { <span class="refund-badge">REFUND</span> }
+                {{ item.product.name }}
+              </span>
               <span class="item-unit-price">
                 {{ item.product.price | currency:'EUR':'symbol':'1.2-2' }} / {{ item.product.isWeighted ? 'kg' : 'pc' }}
               </span>
@@ -36,7 +39,7 @@
 
             <!-- 🔢 Quantity Controls Cluster -->
             <div class="quantity-controls">
-              <button type="button" class="btn-qty" (click)="salesService.removeFromBasket(item.product)">
+              <button type="button" class="btn-qty" (click)="salesService.removeFromBasket(item.product, item.isRefund)">
                 ➖
               </button>
               
@@ -44,15 +47,15 @@
                 {{ item.product.isWeighted ? (item.quantity | number:'1.3-3') + ' kg' : item.quantity + ' pcs' }}
               </span>
               
-              <button type="button" class="btn-qty" (click)="salesService.addToBasket(item.product)">
+              <button type="button" class="btn-qty" (click)="salesService.addToBasket(item.product, item.isRefund)">
                 ➕
               </button>
             </div>
 
             <!-- 💶 Calculated Price Column -->
             <div class="price-section">
-              <span class="line-total">
-                {{ (item.product.price * item.quantity) | currency:'EUR':'symbol':'1.2-2' }}
+              <span class="line-total" [class.negative-price]="item.isRefund">
+                {{ (item.isRefund ? -(item.product.price * item.quantity) : (item.product.price * item.quantity)) | currency:'EUR':'symbol':'1.2-2' }}
               </span>
             </div>
 

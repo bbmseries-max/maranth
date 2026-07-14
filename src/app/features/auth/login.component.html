@@ -46,6 +46,13 @@
         Unlock Register ➔
       </button>
 
+      <!-- ⭐ NEW: Link to Register Screen -->
+      <div style="margin-top: 20px; text-align: center;">
+        <a routerLink="/register" style="color: #3b82f6; font-size: 14px; font-weight: 600; text-decoration: none;">
+          Need a Cashier ID? Register here.
+        </a>
+      </div>
+
     </form>
 
     <div class="footer-note">
@@ -54,4 +61,22 @@
 
   </div>
 
+  <!-- Note: We must include the global modal here so Login errors pop up properly -->
+  @if (salesService.activeModal(); as modal) {
+    <div class="pos-modal-overlay is-active" style="z-index: 99999;">
+      <div class="pos-modal-window">
+        <div class="pos-modal-header" [class.warning-header]="modal.type === 'warning'">
+          {{ modal.title }}
+        </div>
+        <div class="pos-modal-body">
+          <p style="margin: 0;">{{ modal.message }}</p>
+        </div>
+        <div class="pos-modal-footer">
+          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.activeModal.set(null)">
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

@@ -1,40 +1,35 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './shared/guard/auth.guard';
-import('./features/reports/reports').then(m => m.ReportsComponent)
+import { authGuard } from './shared/guard/auth.guard'; // or './shared/guard/auth.guard' depending on your folder name
+import { adminGuard } from './shared/guard/admin.guard';
 
 export const routes: Routes = [
-  // 1. Root default fallback path auto-redirects directly to the Cashier Screen
-  { 
-    path: '', redirectTo: 'pos', pathMatch: 'full' 
-  },
-
+  // Redirect empty path to login
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  
+  // Auth Routes (Unprotected)
   { 
     path: 'login', 
     loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) 
   },
-
-  // 2. Front-Office Cash Register Workspace
+  { 
+    path: 'register', 
+    loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent) 
+  },
+  
+  // App Routes (Protected by AuthGuard)
   { 
     path: 'pos', 
-    canActivate: [authGuard], 
-    loadComponent: () => import('./features/pos/pos').then(m => m.PosComponent) // Adjust to your exact exported class name inside pos.ts
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/pos/pos').then(m => m.PosComponent) 
   },
-
-  // 3. Back-Office Administrative Stock Dashboard
   { 
     path: 'inventory', 
     canActivate: [authGuard],
-    loadComponent: () => import('./features/inventory/inventory').then(m => m.InventoryComponent)
+    loadComponent: () => import('./features/inventory/inventory').then(m => m.InventoryComponent) 
   },
   { 
     path: 'reports', 
-    canActivate: [authGuard], 
-    loadComponent: () => import('./features/reports/reports').then(m => m.ReportsComponent)
-  },
-
-  // 4. Wildcard catch-all safety redirect
-  { 
-    path: '**', 
-    redirectTo: 'pos' 
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./features/reports/reports').then(m => m.ReportsComponent) 
   }
 ];

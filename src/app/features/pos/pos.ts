@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 
 import { SalesService } from '../../shared/services/sales'; 
-import { Product, Category } from '../../shared/services/pos-data.models';
+import { Product } from '../../shared/services/pos-data.models';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
 
 @Component({
@@ -28,13 +28,11 @@ export class PosComponent implements OnInit {
 
   // ⭐ QUICK ACCESS SHELF 1: Scaled/Weighted items
   public weightedProducts = computed(() => {
-    // Ensures a Product array is RETURNED, preventing the 'void' truthiness error
     return this.salesService.products().filter(p => p.isWeighted && p.isActive !== false);
   });
 
   // ⭐ QUICK ACCESS SHELF 2: Loose items (No barcode)
   public looseProducts = computed(() => {
-    // Ensures a Product array is RETURNED, preventing the 'void' truthiness error
     return this.salesService.products().filter(p => !p.barcode && !p.isWeighted && p.isActive !== false);
   });
 

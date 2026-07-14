@@ -6,7 +6,7 @@ import { SalesService } from '../../shared/services/sales';
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink],
+  imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })
