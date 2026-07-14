@@ -20,6 +20,6 @@ export class CategoryListComponent {
   public currentCategory = this.salesService.currentCategory;
 
   public selectCategory(id: string): void {
-    this.salesService.selectCategory(id);
+       this.salesService.currentCategory.set(id);
   }
 }

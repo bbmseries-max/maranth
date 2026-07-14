@@ -1,28 +1,325 @@
-/* ==========================================================================
-   🛒 SHOPPING BASKET VIEWS SCROLL CONTEXT
-   ========================================================================== */
-
-app-shopping-basket {
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100% !important;
-  width: 100% !important;
-  overflow: hidden !important;
+:host {
+display: flex !important;
+flex-direction: column !important;
+height: 100% !important;
+width: 100% !important;
+overflow: hidden !important;
+background-color: #ffffff;
 }
 
-/* Target your itemized shopping rows scrolling window container */
+.basket-container {
+display: flex;
+flex-direction: column;
+height: 100%;
+width: 100%;
+overflow: hidden;
+}
+
+.basket-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 16px;
+border-bottom: 1px solid #e2e8f0;
+}
+
+.header-left {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.basket-icon {
+color: #0b57d0;
+}
+
+.basket-title {
+font-weight: 600;
+color: #1e293b;
+font-size: 15px;
+}
+
+.items-badge {
+background: #d3e3fd;
+color: #041e49;
+padding: 4px 10px;
+border-radius: 12px;
+font-size: 12px;
+font-weight: 700;
+}
+
 .basket-items-viewport {
-  flex: 1 !important;          /* Swallows space between header and footer elements */
-  overflow-y: auto !important;  /* Creates scrollbar if products exceed height */
-  padding: 12px;
-  box-sizing: border-box;
+flex: 1 !important;
+overflow-y: auto !important;
+padding: 12px;
+box-sizing: border-box;
 }
 
-/* Pinned summary checkout financial block wrapper layout */
+.empty-state {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+height: 100%;
+text-align: center;
+padding: 24px;
+color: #64748b;
+}
+
+.empty-icon {
+font-size: 48px;
+color: #94a3b8;
+margin-bottom: 12px;
+}
+
+.empty-text {
+font-size: 15px;
+font-weight: 600;
+color: #334155;
+margin: 0;
+}
+
+.empty-hint {
+font-size: 12px;
+color: #64748b;
+margin-top: 4px;
+}
+
+.item-list {
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+
+.basket-item-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+background: #f8fafc;
+padding: 12px;
+border-radius: 8px;
+border: 1px solid #e2e8f0;
+border-left: 4px solid #cbd5e1;
+transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.basket-item-row:hover {
+transform: translateY(-1px);
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.weighted-item {
+border-left-color: #146c2e;
+}
+
+/* ⭐ The New Pulse Animation! */
+@keyframes highlightFlash {
+0% {
+background-color: #dbeafe;
+border-color: #3b82f6;
+border-left-color: #3b82f6;
+transform: scale(1.02);
+box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+}
+100% {
+background-color: #f8fafc;
+border-color: #e2e8f0;
+transform: scale(1);
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+}
+
+.basket-item-row.is-flashing {
+animation: highlightFlash 0.5s ease-out;
+z-index: 10;
+position: relative;
+}
+
+.item-details {
+display: flex;
+flex-direction: column;
+gap: 2px;
+flex: 1;
+}
+
+.item-name {
+font-weight: 700;
+color: #1e293b;
+font-size: 14px;
+}
+
+.item-unit-price {
+font-size: 12px;
+color: #64748b;
+font-weight: 500;
+}
+
+.quantity-controls {
+display: flex;
+align-items: center;
+gap: 8px;
+margin-right: 16px;
+background: #f1f5f9;
+padding: 4px 10px;
+border-radius: 20px;
+border: 1px solid #e2e8f0;
+}
+
+.btn-qty {
+background: transparent;
+border: none;
+color: #475569;
+font-size: 14px;
+cursor: pointer;
+padding: 4px 6px;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 50%;
+transition: background-color 0.2s;
+}
+
+.btn-qty:hover {
+background-color: #e2e8f0;
+}
+
+.qty-display {
+font-weight: 700;
+color: #0f172a;
+font-size: 13px;
+min-width: 45px;
+text-align: center;
+}
+
+.price-section {
+display: flex;
+align-items: center;
+gap: 12px;
+min-width: 70px;
+justify-content: flex-end;
+}
+
+.line-total {
+font-weight: 800;
+color: #0f172a;
+font-size: 15px;
+}
+
 .basket-summary-footer {
-  background: #f8fafc;
-  border-top: 2px solid #e2e8f0;
-  padding: 16px;
-  margin-top: auto;            /* Latches block directly onto base panel edge */
-  box-sizing: border-box;
+background: #f8fafc;
+border-top: 2px solid #e2e8f0;
+padding: 16px;
+margin-top: auto;
+box-sizing: border-box;
+}
+
+.summary-matrix {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin-bottom: 16px;
+background: #ffffff;
+padding: 14px;
+border-radius: 8px;
+border: 1px solid #e2e8f0;
+box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.summary-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+font-size: 14px;
+}
+
+.summary-label {
+color: #64748b;
+font-weight: 500;
+}
+
+.summary-value {
+font-weight: 600;
+color: #334155;
+}
+
+.summary-divider {
+height: 1px;
+background-color: #e2e8f0;
+margin: 6px 0;
+}
+
+.total-row {
+margin-top: 4px;
+}
+
+.grand-total-label {
+font-weight: 800;
+font-size: 16px;
+color: #0f172a;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+.grand-total-value {
+font-weight: 800;
+font-size: 20px;
+color: #0b57d0;
+}
+
+.payment-method-panel {
+background: #f1f5f9;
+padding: 12px;
+border-radius: 8px;
+border: 1px solid #e2e8f0;
+}
+
+.payment-label {
+display: block;
+font-weight: 700;
+margin-bottom: 10px;
+color: #334155;
+font-size: 13px;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+.payment-button-group {
+display: flex;
+gap: 10px;
+}
+
+.btn-payment {
+flex: 1;
+padding: 12px 10px;
+border-radius: 8px;
+border: 1px solid #cbd5e1;
+background: #ffffff;
+font-weight: 700;
+font-size: 14px;
+color: #1e293b;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 6px;
+transition: all 0.2s ease;
+box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.btn-payment:hover:not(:disabled) {
+background-color: #f8fafc;
+border-color: #94a3b8;
+transform: translateY(-1px);
+box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.btn-payment:active:not(:disabled) {
+transform: translateY(0);
+background-color: #e2e8f0;
+}
+
+.btn-payment:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+background-color: #f1f5f9;
 }

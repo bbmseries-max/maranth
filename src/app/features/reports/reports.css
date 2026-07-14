@@ -1,58 +1,41 @@
-.report-card {
-  background: #ffffff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+/* STREAMING_CHUNK: Setting up scrollable host viewport */
+:host {
+display: block;
+height: 100vh;
+width: 100vw;
+overflow-y: auto;
+background-color: #f4f7f9;
 }
 
-.heatmap-container {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 200px; /* Fixed height for the chart area */
-  padding-top: 30px;
-  border-bottom: 2px solid #e2e8f0;
-  gap: 8px;
+/* STREAMING_CHUNK: Overriding global locks */
+.app-viewport {
+height: auto !important;
+min-height: 100vh;
+overflow: visible !important;
 }
 
-.heatmap-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  height: 100%;
-  justify-content: flex-end;
+/* STREAMING_CHUNK: Configuring Print Styles for Z-Report */
+@media print {
+.app-btn, .app-select, .app-form-label {
+display: none !important;
 }
 
-.heatmap-bar {
-  width: 100%;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  transition: all 0.3s ease;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+.app-viewport {
+padding: 0 !important;
+background: white !important;
+height: auto !important;
+overflow: visible !important;
 }
 
-.heatmap-bar:hover {
-  transform: scaleY(1.05);
-  cursor: pointer;
-  filter: brightness(0.9);
+.app-card {
+box-shadow: none !important;
+border: 1px solid #cbd5e1 !important;
+break-inside: avoid;
+margin-bottom: 20px !important;
 }
 
-.bar-value {
-  font-size: 10px;
-  color: white;
-  font-weight: bold;
-  margin-top: 4px;
-  white-space: nowrap;
+.app-card > div {
+max-height: none !important;
+overflow: visible !important;
 }
-
-.hour-label {
-  font-size: 11px;
-  color: #64748b;
-  margin-top: 8px;
-  transform: rotate(-45deg); /* Tilted for clean spacing if you have 24 hours */
-  white-space: nowrap;
 }

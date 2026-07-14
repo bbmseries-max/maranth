@@ -1,427 +1,385 @@
-<!-- Tab Bar Header Strip -->
-<div class="inventory-tab-bar" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
-  <button type="button" (click)="switchTab('PRODUCTS')" [style.background]="activeTab() === 'PRODUCTS' ? '#2563eb' : '#f1f5f9'" [style.color]="activeTab() === 'PRODUCTS' ? '#ffffff' : '#475569'" style="padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s;">
-    📦 Stock Inventory
-  </button>
-  <button type="button" (click)="switchTab('CATEGORIES')" [style.background]="activeTab() === 'CATEGORIES' ? '#2563eb' : '#f1f5f9'" [style.color]="activeTab() === 'CATEGORIES' ? '#ffffff' : '#475569'" style="padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s;">
-    🗂️ Categories Matrix
-  </button>
-  <button type="button" (click)="switchTab('SUPPLIERS')" [style.background]="activeTab() === 'SUPPLIERS' ? '#2563eb' : '#f1f5f9'" [style.color]="activeTab() === 'SUPPLIERS' ? '#ffffff' : '#475569'" style="padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s;">
-    🚚 Supplier Directory
-  </button>
-</div>
+<div class="app-viewport">
 
-<!-- Main Unified Layout Frame Container -->
-<div class="inventory-dashboard-frame" style="display: flex; gap: 24px; padding: 24px; background: #f8fafc; font-family: system-ui, sans-serif; height: calc(100vh - 110px); box-sizing: border-box; overflow: hidden; position: relative;">
-  
-  <!-- ======================================================== -->
-  <!-- INDEPENDENT 5-MONTH FORECAST OVERLAY (MODAL WINDOW)     -->
-  <!-- ======================================================== -->
-  <div class="forecast-overlay" *ngIf="showForecastOverlay()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box;">
-    <div class="forecast-modal" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
-      
-      <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-        <h3 style="margin: 0; color: #0f172a; font-size: 16px;">📅 5-Month Expiration Control Grid (-2M / +3M)</h3>
-        <button class="btn-close" (click)="closeForecastControl()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b;">✕</button>
-      </div>
-
-      <div class="modal-filters" style="padding: 12px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; display: flex; gap: 16px; align-items: center; font-size: 13px;">
-        <label style="font-weight: 600; color: #475569;">From: <input type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; margin-left: 4px; font-family: inherit;"></label>
-        <label style="font-weight: 600; color: #475569;">To: <input type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; margin-left: 4px; font-family: inherit;"></label>
-      </div>
-
-      <div class="modal-table-wrapper" style="flex: 1; overflow-y: auto; padding: 20px;">
-        <table class="forecast-grid" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-          <thead style="background: #f1f5f9; color: #475569; font-weight: 600; position: sticky; top: 0; z-index: 10;">
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-              <th style="padding: 10px;">Barcode</th>
-              <th style="padding: 10px;">Product Name</th>
-              <th style="padding: 10px; text-align: center;">Stock Count</th>
-              <th style="padding: 10px;">Expiration Date (Double-Click)</th>
-              <th style="padding: 10px; text-align: center;">Alert Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of filteredForecastProducts(); track item.id) {
-              <tr (dblclick)="updateDateOnTheFly(item)" style="border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.1s;">
-                <td style="padding: 10px; font-family: monospace; font-weight: bold; color: #64748b;">{{ item.id }}</td>
-                <td style="padding: 10px; color: #1e293b;"><strong>{{ item.name }}</strong></td>
-                <td style="padding: 10px; text-align: center; font-weight: 600;">{{ item.stockQuantity }} pcs</td>
-                <td style="padding: 10px; color: #0f172a;" class="editable-date-cell">✏️ {{ item.expire || 'Not Tracked' }}</td>
-                <td style="padding: 10px; text-align: center;">
-                  <span [class]="getStatusClass(item.expire || '')" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
-                    {{ getStatusText(item.expire || '') }}
-                  </span>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px 0;">
-                  No products found expiring within this 5-month window.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
+  <!-- Tab Bar Header Strip -->
+  <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+    <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'PRODUCTS'" [class.app-btn-secondary]="activeTab() !== 'PRODUCTS'" (click)="switchTab('PRODUCTS')">
+      📦 Stock Inventory
+    </button>
+    <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'CATEGORIES'" [class.app-btn-secondary]="activeTab() !== 'CATEGORIES'" (click)="switchTab('CATEGORIES')">
+      🗂️ Categories Matrix
+    </button>
+    <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'SUPPLIERS'" [class.app-btn-secondary]="activeTab() !== 'SUPPLIERS'" (click)="switchTab('SUPPLIERS')">
+      🚚 Supplier Directory
+    </button>
   </div>
 
-  <!-- ======================================================== -->
-  <!-- LEFT COLUMN: JOURNAL DATA TAB SWITCHER FRAME             -->
-  <!-- ======================================================== -->
-  <div class="inventory-journal-panel" style="flex: 1.6; background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 20px; display: flex; flex-direction: column; overflow: hidden;">
+  <!-- Main Unified Layout Frame Container -->
+  <div style="display: flex; gap: 24px; height: calc(100vh - 110px); box-sizing: border-box; overflow: hidden; position: relative;">
     
-    <!-- Dynamic Top Tool Action Bar Contextualized by Active View -->
-    <div class="filter-actions-bar" style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;">
+    <!-- ======================================================== -->
+    <!-- LEFT COLUMN: JOURNAL DATA TAB SWITCHER FRAME               -->
+    <!-- ======================================================== -->
+    <div class="app-card" style="flex: 1.6; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; padding-right: 0;">
       
-      @if (activeTab() === 'PRODUCTS') {
-        <input type="text"
-               #barcodeInput
-               [value]="searchQuery()"
-               placeholder="Scan barcode or type name to filter..."
-               (input)="handleBarcodeScan(barcodeInput.value)"
-               (keydown.enter)="handleBarcodeScan(barcodeInput.value)"
-               style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; max-width: 300px; font-family: inherit;" />
-
-        @if (searchQuery()) {
-          <button type="button" 
-                  (click)="handleBarcodeScan(''); barcodeInput.value = ''" 
-                  style="margin-left: 8px; color: #ef4444; background: none; border: none; cursor: pointer; font-weight: 600;">
-            Clear Filter
-          </button>
-        }
-
-        <select [value]="selectedCategory()" (change)="selectedCategory.set(catSelect.value)" #catSelect
-                style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white; font-family: inherit;">
-          <option value="ALL">All Categories Matrix</option>
-          @for (cat of categories(); track cat.id) {
-            <option [value]="cat.id">{{ cat.name }}</option>
-          }
-        </select>
-
-        <button class="btn-control-window" type="button" (click)="openForecastControl()"
-                style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 9px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">
-          📅 Expiration Window (5M)
-        </button>
-      }
-
-      <button type="button" (click)="activeTab() === 'PRODUCTS' ? prepareNewProduct() : activeTab() === 'CATEGORIES' ? prepareNewCategory() : prepareNewSupplier()" style="padding: 8px 14px; background: #16a34a; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; margin-left: auto;">
-        ➕ Add {{ activeTab() === 'PRODUCTS' ? 'Product' : activeTab() === 'CATEGORIES' ? 'Category' : 'Supplier' }}
-      </button>
-    </div>
-
-    <!-- Tab Table Viewports Layer -->
-    <div class="table-scroll-viewport" style="flex: 1; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-      @switch (activeTab()) {
+      <!-- Dynamic Top Tool Action Bar Contextualized by Active View -->
+      <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; padding-right: 20px; flex-wrap: wrap;">
         
-        @case ('PRODUCTS') {
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-            <thead style="background: #f1f5f9; color: #475569; font-weight: 600; position: sticky; top: 0; z-index: 10;">
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <th style="padding: 12px 10px;">ID / Code</th>
-                <th style="padding: 12px 10px;">Item Description</th>
-                <th style="padding: 12px 10px;">Category</th>
-                <th style="padding: 12px 10px; text-align: right;">Cost</th>
-                <th style="padding: 12px 10px; text-align: right;">Retail</th>
-                <th style="padding: 12px 10px; text-align: center;">Stock</th>
-                <th style="padding: 12px 10px; text-align: center;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (product of managedProducts(); track product.id) {
-                <tr (click)="selectProductToEdit(product)" 
-                    [style.background]="selectedProduct()?.id === product.id ? '#eff6ff' : 'transparent'"
-                    style="border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.1s ease;">
-                  <td style="padding: 10px; font-family: monospace; font-weight: bold; color: #64748b;">{{ product.id }}</td>
-                  <td style="padding: 10px; font-weight: 500; color: #1e293b;">{{ product.name }}</td>
-                  <td style="padding: 10px; color: #475569;">
-                    <span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px;">{{ product.categoryId }}</span>
-                  </td>
-                  <td style="padding: 10px; text-align: right; color: #64748b;">{{ getProductCost(product) | currency:'EUR' }}</td>
-                  <td style="padding: 10px; text-align: right; font-weight: 600; color: #0f172a;">{{ product.price | currency:'EUR' }}</td>
-                  <td style="padding: 10px; text-align: center;">
-                    <span [style.background]="isLowStock(product) ? '#fee2e2' : '#dcfce7'" [style.color]="isLowStock(product) ? '#991b1b' : '#166534'" style="padding: 3px 8px; border-radius: 10px; font-weight: bold; font-size: 11px;">
-                      {{ product.stockQuantity }}
-                    </span>
-                  </td>
-                  <td style="padding: 10px; text-align: center;">
-                    <span [style.background]="product.isActive !== false ? '#e0f2fe' : '#f1f5f9'" [style.color]="product.isActive !== false ? '#0369a1' : '#64748b'" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
-                      {{ product.isActive !== false ? 'ACTIVE' : 'DISABLED' }}
-                    </span>
-                  </td>
-                </tr>
-              } @empty {
+        @if (activeTab() === 'PRODUCTS') {
+          <input type="text" #barcodeInput class="app-input" [value]="searchQuery()" placeholder="Scan barcode or type name to filter..." (input)="handleBarcodeScan(barcodeInput.value)" (keydown.enter)="handleBarcodeScan(barcodeInput.value)" style="width: 100%; max-width: 300px;" />
+
+          @if (searchQuery()) {
+            <button type="button" class="app-btn app-btn-danger" (click)="handleBarcodeScan(''); barcodeInput.value = ''">
+              Clear Filter
+            </button>
+          }
+
+          <select class="app-select" [value]="selectedCategory()" (change)="selectedCategory.set(catSelect.value)" #catSelect>
+            <option value="ALL">All Categories Matrix</option>
+            @for (cat of categories(); track cat.id) {
+              <option [value]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
+        }
+
+        <button type="button" class="app-btn app-btn-primary" style="margin-left: auto; background: #16a34a;" (click)="activeTab() === 'PRODUCTS' ? prepareNewProduct() : activeTab() === 'CATEGORIES' ? prepareNewCategory() : prepareNewSupplier()">
+          ➕ Add {{ activeTab() === 'PRODUCTS' ? 'Product' : activeTab() === 'CATEGORIES' ? 'Category' : 'Supplier' }}
+        </button>
+      </div>
+
+      <!-- Tab Table Viewports Layer -->
+      <div style="flex: 1; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px 0 0 8px; border-right: none;">
+        @switch (activeTab()) {
+          
+          @case ('PRODUCTS') {
+            <table class="app-table">
+              <thead>
                 <tr>
-                  <td colspan="7" style="text-align: center; color: #94a3b8; padding: 40px 0;">No matching inventory catalog entries discovered.</td>
+                  <th>ID / Code</th>
+                  <th>Item Description</th>
+                  <th>Category</th>
+                  <th style="text-align: right;">Cost</th>
+                  <th style="text-align: right;">Retail</th>
+                  <th style="text-align: center;">Stock</th>
+                  <th style="text-align: center;">Status</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        }
+              </thead>
+              <tbody>
+                @for (product of managedProducts().slice(0, 50); track product.id) {
+                  <tr (click)="selectProductToEdit(product)" [style.background]="selectedProduct()?.id === product.id ? '#eff6ff' : 'transparent'" style="cursor: pointer;">
+                    <td style="font-family: monospace; font-weight: bold; color: #64748b;">{{ product.id }}</td>
+                    <td style="font-weight: 600; color: #1e293b;">{{ product.name }}</td>
+                    <td><span class="app-badge" style="background: #f1f5f9; color: #475569;">{{ product.categoryId }}</span></td>
+                    <td style="text-align: right; color: #64748b;">{{ getProductCost(product) | currency:'EUR' }}</td>
+                    <td style="text-align: right; font-weight: 600; color: #0f172a;">{{ product.price | currency:'EUR' }}</td>
+                    <td style="text-align: center;">
+                      <span class="app-badge" [class.danger]="isLowStock(product)" [class.success]="!isLowStock(product)">
+                        {{ product.stockQuantity }}
+                      </span>
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="app-badge" [class.info]="product.isActive !== false" [style.background]="product.isActive === false ? '#f1f5f9' : ''" [style.color]="product.isActive === false ? '#64748b' : ''">
+                        {{ product.isActive !== false ? 'ACTIVE' : 'DISABLED' }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 40px 0;">No matching inventory catalog entries discovered.</td></tr>
+                }
+              </tbody>
+            </table>
+          }
 
-        @case ('CATEGORIES') {
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-            <thead style="background: #f1f5f9; color: #475569; font-weight: 600; position: sticky; top: 0; z-index: 10;">
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <th style="padding: 12px 10px;">ID</th>
-                <th style="padding: 12px 10px;">Category Name</th>
-                <th style="padding: 12px 10px;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (cat of categories(); track cat.id) {
-                <tr (click)="selectCategoryToEdit(cat)" style="border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.1s;">
-                  <td style="padding: 10px; font-family: monospace; font-weight: bold; color: #64748b;">{{ cat.id }}</td>
-                  <td style="padding: 10px; font-weight: 600; color: #0f172a;">{{ cat.name }}</td>
-                  <td style="padding: 10px;">
-                    <span [style.background]="cat.isActive !== false ? '#dcfce7' : '#fee2e2'" [style.color]="cat.isActive !== false ? '#15803d' : '#991b1b'" style="padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">
-                      {{ cat.isActive !== false ? 'ACTIVE' : 'DISABLED' }}
-                    </span>
-                  </td>
+          @case ('CATEGORIES') {
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Category Name</th>
+                  <th>Status</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        }
-
-        @case ('SUPPLIERS') {
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-            <thead style="background: #f1f5f9; color: #475569; font-weight: 600; position: sticky; top: 0; z-index: 10;">
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <th style="padding: 12px 10px;">ID</th>
-                <th style="padding: 12px 10px;">Company Name</th>
-                <th style="padding: 12px 10px;">Phone Contact</th>
-                <th style="padding: 12px 10px;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (sup of suppliers(); track sup.id) {
-                <tr (click)="selectSupplierToEdit(sup)" style="border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.1s;">
-                  <td style="padding: 10px; font-family: monospace; color: #64748b;">{{ sup.id }}</td>
-                  <td style="padding: 10px; font-weight: 600; color: #0f172a;">{{ sup.name }}</td>
-                  <td style="padding: 10px; color: #475569;">{{ sup.phone || 'N/A' }}</td>
-                  <td style="padding: 10px;">
-                    <span [style.background]="sup.isActive !== false ? '#dcfce7' : '#fee2e2'" [style.color]="sup.isActive !== false ? '#15803d' : '#991b1b'" style="padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">
-                      {{ sup.isActive !== false ? 'ACTIVE' : 'DISABLED' }}
-                    </span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
-      }
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- RIGHT COLUMN: PRODUCT DETAIL WORKBENCH                   -->
-  <!-- ======================================================== -->
-  <div class="inventory-profile-workbench" style="flex: 1; background: #ffffff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); height: 100%; box-sizing: border-box; overflow-y: auto;">
-      
-    <!-- CONTEXT A: STOCKS & PRODUCTS MATRIX WORKBENCH -->
-    @if (activeTab() === 'PRODUCTS') {
-      @if (selectedProduct() || isCreatingNew()) {
-        <div class="retail-form-layout" style="display: flex; flex-direction: column; gap: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
-            <h3 style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">
-              {{ isCreatingNew() ? '✨ Register New Catalog Item' : '📝 Edit Product Profile' }}
-            </h3>
-            <span style="font-family: monospace; font-size: 11px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #64748b; font-weight: bold;">
-              ID: {{ formProduct.id || 'AUTO' }}
-            </span>
-          </div>
-
-          <div style="display: flex; gap: 12px;">
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Product Code / ID</label>
-              <input type="text" [(ngModel)]="formProduct.id" [disabled]="!isCreatingNew()" placeholder="e.g., 14114" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" />
-            </div>
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Barcode String</label>
-              <input type="text" [(ngModel)]="formProduct.barcode" placeholder="e.g., 8412765942075" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" />
-            </div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 12px; font-weight: 600; color: #475569;">Product Name</label>
-            <input type="text" [(ngModel)]="formProduct.name" placeholder="e.g., Clipper Lighter" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box;" />
-          </div>
-
-          <div style="display: flex; gap: 12px;">
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Product Category</label>
-              <select [(ngModel)]="formProduct.categoryId" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: white; font-family: inherit; height: 37px;">
+              </thead>
+              <tbody>
                 @for (cat of categories(); track cat.id) {
-                  <option [value]="cat.id">{{ cat.name }}</option>
+                  <tr (click)="selectCategoryToEdit(cat)" style="cursor: pointer;">
+                    <td style="font-family: monospace; font-weight: bold; color: #64748b;">{{ cat.id }}</td>
+                    <td style="font-weight: 600; color: #0f172a;">{{ cat.name }}</td>
+                    <td>
+                      <span class="app-badge" [class.success]="cat.isActive !== false" [class.danger]="cat.isActive === false">
+                        {{ cat.isActive !== false ? 'ACTIVE' : 'DISABLED' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
+          @case ('SUPPLIERS') {
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Company Name</th>
+                  <th>Phone Contact</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sup of suppliers(); track sup.id) {
+                  <tr (click)="selectSupplierToEdit(sup)" style="cursor: pointer;">
+                    <td style="font-family: monospace; color: #64748b;">{{ sup.id }}</td>
+                    <td style="font-weight: 600; color: #0f172a;">{{ sup.name }}</td>
+                    <td style="color: #475569;">{{ sup.phone || 'N/A' }}</td>
+                    <td>
+                      <span class="app-badge" [class.success]="sup.isActive !== false" [class.danger]="sup.isActive === false">
+                        {{ sup.isActive !== false ? 'ACTIVE' : 'DISABLED' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- RIGHT COLUMN: PRODUCT DETAIL WORKBENCH                   -->
+    <!-- ======================================================== -->
+    <div class="app-card" style="flex: 1; height: 100%; box-sizing: border-box; overflow-y: auto;">
+        
+      <!-- CONTEXT A: STOCKS & PRODUCTS MATRIX WORKBENCH -->
+      @if (activeTab() === 'PRODUCTS') {
+        @if (selectedProduct() || isCreatingNew()) {
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
+              <h3 class="app-title" style="margin: 0;">
+                {{ isCreatingNew() ? '✨ Register New Catalog Item' : '📝 Edit Product Profile' }}
+              </h3>
+              <span class="app-badge info">ID: {{ formProduct.id || 'AUTO' }}</span>
+            </div>
+
+            <div class="app-form-grid">
+              <div class="app-form-group">
+                <label class="app-form-label">Product Code / ID</label>
+                <input type="text" class="app-input" [(ngModel)]="formProduct.id" [disabled]="!isCreatingNew()" placeholder="e.g., 14114" />
+              </div>
+              <div class="app-form-group">
+                <label class="app-form-label">Barcode String</label>
+                <input type="text" class="app-input" [(ngModel)]="formProduct.barcode" placeholder="e.g., 8412765942075" />
+              </div>
+            </div>
+
+            <div class="app-form-group">
+              <label class="app-form-label">Product Name</label>
+              <input type="text" class="app-input" [(ngModel)]="formProduct.name" placeholder="e.g., Clipper Lighter" />
+            </div>
+
+            <div class="app-form-grid">
+              <div class="app-form-group">
+                <label class="app-form-label">Product Category</label>
+                <select class="app-select" [(ngModel)]="formProduct.categoryId">
+                  @for (cat of categories(); track cat.id) {
+                    <option [value]="cat.id">{{ cat.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="app-form-group">
+                <label class="app-form-label">Expiration Matrix</label>
+                <input type="date" class="app-input" [(ngModel)]="formProduct.expire" (dblclick)="showExpirationGrid.set(true)" title="Double-click to open 5-Month Control Grid" style="cursor: pointer; background: #fffdfa;" />
+              </div>
+            </div>
+
+            <div class="app-form-grid">
+              <div class="app-form-group">
+                <label class="app-form-label">Purchase Cost (€)</label>
+                <input type="number" step="0.01" class="app-input" [(ngModel)]="formProduct.purchasePrice" placeholder="0.00" />
+              </div>
+              <div class="app-form-group">
+                <label class="app-form-label">Retail Price (€)</label>
+                <input type="number" step="0.01" class="app-input" [(ngModel)]="formProduct.price" placeholder="0.00" />
+              </div>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+              <span style="color: #64748b; font-weight: 500;">Calculated Gross Profit Margin:</span>
+              <strong [style.color]="getFormProfitMargin() >= 0 ? '#166534' : '#991b1b'">{{ getFormProfitMargin() | number:'1.1-2' }}%</strong>
+            </div>
+
+            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+              <span>Category ID: {{ formProduct.categoryId }}</span>
+              <span style="margin: 0 8px;">•</span>
+              <span style="font-weight: 500; color: #334155;">🚚 Supplier: {{ getSupplierName(formProduct.supplierId) }}</span>
+            </div>
+
+            <div class="app-form-group" style="margin-bottom: 16px;">
+              <label class="app-form-label">🔗 Link Supplier</label>
+              <select class="app-select" [(ngModel)]="formProduct.supplierId">
+                <option [value]="null" disabled selected>-- Select Supplier --</option>
+                @for (supplier of suppliers(); track supplier.id) {
+                  <option [value]="supplier.id">{{ supplier.name }}</option>
                 }
               </select>
             </div>
-            <div style="flex: 1; position: relative;">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Expiration Matrix</label>
-              <input type="date" [(ngModel)]="formProduct.expire" (dblclick)="showExpirationGrid.set(true)" title="Double-click to open 5-Month Control Grid" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; height: 37px; cursor: pointer; background: #fffdfa;" />
+
+            <div class="app-form-grid">
+              <div class="app-form-group">
+                <label class="app-form-label">Current Stock Count</label>
+                <input type="number" class="app-input" [(ngModel)]="formProduct.stockQuantity" />
+              </div>
+              <div class="app-form-group">
+                <label class="app-form-label">Low Stock Floor</label>
+                <input type="number" class="app-input" [(ngModel)]="formProduct.minStockWarning" />
+              </div>
+            </div>
+
+            <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; gap: 24px; align-items: center; border: 1px dashed #cbd5e1;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
+                <input type="checkbox" [(ngModel)]="formProduct.isWeighted" style="width: 16px; height: 16px; cursor: pointer;" /> ⚖️ Scaled Item
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
+                <input type="checkbox" [(ngModel)]="formProduct.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Status Active
+              </label>
+            </div>
+
+            <div class="app-form-actions">
+              <button type="button" class="app-btn app-btn-secondary" (click)="clearAllWorkbenches()">Cancel</button>
+              <button type="button" class="app-btn app-btn-primary" (click)="saveProductChanges()">💾 Save Product</button>
             </div>
           </div>
-
-          <div style="display: flex; gap: 12px;">
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Purchase Cost (€)</label>
-              <input type="number" step="0.01" [(ngModel)]="formProduct.purchasePrice" placeholder="0.00" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" />
-            </div>
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Retail Price (€)</label>
-              <input type="number" step="0.01" [(ngModel)]="formProduct.price" placeholder="0.00" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" />
-            </div>
-          </div>
-
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-            <span style="color: #64748b; font-weight: 500;">Calculated Gross Profit Margin:</span>
-            <strong [style.color]="getFormProfitMargin() >= 0 ? '#166534' : '#991b1b'">{{ getFormProfitMargin() | number:'1.1-2' }}%</strong>
-          </div>
-
-          <div class="product-meta-row" style="font-size: 12px; color: #64748b; margin-top: 4px;">
-            <span>Category ID: {{ formProduct.categoryId }}</span>
-            <span style="margin: 0 8px;">•</span>
-            <span style="font-weight: 500; color: #334155;">🚚 Supplier: {{ getSupplierName(formProduct.supplierId) }}</span>
-          </div>
-
-          <!-- New Supplier Link Selector -->
-          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;">
-            <label style="font-size: 13px; font-weight: 600; color: #475569;">🔗 Link Supplier</label>
-            <select [(ngModel)]="formProduct.supplierId" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box; background: white;">
-              <option [value]="null" disabled selected>-- Select Supplier --</option>
-              @for (supplier of suppliers(); track supplier.id) {
-                <option [value]="supplier.id">{{ supplier.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div style="display: flex; gap: 12px;">
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Current Stock Count</label>
-              <input type="number" [(ngModel)]="formProduct.stockQuantity" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" />
-            </div>
-            <div style="flex: 1;">
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Low Stock Floor</label>
-              <input type="number" [(ngModel)]="formProduct.minStockWarning" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" />
-            </div>
-          </div>
-
-          <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; gap: 24px; align-items: center; border: 1px dashed #cbd5e1;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
-              <input type="checkbox" [(ngModel)]="formProduct.isWeighted" style="width: 16px; height: 16px; cursor: pointer;" /> ⚖️ Scaled Item
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
-              <input type="checkbox" [(ngModel)]="formProduct.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Status Active
-            </label>
-          </div>
-
-          <div style="display: flex; gap: 12px; margin-top: 8px;">
-            <button type="button" (click)="clearFormLayout()" style="flex: 1; padding: 10px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">Cancel</button>
-            <button type="button" (click)="saveProductChanges()" style="flex: 2; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">💾 Save Product</button>
-          </div>
-        </div>
-      } @else { @render fallbackPlaceholder }
-    }
-
-    <!-- CONTEXT B: CATEGORIES CONFIGURATION WORKBENCH -->
-    @if (activeTab() === 'CATEGORIES') {
-      @if (editingCategory() || isCreatingNew()) {
-        <div class="category-form-layout" style="display: flex; flex-direction: column; gap: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
-            <h3 style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">
-              {{ isCreatingNew() ? '✨ New Matrix Category' : '📝 Modify Category Group' }}
-            </h3>
-            <span style="font-family: monospace; font-size: 11px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #64748b; font-weight: bold;">
-              ID: {{ formCategory.id || 'AUTO' }}
-            </span>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 12px; font-weight: 600; color: #475569;">Category Short Code / Unique key</label>
-            <input type="text" [(ngModel)]="formCategory.id" [disabled]="!isCreatingNew()" placeholder="e.g., SMOKE" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box;" />
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 4px;">
-            <label style="font-size: 12px; font-weight: 600; color: #475569;">Display Category Name</label>
-            <input type="text" [(ngModel)]="formCategory.name" placeholder="e.g., Tobacco Products" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box;" />
-          </div>
-
-          <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; width: 100%;">
-              <input type="checkbox" [(ngModel)]="formCategory.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Category Available for POS Sales
-            </label>
-          </div>
-
-          <div style="display: flex; gap: 12px; margin-top: 8px;">
-            <button type="button" (click)="clearAllWorkbenches()" style="flex: 1; padding: 10px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">Cancel</button>
-            <button type="button" (click)="saveCategoryChanges()" style="flex: 2; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">💾 Save Category</button>
-          </div>
-        </div>
-      } @else {
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 2px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center;">
-          <span style="font-size: 24px; margin-bottom: 8px;">📁</span>
-          <p style="margin: 0; font-size: 14px; font-weight: 500;">No Category Selected</p>
-          <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Select a category item from the directory list to modify its details, or create a brand new matrix group definition.</p>
-        </div>
+        } @else { @render fallbackPlaceholder }
       }
-    }
 
-    <!-- CONTEXT C: SUPPLIER DIRECTORY WORKBENCH -->
-    @if (activeTab() === 'SUPPLIERS') {
-      <div style="width: 100%; box-sizing: border-box;">
-        @if (selectedSupplier() || isCreatingNew()) {
-          <div class="supplier-form-layout" style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- CONTEXT B: CATEGORIES CONFIGURATION WORKBENCH -->
+      @if (activeTab() === 'CATEGORIES') {
+        @if (editingCategory() || isCreatingNew()) {
+          <div style="display: flex; flex-direction: column; gap: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
-              <h3 style="margin: 0; color: #0f172a; font-size: 16px; font-weight: 700;">
-                {{ isCreatingNew() ? '✨ Register New Supplier Profile' : '📝 Edit Vendor Ledger' }}
+              <h3 class="app-title" style="margin: 0;">
+                {{ isCreatingNew() ? '✨ New Matrix Category' : '📝 Modify Category Group' }}
               </h3>
-              <span style="font-family: monospace; font-size: 11px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #64748b; font-weight: bold;">
-                ID: {{ formSupplier.id || 'AUTO' }}
-              </span>
+              <span class="app-badge info">ID: {{ formCategory.id || 'AUTO' }}</span>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <label style="font-size: 12px; font-weight: 600; color: #475569;">Company Name</label>
-              <input type="text" [(ngModel)]="formSupplier.name" placeholder="e.g., Wholesale Corp S.A." style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box;" />
+            <div class="app-form-group">
+              <label class="app-form-label">Category Short Code / Unique key</label>
+              <input type="text" class="app-input" [(ngModel)]="formCategory.id" [disabled]="!isCreatingNew()" placeholder="e.g., SMOKE" />
             </div>
 
-            <div style="display: flex; gap: 12px;">
-              <div style="flex: 1;">
-                <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Contact Person</label>
-                <input type="text" [(ngModel)]="formSupplier.contact" placeholder="e.g., John Doe" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" />
-              </div>
-              <div style="flex: 1;">
-                <label style="display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px;">Phone Number</label>
-                <input type="text" [(ngModel)]="formSupplier.phone" placeholder="e.g., +30 210..." style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px;" />
-              </div>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-              <label style="font-size: 12px; font-weight: 600; color: #475569;">Internal Notes / Observations</label>
-              <textarea [(ngModel)]="formSupplier.notes" placeholder="e.g., Delivers on Tuesdays, minimum order 150€..." rows="3" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 100%; box-sizing: border-box; font-family: inherit; resize: vertical;"></textarea>
+            <div class="app-form-group">
+              <label class="app-form-label">Display Category Name</label>
+              <input type="text" class="app-input" [(ngModel)]="formCategory.name" placeholder="e.g., Tobacco Products" />
             </div>
 
             <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1;">
               <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; width: 100%;">
-                <input type="checkbox" [(ngModel)]="formSupplier.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Vendor Active
+                <input type="checkbox" [(ngModel)]="formCategory.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Category Available for POS Sales
               </label>
             </div>
 
-            <div style="display: flex; gap: 12px; margin-top: 8px;">
-              <button type="button" (click)="clearAllWorkbenches()" style="flex: 1; padding: 10px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">Cancel</button>
-              <button type="button" (click)="saveSupplierChanges()" style="flex: 2; padding: 10px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">💾 Save Vendor</button>
+            <div class="app-form-actions">
+              <button type="button" class="app-btn app-btn-secondary" (click)="clearAllWorkbenches()">Cancel</button>
+              <button type="button" class="app-btn app-btn-primary" (click)="saveCategoryChanges()">💾 Save Category</button>
             </div>
-          </div>
+          </div>        
         } @else {
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 2px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center;">
-            <span style="font-size: 24px; margin-bottom: 8px;">🚚</span>
-            <p style="margin: 0; font-size: 14px; font-weight: 500;">No Supplier Selected</p>
-            <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Select a vendor item from the directory table on the left to modify details, or establish a brand new profile grid entry.</p>
+            <span style="font-size: 24px; margin-bottom: 8px;">📁</span>
+            <p style="margin: 0; font-size: 14px; font-weight: 500;">No Category Selected</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Select a category item from the directory list to modify its details.</p>
           </div>
         }
-      </div>
-    }
+
+        <!-- 📦 Linked Products List -->
+        @if (editingCategory()) {
+          <div style="margin-top: 24px; padding-top: 16px; border-top: 2px dashed #e2e8f0;">
+            <h4 style="margin: 0 0 12px 0; color: #475569; font-size: 14px; display: flex; justify-content: space-between;">
+              <span>Linked Products Registry</span>
+              <span class="app-badge info">{{ getProductsInEditingCategory().length }} items</span>
+            </h4>
+
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc;">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Barcode/ID</th>
+                    <th>Product Name</th>
+                    <th style="text-align: right;">Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (prod of getProductsInEditingCategory(); track prod.id) {
+                    <tr>
+                      <td style="font-family: monospace; color: #64748b;">{{ prod.id }}</td>
+                      <td style="font-weight: 600; color: #1e293b;">{{ prod.name }}</td>
+                      <td style="text-align: right; font-weight: bold;" [style.color]="prod.stockQuantity <= 5 ? '#ef4444' : '#10b981'">
+                        {{ prod.stockQuantity }} pcs
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 24px 0;">No products assigned to this category.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- CONTEXT C: SUPPLIER DIRECTORY WORKBENCH -->
+      @if (activeTab() === 'SUPPLIERS') {
+        <div style="width: 100%; box-sizing: border-box;">
+          @if (selectedSupplier() || isCreatingNew()) {
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
+                <h3 class="app-title" style="margin: 0;">
+                  {{ isCreatingNew() ? '✨ Register New Supplier Profile' : '📝 Edit Vendor Ledger' }}
+                </h3>
+                <span class="app-badge info">ID: {{ formSupplier.id || 'AUTO' }}</span>
+              </div>
+
+              <div class="app-form-group">
+                <label class="app-form-label">Company Name</label>
+                <input type="text" class="app-input" [(ngModel)]="formSupplier.name" placeholder="e.g., Wholesale Corp S.A." />
+              </div>
+
+              <div class="app-form-grid">
+                <div class="app-form-group">
+                  <label class="app-form-label">Contact Person</label>
+                  <input type="text" class="app-input" [(ngModel)]="formSupplier.contact" placeholder="e.g., John Doe" />
+                </div>
+                <div class="app-form-group">
+                  <label class="app-form-label">Phone Number</label>
+                  <input type="text" class="app-input" [(ngModel)]="formSupplier.phone" placeholder="e.g., +30 210..." />
+                </div>
+              </div>
+
+              <div class="app-form-group">
+                <label class="app-form-label">Internal Notes / Observations</label>
+                <textarea class="app-input" [(ngModel)]="formSupplier.notes" placeholder="e.g., Delivers on Tuesdays..." rows="3" style="resize: vertical;"></textarea>
+              </div>
+
+              <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; width: 100%;">
+                  <input type="checkbox" [(ngModel)]="formSupplier.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Vendor Active
+                </label>
+              </div>
+
+              <div class="app-form-actions">
+                <button type="button" class="app-btn app-btn-secondary" (click)="clearAllWorkbenches()">Cancel</button>
+                <button type="button" class="app-btn app-btn-primary" (click)="saveSupplierChanges()">💾 Save Vendor</button>
+              </div>
+            </div>
+          } @else {
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 2px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center;">
+              <span style="font-size: 24px; margin-bottom: 8px;">🚚</span>
+              <p style="margin: 0; font-size: 14px; font-weight: 500;">No Supplier Selected</p>
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Select a vendor item from the directory table on the left to modify details.</p>
+            </div>
+          }
+        </div>
+      }
+    </div>
   </div>
 </div>

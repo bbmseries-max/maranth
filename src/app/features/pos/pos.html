@@ -1,20 +1,16 @@
-<!-- Custom POS Overlay Dialog Frame -->
 @if (salesService.activeModal(); as modal) {
   <div class="pos-modal-overlay is-active">
     <div class="pos-modal-window">
       
-      <!-- Styled Header Section based on Modal Type -->
       <div class="pos-modal-header" 
            [class.warning-header]="modal.type === 'warning'"
            [class.success-header]="modal.type === 'success'">
         {{ modal.title }}
       </div>
       
-      <!-- Modal Main Content Body -->
       <div class="pos-modal-body" style="white-space: pre-line;">
-        <p>{{ modal.message }}</p>
+        <p style="margin-top: 0;">{{ modal.message }}</p>
         
-        <!-- 🎯 Dynamic Input: Safely handles both Numbers and Dates -->
         @if (modal.type === 'prompt') {
           <input 
             #weightInput
@@ -28,20 +24,17 @@
         }
       </div>
       
-      <!-- Dynamic Layout Button Footer Row -->
       <div class="pos-modal-footer">
         
-        <!-- ⚖️ PROMPT MODE: Show Cancel + Confirm buttons -->
         @if (modal.type === 'prompt') {
           <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.activeModal.set(null)">
             Cancel
           </button>
-          <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">
+          <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm && modal.onConfirm(modal.value)">
             Confirm
           </button>
         }
 
-        <!-- ⚠️ WARNING / SUCCESS MODE: Show exactly ONE Close button -->
         @if (modal.type === 'warning' || modal.type === 'success') {
           <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.activeModal.set(null)">
             Dismiss
@@ -57,13 +50,13 @@
 <div class="pos-container">
   
   <header class="pos-header">
-    <div class="header-left">
-   <button class="pos-admin-btn" (click)="salesService.linkCloudFolder()">
-  🔗 Link to Google Drive folder
-</button>
+    <div class="header-left" style="display: flex; align-items: center;">
+      <button class="pos-admin-btn" (click)="salesService.linkCloudFolder()">
+        🔗 Link to Google Drive folder
+      </button>
 
-      <span class="brand-logo">🍊 MARANTH</span>
-      <span class="system-tag">POS System v2.0</span>
+      <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px; margin-left: 16px;">🍊 MARANTH</span>
+      <span class="system-tag" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">POS System v2.0</span>
     </div>
     <div class="header-right">
       <a routerLink="/reports" class="header-btn btn-reports">📊 Sales Reports</a>
@@ -73,61 +66,81 @@
 
   <div class="pos-main-layout">
     
-    <aside class="pos-sidebar-panel" style="display: flex; flex-direction: column; height: 100%; color: #fff;">
+    <aside class="pos-sidebar-panel" style="color: #fff;">
   
-  <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
-  <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
-    
-<button 
-  (click)="salesService.clearBasket()" 
-  [disabled]="salesService.basket().length === 0"
-  style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
-  [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
-  🗑️ Clear Current Sale
-</button>
+      <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
+      <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+        
+        <button 
+          (click)="salesService.clearBasket()" 
+          [disabled]="salesService.basket().length === 0"
+          style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
+          [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
+          🗑️ Clear Current Sale
+        </button>
 
-@if (!salesService.suspendedBasket()) {
-  <button 
-    (click)="salesService.suspendOrder()" 
-    [disabled]="salesService.basket().length === 0"
-    style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
-    [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
-    ⏸️ Suspend Order
-  </button>
-    } @else {
-      <button 
-        (click)="salesService.recallOrder()" 
-        style="background: #eab308; color: #0f172a; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; text-align: left; animation: pulse 2s infinite;">
-        🔄 Recall Held Order (1)
-      </button>
-    }
+        @if (!salesService.suspendedBasket()) {
+          <button 
+            (click)="salesService.suspendOrder()" 
+            [disabled]="salesService.basket().length === 0"
+            style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
+            [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
+            ⏸️ Suspend Order
+          </button>
+        } @else {
+          <button 
+            (click)="salesService.recallOrder()" 
+            style="background: #eab308; color: #0f172a; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; text-align: left;">
+            🔄 Recall Held Order (1)
+          </button>
+        }
 
-  </div>
+      </div>
 
-  <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Catalog Filters</div>
-  <div class="sidebar-scroll-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
-    
-    <button 
-      (click)="searchQuery.set('')" 
-      style="background: #334155; color: #f8fafc; border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600;">
-      🌐 Show All Items
-    </button>
+      <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Catalog Filters</div>
+      <div class="sidebar-scroll-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
+        
+        <button 
+          (click)="showWeightedShelf.set(!showWeightedShelf())" 
+          [style.background]="showWeightedShelf() ? '#166534' : '#334155'"
+          style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600; color: #ffffff; transition: all 0.2s;">
+          ⚖️ {{ showWeightedShelf() ? 'Hide' : 'Show' }} Scaled Items
+        </button>
 
-    @for (cat of salesService.categories(); track cat.id) {
-      <button 
-        (click)="searchQuery.set(cat.name)" 
-        style="background: #1e293b; color: #cbd5e1; border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
-        📁 {{ cat.name }}
-      </button>
-    }
-  </div>
+        <button 
+          (click)="showLooseShelf.set(!showLooseShelf())" 
+          [style.background]="showLooseShelf() ? '#0369a1' : '#334155'"
+          style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600; color: #ffffff; transition: all 0.2s;">
+          🏷️ {{ showLooseShelf() ? 'Hide' : 'Show' }} Loose Items
+        </button>
 
-</aside>
+        <div style="height: 1px; background: #334155; margin: 4px 0;"></div>
 
-  <section class="main-catalog-panel">
-      
+        <button 
+          (click)="selectedCategoryId.set('ALL'); searchQuery.set('')" 
+          [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#1e293b'"
+          [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#cbd5e1'"
+          style="border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
+          🌐 Show All Categories
+        </button>
+
+        @for (cat of salesService.categories(); track cat.id) {
+          <button 
+            (click)="selectedCategoryId.set(cat.id); searchQuery.set('')" 
+            [style.background]="selectedCategoryId() === cat.id ? '#3b82f6' : '#1e293b'"
+            [style.color]="selectedCategoryId() === cat.id ? '#ffffff' : '#cbd5e1'"
+            style="border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
+            📁 {{ cat.name }}
+          </button>
+        }
+      </div>
+
+    </aside>
+
+    <section class="main-catalog-panel">
+        
       <div class="search-action-bar" style="background: #ffffff; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; flex: 0 0 auto;">
-        <div class="search-input-wrapper" style="display: flex; align-items: center; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 6px; padding: 4px 12px;">
+        <div class="search-input-wrapper">
           <span style="font-size: 16px; color: #94a3b8; margin-right: 8px;">🔍</span>
           <input 
             #searchInput
@@ -142,6 +155,42 @@
         </div>
       </div>
 
+      <!-- ⭐ QUICK ACCESS SHELF 1: WEIGHTED -->
+      @if (showWeightedShelf() && weightedProducts().length > 0) {
+        <div class="quick-access-shelf">
+          <div class="qa-header" style="color: #166534;">⚖️ Quick Access: Scaled Produce & Meat</div>
+          <div class="qa-scroll-track" style="grid-template-rows: repeat(3, 1fr); padding-bottom: 4px;">
+            @for (prod of weightedProducts(); track prod.id) {
+              <div class="qa-card" (click)="handleProductClick(prod)">
+                <div class="qa-name">{{ prod.name }}</div>
+                <div class="qa-bottom">
+                  <span class="qa-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+                  <span class="qa-badge weighted">⚖️ Scale</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ⭐ QUICK ACCESS SHELF 2: LOOSE -->
+      @if (showLooseShelf() && looseProducts().length > 0) {
+        <div class="quick-access-shelf">
+          <div class="qa-header" style="color: #0369a1;">🏷️ Quick Access: Loose Items (No Barcode)</div>
+          <div class="qa-scroll-track" style="grid-template-rows: repeat(3, 1fr); padding-bottom: 4px;">
+            @for (prod of looseProducts(); track prod.id) {
+              <div class="qa-card" (click)="handleProductClick(prod)">
+                <div class="qa-name">{{ prod.name }}</div>
+                <div class="qa-bottom">
+                  <span class="qa-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+                  <span class="qa-badge">🏷️ Loose</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <div class="catalog-scroll-viewport">
         <div class="grid-layout-scroll">
           @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
@@ -155,7 +204,7 @@
             }
 
             <div class="product-item-card" (click)="handleProductClick(prod)">
-              <div class="prod-details" style="display: flex; flex-direction: column; gap: 4px;">
+              <div class="prod-details">
                 <span class="prod-name">{{ prod.name }}</span>
                 <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
               </div>
@@ -178,14 +227,8 @@
     </section>
 
     <section class="checkout-basket-panel">
-      <div class="col-header-basket">
-        <span>🛒 Current Order Balance</span>
-      </div>
       <app-shopping-basket></app-shopping-basket>
     </section>
-
-    <!-- Put this in your settings panel or layout footer temporarily -->
-
 
   </div>
 </div>

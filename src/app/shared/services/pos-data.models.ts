@@ -1,47 +1,52 @@
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  stockQuantity: number;
+  categoryId?: string;
+  isActive?: boolean;
+  expire?: string;
+  barcode?: string;
+  sku?: string;
+  purchasePrice?: number;
+  taxRate?: number;
+  supplierId?: string;
+  minStockWarning?: number;
+  notes?: string;
+  isWeighted?: boolean;
+  imageUrl?: string;
+  
+  // UI Display Helpers
+  isFirstOfCategory?: boolean;
+  displayCategoryName?: string;
+}
+
 export interface Category {
   id: string;
   name: string;
-  isActive: boolean;
+  isActive?: boolean;
 }
 
 export interface Supplier {
   id: string;
   name: string;
-  contact: string;
-  phone: string;
-  notes: string;
-  isActive: boolean;
-}
-
-export interface Product {
-  id: string;
-  barcode: string;
-  categoryId: string;
-  companyId?: string;
-  name: string;
-  price: number;
-  stockQuantity: number;
-  purchasePrice: number;
-  taxRate: number;
-  isActive: boolean;
-  isWeighted?: boolean;
-  expire?: string;
+  contact?: string;
+  phone?: string;
   notes?: string;
+  isActive?: boolean;
 }
 
 export interface BasketItem {
-  productId: string;
-  productName: string;
-  price: number;
+  product: Product;
   quantity: number;
-  taxRate: number; // 🚀 Add this line (e.g., 24, 13, or 6)
-  // ... keep any other existing fields like barcode or unit
 }
 
-export interface SupplierJsonData {
-  [key: string]: Supplier;
-}
-
-export interface ProductJsonData {
-  [key: string]: Product;
+export interface TransactionRecord {
+  id: string;
+  timestamp: string;
+  items: BasketItem[];
+  subtotal: number;
+  taxAmount: number;
+  grandTotal: number;
+  paymentMethod: 'Cash' | 'Card' | 'Debit';
 }
