@@ -4,7 +4,6 @@ import { Product, BasketItem, Category, Supplier, TransactionRecord } from './po
 // ⭐ Re-export all blueprints so other components can safely import them from here!
 export * from './pos-data.models';
 
-// ⭐ Tell TypeScript explicitly that this signal holds a POSModal
 export interface POSModal {
   type: 'warning' | 'success' | 'prompt';
   title: string;
@@ -44,21 +43,27 @@ const DEFAULT_PRODUCTS: Product[] = [
   providedIn: 'root'
 })
 export class SalesService {
-
-  public products = signal<Product[]>(this.loadFromStorage('maranth_inventory', DEFAULT_PRODUCTS));
-  public categories = signal<Category[]>(this.loadFromStorage('maranth_categories', DEFAULT_CATEGORIES));
-  public suppliers = signal<Supplier[]>(this.loadFromStorage('maranth_suppliers', DEFAULT_SUPPLIERS));
-  public transactions = signal<TransactionRecord[]>(this.loadFromStorage('maranth_transactions', []));
+  public currentCashier = signal<string | null>(localStorage.getItem('maranth_active_cashier') || null);
   
   public basket = signal<BasketItem[]>([]);
   public suspendedBasket = signal<BasketItem[] | null>(null);
+  public transactions = signal<TransactionRecord[]>([]);
   
-  public currentCategory = signal<string>('ALL');
-  public highlightedItemId = signal<string | null>(null);
-  
+  public products = signal<Product[]>([]);
+  public categories = signal<Category[]>([]);
+  public suppliers = signal<Supplier[]>([]);
+
   public activeModal = signal<POSModal | null>(null);
+  public highlightedItemId = signal<string | null>(null);
 
   constructor() {
+    // 1. Load Data from Memory
+    this.products.set(this.loadFromStorage('maranth_inventory', DEFAULT_PRODUCTS));
+    this.categories.set(this.loadFromStorage('maranth_categories', DEFAULT_CATEGORIES));
+    this.suppliers.set(this.loadFromStorage('maranth_suppliers', DEFAULT_SUPPLIERS));
+    this.transactions.set(this.loadFromStorage('maranth_transactions', []));
+
+    // 2. Setup Auto-Save Effects
     effect(() => localStorage.setItem('maranth_inventory', JSON.stringify(this.products())));
     effect(() => localStorage.setItem('maranth_categories', JSON.stringify(this.categories())));
     effect(() => localStorage.setItem('maranth_suppliers', JSON.stringify(this.suppliers())));
@@ -80,16 +85,22 @@ export class SalesService {
     return fallback;
   }
 
-  // ⭐ MASTER GLOBAL TRANSLATOR ⭐
+  public loginCashier(name: string): void {
+    this.currentCashier.set(name);
+    localStorage.setItem('maranth_active_cashier', name);
+  }
+
+  public logoutCashier(): void {
+    this.currentCashier.set(null);
+    localStorage.removeItem('maranth_active_cashier');
+  }
+
   public getCategoryName(categoryId: string | undefined): string {
     if (!categoryId) return 'Unassigned';
     const cleanId = categoryId.toString().trim();
-    
-    // 1. Check live list
     const match = this.categories().find(c => c.id.toString() === cleanId);
     if (match && match.name) return match.name;
     
-    // 2. Ultimate Fallback
     switch (cleanId) {
       case '5605': return 'Shkolla - Lojra';
       case '5619': return 'Xartika kouzinas - Banjo';
@@ -108,13 +119,11 @@ export class SalesService {
   public netSubtotal = computed(() => {
     return this.basket().reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
   });
-
   public subtotal = this.netSubtotal;
 
   public taxAmount = computed(() => {
     return this.netSubtotal() * 0.24;
   });
-
   public vatAmount = this.taxAmount;
 
   public grandTotal = computed(() => {
@@ -174,41 +183,34 @@ export class SalesService {
     this.basket.set([]);
   }
 
-  // ⭐ RESTORED: Barcode Scanner & Search Logic ⭐
-  public lookupAndScanBarcode(query: string): void {
-    const cleanQuery = query.trim().toLowerCase();
-    if (!cleanQuery) return;
-
-    // Try to find an exact match by ID, Barcode, or Name
-    const match = this.products().find(p => 
-      p.id.toString().toLowerCase() === cleanQuery || 
-      (p.barcode && p.barcode.toLowerCase() === cleanQuery) ||
-      p.name.toLowerCase() === cleanQuery
-    );
-
-    if (match) {
-      this.addToBasket(match);
-    } else {
-      // Show warning modal if scan fails
-      this.activeModal.set({
-        type: 'warning',
-        title: '⚠️ Item Not Found',
-        message: `Could not find any product matching "${query}".`,
-        value: '',
-        onConfirm: () => this.activeModal.set(null)
-      });
+  public suspendOrder(): void {
+    if (this.basket().length > 0) {
+      this.suspendedBasket.set([...this.basket()]);
+      this.clearBasket();
     }
   }
 
-  public suspendOrder(): void {
-    this.suspendedBasket.set(this.basket());
-    this.clearBasket();
+  public recallOrder(): void {
+    const suspended = this.suspendedBasket();
+    if (suspended && suspended.length > 0) {
+      this.basket.set([...suspended]);
+      this.suspendedBasket.set(null);
+    }
   }
 
-  public recallOrder(): void {
-    if (this.suspendedBasket()) {
-      this.basket.set(this.suspendedBasket()!);
-      this.suspendedBasket.set(null);
+  public lookupAndScanBarcode(query: string): void {
+    const queryLower = query.toLowerCase().trim();
+    const found = this.products().find(p => 
+      (p.barcode && p.barcode.toLowerCase() === queryLower) || 
+      (p.id && p.id.toString().toLowerCase() === queryLower)
+    );
+
+    if (found) {
+      this.addToBasket(found);
+    } else {
+      this.activeModal.set({
+        type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.activeModal.set(null)
+      });
     }
   }
 
@@ -237,15 +239,12 @@ export class SalesService {
       onConfirm: () => this.activeModal.set(null)
     });
 
-    // ⭐ New: Auto-close the modal after 2 seconds!
     setTimeout(() => {
-      // Check to make sure they haven't already clicked something else
       if (this.activeModal()?.title === '✅ Payment Successful') {
         this.activeModal.set(null);
       }
     }, 2000);
   }
-
 
   public topSellingProducts = computed(() => {
     const itemsMap = new Map<string, { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number }>();
@@ -254,11 +253,7 @@ export class SalesService {
       tx.items.forEach(item => {
         if (!itemsMap.has(item.product.id)) {
           itemsMap.set(item.product.id, {
-            id: item.product.id,
-            name: item.product.name,
-            unitsSold: 0,
-            totalRevenue: 0,
-            stockQuantity: item.product.stockQuantity || 0
+            id: item.product.id, name: item.product.name, unitsSold: 0, totalRevenue: 0, stockQuantity: item.product.stockQuantity || 0
           });
         }
         const stats = itemsMap.get(item.product.id)!;
@@ -272,11 +267,7 @@ export class SalesService {
 
   public hourlyHeatmapMetrics = computed(() => {
     const hours = Array.from({length: 24}, (_, i) => ({
-      hour: i,
-      hourLabel: `${i.toString().padStart(2, '0')}:00`,
-      revenue: 0,
-      ticketCount: 0,
-      intensityPercentage: 0
+      hour: i, hourLabel: `${i.toString().padStart(2, '0')}:00`, revenue: 0, ticketCount: 0, intensityPercentage: 0
     }));
 
     this.transactions().forEach(tx => {
@@ -286,27 +277,17 @@ export class SalesService {
     });
 
     const maxRev = Math.max(...hours.map(h => h.revenue));
-    if (maxRev > 0) {
-      hours.forEach(h => {
-        h.intensityPercentage = Math.round((h.revenue / maxRev) * 100);
-      });
-    }
-
+    if (maxRev > 0) hours.forEach(h => { h.intensityPercentage = Math.round((h.revenue / maxRev) * 100); });
     return hours;
   });
 
   public linkCloudFolder() {
     this.activeModal.set({
-      type: 'prompt',
-      title: '🔗 Link Cloud Folder',
-      message: 'Establish a secure sync connection to a local or cloud folder to seamlessly backup your daily Z-Reports.',
-      value: '',
+      type: 'prompt', title: '🔗 Link Cloud Folder', message: 'Establish a secure sync connection to backup your daily Z-Reports.', value: '',
       onConfirm: () => {
          this.activeModal.set(null);
          setTimeout(() => {
-            this.activeModal.set({
-                type: 'success', title: '✅ Folder Linked', message: 'Successfully established sync connection!', value: '', onConfirm: () => this.activeModal.set(null)
-            });
+            this.activeModal.set({ type: 'success', title: '✅ Folder Linked', message: 'Successfully established sync connection!', value: '', onConfirm: () => this.activeModal.set(null) });
          }, 400);
       }
     });

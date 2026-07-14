@@ -1,11 +1,12 @@
 import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DecimalPipe, DatePipe],
+  imports: [CommonModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })

@@ -86,7 +86,6 @@
 
     <!-- 💳 Sticky Payment Method Selector Block -->
     <div class="payment-method-panel">
-      <label class="payment-label">Select Payment Method:</label>
       <div class="payment-button-group">
         <button type="button" class="btn-payment" (click)="salesService.processPayment('Cash')" [disabled]="salesService.basket().length === 0">💵 Cash</button>
         <button type="button" class="btn-payment" (click)="salesService.processPayment('Card')" [disabled]="salesService.basket().length === 0">💳 Card</button>

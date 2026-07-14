@@ -1,0 +1,57 @@
+<div class="login-viewport">
+  
+  <div class="login-card">
+    
+    <div class="brand-section">
+      <div class="logo-circle">🍊</div>
+      <h1 class="brand-title">MARANTH</h1>
+      <p class="brand-subtitle">Secure Terminal Access</p>
+    </div>
+    
+    <form class="login-form" (ngSubmit)="onLogin()">
+      
+      <div class="app-form-group">
+        <label class="app-form-label">Cashier ID / Username</label>
+        <div class="input-with-icon">
+          <span class="input-icon">👤</span>
+          <input 
+            type="text" 
+            class="app-input custom-login-input" 
+            [ngModel]="username()" 
+            (ngModelChange)="username.set($event)" 
+            name="username" 
+            placeholder="e.g. admin" 
+            autocomplete="off"
+            autofocus
+          >
+        </div>
+      </div>
+      
+      <div class="app-form-group" style="margin-top: 16px;">
+        <label class="app-form-label">Authorization PIN</label>
+        <div class="input-with-icon">
+          <span class="input-icon">🔒</span>
+          <input 
+            type="password" 
+            class="app-input custom-login-input" 
+            [ngModel]="password()" 
+            (ngModelChange)="password.set($event)" 
+            name="password" 
+            placeholder="••••"
+          >
+        </div>
+      </div>
+      
+      <button type="submit" class="app-btn app-btn-primary login-btn">
+        Unlock Register ➔
+      </button>
+
+    </form>
+
+    <div class="footer-note">
+      POS System v2.0 • Authorized Personnel Only
+    </div>
+
+  </div>
+
+</div>

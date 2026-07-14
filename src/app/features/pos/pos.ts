@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common'; 
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 
 import { SalesService } from '../../shared/services/sales'; 
 import { Product, Category } from '../../shared/services/pos-data.models';
@@ -16,6 +16,7 @@ import { ShoppingBasketComponent } from './components/shopping-basket/shopping-b
 })
 export class PosComponent implements OnInit {
   public salesService = inject(SalesService);
+  public router = inject(Router);
 
   public searchQuery = signal<string>('');
   public selectedCategoryId = signal<string>('ALL');
@@ -68,5 +69,10 @@ export class PosComponent implements OnInit {
 
   public handleProductClick(product: Product) {
     this.salesService.addToBasket(product);
+  }
+
+  public onLogout() {
+    this.salesService.logoutCashier();
+    this.router.navigate(['/login']);
   }
 }

@@ -1,10 +1,17 @@
 <div class="app-viewport">
   
   <div class="app-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <div>
-      <h1 class="app-title" style="margin: 0; font-size: 24px;">📊 Store Analytics & Z-Report</h1>
-      <span class="app-subtitle" style="display: inline-block; margin-top: 8px;">{{ todayDate | date:'fullDate' }}</span>
+    
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <a routerLink="/pos" class="app-btn" style="background: #1e293b; color: white; text-decoration: none; padding: 10px 16px;">
+        ⬅️ Back
+      </a>
+      <div>
+        <h1 class="app-title" style="margin: 0; font-size: 24px;">📊 Store Analytics & Z-Report</h1>
+        <span class="app-subtitle" style="display: inline-block; margin-top: 8px;">{{ todayDate | date:'fullDate' }}</span>
+      </div>
     </div>
+
     <div style="display: flex; gap: 12px;">
       <button class="app-btn app-btn-primary" (click)="printZReport()">🖨️ Print Z-Report</button>
       <button class="app-btn app-btn-danger" (click)="clearAllLedgerData()">🗑️ Clear Logs</button>

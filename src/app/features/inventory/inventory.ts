@@ -1,6 +1,7 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product, Category, Supplier } from '../../shared/services/pos-data.models';
 import { InventoryService } from './inventory.service';
@@ -8,7 +9,7 @@ import { InventoryService } from './inventory.service';
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './inventory.html',
   styleUrls: ['./inventory.css']
 })
@@ -52,20 +53,8 @@ export class InventoryComponent implements OnInit {
     isWeighted: false    
   };
 
-  private readonly FALLBACK_SUPPLIERS: Supplier[] = [
-    { id: '1', name: 'Standard Local Supplier', contact: '', phone: '', notes: '', isActive: true },
-    { id: '2', name: 'Direct Procurement Wholesale', contact: '', phone: '', notes: '', isActive: true },
-    { id: 'DRINKS', name: 'Beverage Main Distributor', contact: '', phone: '', notes: '', isActive: true }
-  ];
-
   ngOnInit(): void {
     this.clearAllWorkbenches(); 
-    //this.loadInventoryCatalog();
-    //this.loadInventoryMetadata();
-  }
-
-  private loadInventoryCatalog(): void {
-    console.log('Loading primary inventory product stream...');
   }
 
   public switchTab(tab: 'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS'): void {
@@ -139,6 +128,35 @@ export class InventoryComponent implements OnInit {
     return match ? match.name : 'Unknown Supplier';
   }
 
+  // ⭐ New function to translate Category IDs to actual names!
+  public getCategoryName(categoryId: string | undefined): string {
+    if (!categoryId) return 'Unassigned';
+    const cleanId = categoryId.toString().trim();
+    
+    const match = this.categories().find(c => 
+      c.id?.toString() === cleanId || 
+      (c as any).category_id?.toString() === cleanId
+    );
+    
+    if (match && (match.name || (match as any).category_name)) {
+      return match.name || (match as any).category_name;
+    }
+    
+    switch (cleanId) {
+      case '5605': return 'Shkolla - Lojra';
+      case '5619': return 'Xartika kouzinas - Banjo';
+      case '5614': return 'Freska Fruta';
+      case '5613': return 'Freska laxanika';
+      case '5636': return 'Karta ananeosis';
+      case '5606': return 'Caj zesto - Rofimata';
+      case '5609': return 'Cikles - Karameles';
+      case '5622': return 'Idi kapnistou -Pipes - Anaptires';
+      case '5627': return 'Zootrofes - Axesuar katikidion';
+      case '5635': return 'Veze';
+    }
+    return `Category ${cleanId}`;
+  }
+
   public prepareNewSupplier(): void {
     this.isCreatingNew.set(true);
     this.formSupplier = { id: '', name: '', contact: '', phone: '', notes: '', isActive: true };
@@ -162,21 +180,6 @@ export class InventoryComponent implements OnInit {
     this.salesService.activeModal.set({
       type: 'success', title: '✅ Success', message: 'Supplier directory updated!', value: '', onConfirm: () => this.salesService.activeModal.set(null)
     });
-  }
-
-  private loadInventoryMetadata(): void {
-    if ((this.salesService as any).loadStoreInventory) {
-      (this.salesService as any).loadStoreInventory().subscribe({
-        next: (data: any) => {
-          this.salesService.categories.set(data?.categories || []);
-          const backendSuppliers = data?.suppliers?.length ? data.suppliers : this.FALLBACK_SUPPLIERS;
-          this.salesService.suppliers.set(backendSuppliers);
-        },
-        error: (err: any) => console.error('Failed to load metadata:', err)
-      });
-    } else {
-      this.salesService.suppliers.set(this.FALLBACK_SUPPLIERS);
-    }
   }
 
   public updateDateOnTheFly(product: Product): void {

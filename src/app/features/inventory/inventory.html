@@ -1,7 +1,12 @@
 <div class="app-viewport">
 
   <!-- Tab Bar Header Strip -->
-  <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+  <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; align-items: center;">
+    
+    <a routerLink="/pos" class="app-btn" style="background: #1e293b; color: white; text-decoration: none; margin-right: 16px;">
+      ⬅️ Back to Register
+    </a>
+
     <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'PRODUCTS'" [class.app-btn-secondary]="activeTab() !== 'PRODUCTS'" (click)="switchTab('PRODUCTS')">
       📦 Stock Inventory
     </button>
@@ -16,19 +21,17 @@
   <!-- Main Unified Layout Frame Container -->
   <div style="display: flex; gap: 24px; height: calc(100vh - 110px); box-sizing: border-box; overflow: hidden; position: relative;">
     
-    <!-- ======================================================== -->
-    <!-- LEFT COLUMN: JOURNAL DATA TAB SWITCHER FRAME               -->
-    <!-- ======================================================== -->
+    <!-- LEFT COLUMN: JOURNAL DATA TAB SWITCHER FRAME -->
     <div class="app-card" style="flex: 1.6; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; padding-right: 0;">
       
-      <!-- Dynamic Top Tool Action Bar Contextualized by Active View -->
+      <!-- Dynamic Top Tool Action Bar -->
       <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; padding-right: 20px; flex-wrap: wrap;">
         
         @if (activeTab() === 'PRODUCTS') {
-          <input type="text" #barcodeInput class="app-input" [value]="searchQuery()" placeholder="Scan barcode or type name to filter..." (input)="handleBarcodeScan(barcodeInput.value)" (keydown.enter)="handleBarcodeScan(barcodeInput.value)" style="width: 100%; max-width: 300px;" />
+          <input type="text" #barcodeInput class="app-input" [value]="searchQuery()" placeholder="Scan barcode or type name..." (input)="handleBarcodeScan(barcodeInput.value)" (keydown.enter)="handleBarcodeScan(barcodeInput.value)" style="width: 100%; max-width: 300px;" />
 
           @if (searchQuery()) {
-            <button type="button" class="app-btn app-btn-danger" (click)="handleBarcodeScan(''); barcodeInput.value = ''">
+            <button type="button" class="app-btn app-btn-danger" (click)="handleBarcodeScan(''); barcodeInput.value = ''" style="padding: 6px 12px;">
               Clear Filter
             </button>
           }
@@ -68,7 +71,10 @@
                   <tr (click)="selectProductToEdit(product)" [style.background]="selectedProduct()?.id === product.id ? '#eff6ff' : 'transparent'" style="cursor: pointer;">
                     <td style="font-family: monospace; font-weight: bold; color: #64748b;">{{ product.id }}</td>
                     <td style="font-weight: 600; color: #1e293b;">{{ product.name }}</td>
-                    <td><span class="app-badge" style="background: #f1f5f9; color: #475569;">{{ product.categoryId }}</span></td>
+                    
+                    <!-- ⭐ Changed right here: Now calls salesService.getCategoryName! -->
+                    <td><span class="app-badge info" style="background: #f1f5f9; color: #475569;">{{ salesService.getCategoryName(product.categoryId) }}</span></td>
+                    
                     <td style="text-align: right; color: #64748b;">{{ getProductCost(product) | currency:'EUR' }}</td>
                     <td style="text-align: right; font-weight: 600; color: #0f172a;">{{ product.price | currency:'EUR' }}</td>
                     <td style="text-align: center;">
@@ -144,9 +150,7 @@
       </div>
     </div>
 
-    <!-- ======================================================== -->
-    <!-- RIGHT COLUMN: PRODUCT DETAIL WORKBENCH                   -->
-    <!-- ======================================================== -->
+    <!-- RIGHT COLUMN: PRODUCT DETAIL WORKBENCH -->
     <div class="app-card" style="flex: 1; height: 100%; box-sizing: border-box; overflow-y: auto;">
         
       <!-- CONTEXT A: STOCKS & PRODUCTS MATRIX WORKBENCH -->
@@ -171,7 +175,7 @@
               </div>
             </div>
 
-            <div class="app-form-group">
+            <div class="app-form-group" style="margin-bottom: 16px;">
               <label class="app-form-label">Product Name</label>
               <input type="text" class="app-input" [(ngModel)]="formProduct.name" placeholder="e.g., Clipper Lighter" />
             </div>
@@ -202,15 +206,9 @@
               </div>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 16px;">
               <span style="color: #64748b; font-weight: 500;">Calculated Gross Profit Margin:</span>
               <strong [style.color]="getFormProfitMargin() >= 0 ? '#166534' : '#991b1b'">{{ getFormProfitMargin() | number:'1.1-2' }}%</strong>
-            </div>
-
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-              <span>Category ID: {{ formProduct.categoryId }}</span>
-              <span style="margin: 0 8px;">•</span>
-              <span style="font-weight: 500; color: #334155;">🚚 Supplier: {{ getSupplierName(formProduct.supplierId) }}</span>
             </div>
 
             <div class="app-form-group" style="margin-bottom: 16px;">
@@ -234,7 +232,7 @@
               </div>
             </div>
 
-            <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; gap: 24px; align-items: center; border: 1px dashed #cbd5e1;">
+            <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; gap: 24px; align-items: center; border: 1px dashed #cbd5e1; margin-bottom: 24px;">
               <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
                 <input type="checkbox" [(ngModel)]="formProduct.isWeighted" style="width: 16px; height: 16px; cursor: pointer;" /> ⚖️ Scaled Item
               </label>
@@ -262,17 +260,17 @@
               <span class="app-badge info">ID: {{ formCategory.id || 'AUTO' }}</span>
             </div>
 
-            <div class="app-form-group">
+            <div class="app-form-group" style="margin-bottom: 16px;">
               <label class="app-form-label">Category Short Code / Unique key</label>
               <input type="text" class="app-input" [(ngModel)]="formCategory.id" [disabled]="!isCreatingNew()" placeholder="e.g., SMOKE" />
             </div>
 
-            <div class="app-form-group">
+            <div class="app-form-group" style="margin-bottom: 16px;">
               <label class="app-form-label">Display Category Name</label>
               <input type="text" class="app-input" [(ngModel)]="formCategory.name" placeholder="e.g., Tobacco Products" />
             </div>
 
-            <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1;">
+            <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1; margin-bottom: 24px;">
               <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; width: 100%;">
                 <input type="checkbox" [(ngModel)]="formCategory.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Category Available for POS Sales
               </label>
@@ -339,7 +337,7 @@
                 <span class="app-badge info">ID: {{ formSupplier.id || 'AUTO' }}</span>
               </div>
 
-              <div class="app-form-group">
+              <div class="app-form-group" style="margin-bottom: 16px;">
                 <label class="app-form-label">Company Name</label>
                 <input type="text" class="app-input" [(ngModel)]="formSupplier.name" placeholder="e.g., Wholesale Corp S.A." />
               </div>
@@ -355,12 +353,12 @@
                 </div>
               </div>
 
-              <div class="app-form-group">
+              <div class="app-form-group" style="margin-bottom: 16px;">
                 <label class="app-form-label">Internal Notes / Observations</label>
                 <textarea class="app-input" [(ngModel)]="formSupplier.notes" placeholder="e.g., Delivers on Tuesdays..." rows="3" style="resize: vertical;"></textarea>
               </div>
 
-              <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1;">
+              <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1; margin-bottom: 24px;">
                 <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; width: 100%;">
                   <input type="checkbox" [(ngModel)]="formSupplier.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Vendor Active
                 </label>

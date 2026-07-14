@@ -1,1 +1,0 @@
-import { Product, Category, Supplier } from '../../shared/services/pos-data.models';
