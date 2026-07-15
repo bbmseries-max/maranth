@@ -95,61 +95,50 @@ export class InventoryComponent implements OnInit {
             }
           }
           return strDate;
-        };
-        
-        if (dataArray.length > 0) {
-          let importCount = 0;
-          
-          this.salesService.products.update(prods => {
-            const currentProds = [...prods];
+            };
             
-            dataArray.forEach(item => {
-              // Find the ID (checking both your new 'ProductID' and old 'id')
-              const rawId = item.ProductID || item.id || item.Barcode || item.barcode;
+            if (dataArray.length > 0) {
+              let importCount = 0;
               
-              if (rawId) {
-                const itemId = rawId.toString();
-                const existingIndex = currentProds.findIndex(p => p.id?.toString() === itemId);
+              dataArray.forEach(item => {
+                // Find the ID (checking both your new 'ProductID' and old 'id')
+                const rawId = item.ProductID || item.id || item.Barcode || item.barcode;
                 
-                // 🧠 The "Smart Mapper": Translates your Excel column names to Maranth fields!
-                const parsedItem: Product = {
-                  id: itemId,
-                  barcode: (item.Barcode || item.barcode || '').toString(),
-                  name: item.Product || item.name || 'Unknown Item',
-                  categoryId: (item.Category || item.categoryId || 'ALL').toString(),
-                  price: parseFloat(item.Price || item.price) || 0,
-                  purchasePrice: parseFloat(item.Blerje || item.purchasePrice) || 0,
-                  stockQuantity: parseFloat(item.Cope || item.stockQuantity) || 0,
-                  taxRate: parseFloat(item.FPA || item.taxRate) || 1.24,
-                  afterTaxRate: parseFloat(item.AfterFPA || item.afterTaxRate) || 0,
+                if (rawId) {
+                  const itemId = rawId.toString();
                   
-                  // ⭐ Use the Date Translator here!
-                  expire: normalizeDate(item.Expire || item.expire),
-                  statusDate: normalizeDate(item.StatusDate || item.statusDate),
-                  
-                  notes: item.Shenime || item.notes || '',
-                  status: item.Status || item.status || 'Active',
-                  // Auto-disable product if status says 'Inactive'
-                  isActive: (item.Status || item.status) !== 'Inactive',
-                  isWeighted: item.isWeighted === true || item.isWeighted === 'true' // Fallback
-                };
+                  // 🧠 The "Smart Mapper": Translates your Excel column names to Maranth fields!
+                  const parsedItem: Product = {
+                    id: itemId,
+                    barcode: (item.Barcode || item.barcode || '').toString(),
+                    name: item.Product || item.name || 'Unknown Item',
+                    categoryId: (item.Category || item.categoryId || 'ALL').toString(),
+                    price: parseFloat(item.Price || item.price) || 0,
+                    purchasePrice: parseFloat(item.Blerje || item.purchasePrice) || 0,
+                    stockQuantity: parseFloat(item.Cope || item.stockQuantity) || 0,
+                    taxRate: parseFloat(item.FPA || item.taxRate) || 1.24,
+                    afterTaxRate: parseFloat(item.AfterFPA || item.afterTaxRate) || 0,
+                    
+                    // ⭐ Use the Date Translator here!
+                    expire: normalizeDate(item.Expire || item.expire),
+                    statusDate: normalizeDate(item.StatusDate || item.statusDate),
+                    
+                    notes: item.Shenime || item.notes || '',
+                    status: item.Status || item.status || 'Active',
+                    // Auto-disable product if status says 'Inactive'
+                    isActive: (item.Status || item.status) !== 'Inactive',
+                    isWeighted: item.isWeighted === true || item.isWeighted === 'true' // Fallback
+                  };
 
-                if (existingIndex > -1) {
-                  // Update existing
-                  currentProds[existingIndex] = { ...currentProds[existingIndex], ...parsedItem };
-                } else {
-                  // Add new
-                  currentProds.push(parsedItem);
+                  // 🔥 Push directly to Firebase Cloud!
+                  this.inventoryService.saveProductPayload(itemId, parsedItem);
+                  importCount++;
                 }
-                importCount++;
-              }
-            });
-            return currentProds;
-          });
+              });
 
-          this.salesService.activeModal.set({
-            type: 'success', title: '✅ Database Synced', message: `Successfully loaded ${importCount} products into the catalog!`, value: '', onConfirm: () => this.salesService.closeModal()
-          });
+              this.salesService.activeModal.set({
+                type: 'success', title: '✅ Live Sync Complete', message: `Successfully blasted ${importCount} products straight to the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal()
+              });
 
         } else {
           throw new Error("No valid data found in file.");
