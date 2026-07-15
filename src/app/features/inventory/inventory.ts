@@ -37,122 +37,136 @@ export class InventoryComponent implements OnInit {
   public selectedProduct = signal<Product | null>(null);
 
   // ⭐ SMART JSON Bulk Import Engine
-  public importJsonData(event: any): void {
+ public importJsonData(event: any): void {
     const file = event.target.files[0];
     if (!file) return;
+
+    this.salesService.activeModal.set({
+      type: 'success', title: '⏳ Processing Upload...', message: 'Reading file data. Please wait.', value: '', onConfirm: () => {}
+    });
 
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        let rawText = e.target?.result as string;
+        const jsonText = e.target?.result as string;
+        const rawData = JSON.parse(jsonText);
         
-        // 🛠️ SANITATION 1: Fix trailing commas (e.g., `},]`) commonly left by export tools
-        rawText = rawText.replace(/,\s*]/g, ']').replace(/,\s*}/g, '}');
-        
-        // 🛠️ SANITATION 2: Remove unprintable control chars from Access exports (like \u0001)
-        rawText = rawText.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
-
-        // 🛠️ SANITATION 3: Fix stray backslashes (like C:\Images) that break JSON parsers
-        rawText = rawText.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
-
-        // 🛠️ SANITATION 4: Escape literal newlines & tabs hidden INSIDE text fields!
-        // This looks inside every "quoted string" and neutralizes literal enters/tabs from Excel.
-        rawText = rawText.replace(/"(?:[^"\\]|\\.)*"/g, (match) => {
-          return match
-            .replace(/\n/g, '\\n')
-            .replace(/\r/g, '\\r')
-            .replace(/\t/g, '\\t')
-            .replace(/[\x00-\x1F]/g, ''); // Nuke any remaining invisible gremlins
-        });
-
-        // Now parse the perfectly clean text!
-        const importedData = JSON.parse(rawText);
-        
-        // Handle both Array format (New) and Object-Map format (Old)
+        // 🧠 Smart Array Extractor: Converts regular arrays OR Dictionary objects (like your Suppliers format) into a loopable list!
         let dataArray: any[] = [];
-        if (Array.isArray(importedData)) {
-          dataArray = importedData;
-        } else if (typeof importedData === 'object' && importedData !== null) {
-          dataArray = Object.values(importedData);
+        if (Array.isArray(rawData)) {
+          dataArray = rawData;
+        } else if (rawData.RECORDS || rawData.data || rawData.items) {
+          dataArray = rawData.RECORDS || rawData.data || rawData.items;
+        } else if (typeof rawData === 'object' && rawData !== null) {
+          dataArray = Object.values(rawData);
         }
 
-        // 🗓️ NEW: Date Translator Helper
-        const normalizeDate = (rawDate: any): string => {
-          if (!rawDate) return '';
-          const strDate = String(rawDate).trim();
-          if (strDate.includes('/')) {
-            const parts = strDate.split('/');
-            if (parts.length === 3) {
-              let year = parts[2];
-              if (year.length === 2) year = '20' + year; // Convert '22' to '2022'
-              let month = parts[0].padStart(2, '0');
-              let day = parts[1].padStart(2, '0');
-              // Safety swap if Excel exported Day/Month instead of Month/Day
-              if (parseInt(month) > 12) {
-                const temp = month; month = day; day = temp;
-              }
-              return `${year}-${month}-${day}`;
-            }
-          }
-          return strDate;
-            };
-            
-            if (dataArray.length > 0) {
-              let importCount = 0;
-              
-              dataArray.forEach(item => {
-                // Find the ID (checking both your new 'ProductID' and old 'id')
-                const rawId = item.ProductID || item.id || item.Barcode || item.barcode;
-                
-                if (rawId) {
-                  const itemId = rawId.toString();
-                  
-                  // 🧠 The "Smart Mapper": Translates your Excel column names to Maranth fields!
-                  const parsedItem: Product = {
-                    id: itemId,
-                    barcode: (item.Barcode || item.barcode || '').toString(),
-                    name: item.Product || item.name || 'Unknown Item',
-                    categoryId: (item.Category || item.categoryId || 'ALL').toString(),
-                    price: parseFloat(item.Price || item.price) || 0,
-                    purchasePrice: parseFloat(item.Blerje || item.purchasePrice) || 0,
-                    stockQuantity: parseFloat(item.Cope || item.stockQuantity) || 0,
-                    taxRate: parseFloat(item.FPA || item.taxRate) || 1.24,
-                    afterTaxRate: parseFloat(item.AfterFPA || item.afterTaxRate) || 0,
-                    
-                    // ⭐ Use the Date Translator here!
-                    expire: normalizeDate(item.Expire || item.expire),
-                    statusDate: normalizeDate(item.StatusDate || item.statusDate),
-                    
-                    notes: item.Shenime || item.notes || '',
-                    status: item.Status || item.status || 'Active',
-                    // Auto-disable product if status says 'Inactive'
-                    isActive: (item.Status || item.status) !== 'Inactive',
-                    isWeighted: item.isWeighted === true || item.isWeighted === 'true' // Fallback
-                  };
-
-                  // 🔥 Push directly to Firebase Cloud!
-                  this.inventoryService.saveProductPayload(itemId, parsedItem);
-                  importCount++;
-                }
-              });
-
-              this.salesService.activeModal.set({
-                type: 'success', title: '✅ Live Sync Complete', message: `Successfully blasted ${importCount} products straight to the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal()
-              });
-
-        } else {
-          throw new Error("No valid data found in file.");
-        }
-      } catch (error) {
-        // Log the exact error to the console so we can see it if it fails again
-        console.error("JSON Import Error:", error);
+        if (dataArray.length === 0) throw new Error("No valid data found in file.");
         
+        let importCount = 0;
+
+        // 🟢 SCENARIO A: We are on the PRODUCTS Tab
+        if (this.activeTab() === 'PRODUCTS') {
+          const normalizeDate = (rawDate: any): string => {
+            if (!rawDate) return '';
+            const strDate = String(rawDate).trim();
+            if (strDate.includes('/')) {
+              const parts = strDate.split('/');
+              if (parts.length === 3) {
+                let year = parts[2];
+                if (year.length === 2) year = '20' + year; 
+                let month = parts[0].padStart(2, '0');
+                let day = parts[1].padStart(2, '0');
+                if (parseInt(month) > 12) { const temp = month; month = day; day = temp; }
+                return `${year}-${month}-${day}`;
+              }
+            }
+            return strDate;
+          };
+          
+          dataArray.forEach(item => {
+            const rawId = item.ProductID || item.id || item.Barcode || item.barcode;
+            if (rawId) {
+              const itemId = rawId.toString();
+              const parsedItem: Product = {
+                id: itemId,
+                barcode: (item.Barcode || item.barcode || '').toString(),
+                name: item.Product || item.name || 'Unknown Item',
+                categoryId: (item.Category || item.categoryId || 'ALL').toString(),
+                price: parseFloat(item.Price || item.price) || 0,
+                purchasePrice: parseFloat(item.Blerje || item.purchasePrice) || 0,
+                stockQuantity: parseFloat(item.Cope || item.stockQuantity) || 0,
+                taxRate: parseFloat(item.FPA || item.taxRate) || 1.24,
+                afterTaxRate: parseFloat(item.AfterFPA || item.afterTaxRate) || 0,
+                expire: normalizeDate(item.Expire || item.expire),
+                statusDate: normalizeDate(item.StatusDate || item.statusDate),
+                notes: item.Shenime || item.notes || '',
+                status: item.Status || item.status || 'Active',
+                isActive: (item.Status || item.status) !== 'Inactive',
+                isWeighted: item.isWeighted === true || item.isWeighted === 'true'
+              };
+              this.inventoryService.saveProductPayload(itemId, parsedItem);
+              importCount++;
+            }
+          });
+
+          this.salesService.activeModal.set({
+            type: 'success', title: '✅ Live Sync Complete', message: `Successfully blasted ${importCount} products straight to Firebase!`, value: '', onConfirm: () => this.salesService.closeModal()
+          });
+
+        } 
+        // 🔵 SCENARIO B: We are on the CATEGORIES Tab
+        else if (this.activeTab() === 'CATEGORIES') {
+          dataArray.forEach(item => {
+            const rawId = item.CategoryID || item.categoryId || item.id || item.ID;
+            if (rawId) {
+              const catId = rawId.toString();
+              const parsedCat: Category = {
+                id: catId,
+                name: item.CategoryName || item.categoryName || item.name || item.Name || `Category ${catId}`,
+                isActive: (item.Status || item.status) !== 'Inactive'
+              };
+              this.inventoryService.saveCategoryPayload(parsedCat, true);
+              importCount++;
+            }
+          });
+
+          this.salesService.activeModal.set({
+            type: 'success', title: '✅ Matrix Sync Complete', message: `Successfully loaded ${importCount} categories into the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal()
+          });
+        }
+        // 🟠 SCENARIO C: We are on the SUPPLIERS Tab
+        else if (this.activeTab() === 'SUPPLIERS') {
+          dataArray.forEach(item => {
+            const rawId = item.SupplierID || item.supplierId || item.id || item.ID;
+            if (rawId) {
+              const supId = rawId.toString();
+              const parsedSup: Supplier = {
+                id: supId,
+                name: item.CompanyName || item.name || item.Name || item.name || `Vendor ${supId}`,
+                contact: item.ContactName || item.contact || item.Contact || '',
+                phone: item.Phone || item.phone || '',
+                notes: item.Notes || item.notes || item.Observations || '',
+                isActive: (item.Status || item.status) !== 'Inactive' && item.isActive !== false
+              };
+              this.inventoryService.saveSupplierPayload(parsedSup, true);
+              importCount++;
+            }
+          });
+
+          this.salesService.activeModal.set({
+            type: 'success', title: '✅ Ledger Sync Complete', message: `Successfully loaded ${importCount} suppliers into the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal()
+          });
+        }
+        
+      } catch (error) {
+        console.error("JSON Import Error:", error);
         this.salesService.activeModal.set({
-          type: 'warning', title: '⚠️ Import Failed', message: 'Could not read the JSON file. Please check the format.', value: '', onConfirm: () => this.salesService.closeModal()
+          type: 'warning', title: '⚠️ Import Failed', message: 'Could not read the JSON file. Check format.', value: '', onConfirm: () => this.salesService.closeModal()
         });
       }
       
-      // Clear the input so you can import the same file again if needed
+      // Clear the input so you can upload the same file again if needed
       event.target.value = '';
     };
     

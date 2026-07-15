@@ -72,8 +72,8 @@
           </select>
         }
 
-        <!-- ⭐ NEW: The button now shows for BOTH Products and Categories! -->
-        @if (activeTab() === 'PRODUCTS' || activeTab() === 'CATEGORIES') {
+        <!-- ⭐ NEW: The button now shows for ALL THREE tabs! -->
+        @if (activeTab() === 'PRODUCTS' || activeTab() === 'CATEGORIES' || activeTab() === 'SUPPLIERS') {
           <input type="file" #fileInput style="display: none" accept=".json" (change)="importJsonData($event)" />
           <button type="button" class="app-btn" style="background: #3b82f6; color: white;" (click)="fileInput.click()">
             📥 Import JSON
@@ -107,10 +107,7 @@
                   <tr (click)="selectProductToEdit(product)" [style.background]="selectedProduct()?.id === product.id ? '#eff6ff' : 'transparent'" style="cursor: pointer;">
                     <td style="font-family: monospace; font-weight: bold; color: #64748b;">{{ product.id }}</td>
                     <td style="font-weight: 600; color: #1e293b;">{{ product.name }}</td>
-                    
-                    <!-- ⭐ Changed right here: Now calls salesService.getCategoryName! -->
                     <td><span class="app-badge info" style="background: #f1f5f9; color: #475569;">{{ salesService.getCategoryName(product.categoryId) }}</span></td>
-                    
                     <td style="text-align: right; color: #64748b;">{{ getProductCost(product) | currency:'EUR' }}</td>
                     <td style="text-align: right; font-weight: 600; color: #0f172a;">{{ product.price | currency:'EUR' }}</td>
                     <td style="text-align: center;">
@@ -242,7 +239,6 @@
               </div>
             </div>
 
-            <!-- ⭐ NEW: Database Specific Fields -->
             <div class="app-form-grid" style="margin-bottom: 16px;">
               <div class="app-form-group">
                 <label class="app-form-label">After Tax Rate (€)</label>
@@ -298,7 +294,13 @@
               <button type="button" class="app-btn app-btn-primary" (click)="saveProductChanges()">💾 Save Product</button>
             </div>
           </div>
-        } @else { @render fallbackPlaceholder }
+        } @else { 
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 2px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center;">
+            <span style="font-size: 24px; margin-bottom: 8px;">🛒</span>
+            <p style="margin: 0; font-size: 14px; font-weight: 500;">No Product Selected</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Select an item from the inventory catalog to view and edit details.</p>
+          </div>
+        }
       }
 
       <!-- CONTEXT B: CATEGORIES CONFIGURATION WORKBENCH -->
