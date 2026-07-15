@@ -204,92 +204,107 @@
               </h3>
             </div>
 
-            <!-- 1. Auto ID & 2. Barcode Scan -->
-            <div class="app-form-grid">
-              <div class="app-form-group">
-                <label class="app-form-label">1. Product Code / ID</label>
-                <input type="text" class="app-input" [(ngModel)]="formProduct.id" disabled style="background: #f1f5f9; color: #64748b; font-weight: bold;" />
-              </div>
-              <div class="app-form-group">
-                <label class="app-form-label" style="color: #0b57d0; font-weight: bold;">2. Barcode String (Scan & Enter) 🎯</label>
-                <input type="text" class="app-input" style="border: 2px solid #0b57d0;" #newBarcodeFocus [(ngModel)]="formProduct.barcode" placeholder="Scan here..." (keyup.enter)="focusNext(nameInput)" />
-              </div>
-            </div>
+            <!-- 🌟 FORM WRAPPER WITH COLORED PANELS -->
+            <div style="display: flex; flex-direction: column; gap: 20px; padding-top: 4px;">
 
-            <!-- 3. Name -->
-            <div class="app-form-group" style="margin-bottom: 16px;">
-              <label class="app-form-label">3. Product Name</label>
-              <input type="text" class="app-input" #nameInput [(ngModel)]="formProduct.name" placeholder="e.g., Clipper Lighter" (keyup.enter)="focusNext(catInput)" />
-            </div>
+              <!-- SECTION 1: IDENTIFICATION (Light Blue Tint) -->
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                <h4 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 800; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.05em;">🏷️ Section 1: Identification</h4>
+                <div class="app-form-grid">
+                  <div class="app-form-group">
+                    <label class="app-form-label">1. Product Code / ID</label>
+                    <input type="text" class="app-input" [(ngModel)]="formProduct.id" disabled style="background: #e2e8f0; color: #475569; font-weight: bold; cursor: not-allowed;" />
+                  </div>
+                  <div class="app-form-group">
+                    <label class="app-form-label" style="color: #0b57d0; font-weight: bold;">2. Barcode String (Scan & Enter) 🎯</label>
+                    <input type="text" class="app-input" style="border: 2px solid #0b57d0; box-shadow: 0 0 0 2px rgba(11, 87, 208, 0.1);" #newBarcodeFocus [(ngModel)]="formProduct.barcode" placeholder="Scan here..." (keyup.enter)="focusNext(nameInput)" />
+                  </div>
+                </div>
+              </div>
 
-            <!-- 4. Category & 5. Retail Price -->
-            <div class="app-form-grid">
-              <div class="app-form-group">
-                <label class="app-form-label">4. Product Category</label>
-                <select class="app-select" #catInput [(ngModel)]="formProduct.categoryId" (change)="focusNext(retailInput)">
-                  @for (cat of categories(); track cat.id) {
-                    <option [value]="cat.id">{{ cat.name }}</option>
-                  }
-                </select>
+              <!-- SECTION 2: RETAIL CORE (White Card) -->
+              <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <h4 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.05em;">🛍️ Section 2: Retail Core</h4>
+                <div class="app-form-group" style="margin-bottom: 16px;">
+                  <label class="app-form-label">3. Product Name</label>
+                  <input type="text" class="app-input" #nameInput [(ngModel)]="formProduct.name" placeholder="e.g., Clipper Lighter" (keyup.enter)="focusNext(catInput)" />
+                </div>
+                <div class="app-form-grid">
+                  <div class="app-form-group">
+                    <label class="app-form-label">4. Product Category</label>
+                    <select class="app-select" #catInput [(ngModel)]="formProduct.categoryId" (change)="focusNext(retailInput)">
+                      @for (cat of categories(); track cat.id) {
+                        <option [value]="cat.id">{{ cat.name }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="app-form-group">
+                    <label class="app-form-label" style="color: #16a34a; font-weight: bold;">5. Retail Price (€)</label>
+                    <input type="number" step="0.01" class="app-input" style="border: 2px solid #16a34a; background: #f0fdf4;" #retailInput [(ngModel)]="formProduct.price" placeholder="0.00" (keyup.enter)="focusNext(expireInput)" />
+                  </div>
+                </div>
               </div>
-              <div class="app-form-group">
-                <label class="app-form-label" style="color: #16a34a; font-weight: bold;">5. Retail Price (€)</label>
-                <input type="number" step="0.01" class="app-input" style="border: 2px solid #16a34a;" #retailInput [(ngModel)]="formProduct.price" placeholder="0.00" (keyup.enter)="focusNext(expireInput)" />
-              </div>
-            </div>
 
-            <!-- 6. Expire & 7. Stock -->
-            <div class="app-form-grid">
-              <div class="app-form-group">
-                <label class="app-form-label">6. Expiration Date</label>
-                <input type="date" class="app-input" #expireInput [(ngModel)]="formProduct.expire" (keyup.enter)="focusNext(stockInput)" />
+              <!-- SECTION 3: STOCK & LOGISTICS (Light Gray/Slate) -->
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">📦 Section 3: Inventory Logistics</h4>
+                <div class="app-form-grid">
+                  <div class="app-form-group">
+                    <label class="app-form-label">6. Expiration Date</label>
+                    <input type="date" class="app-input" #expireInput [(ngModel)]="formProduct.expire" (keyup.enter)="focusNext(stockInput)" />
+                  </div>
+                  <div class="app-form-group">
+                    <label class="app-form-label">7. Current Stock Count</label>
+                    <input type="number" class="app-input" #stockInput [(ngModel)]="formProduct.stockQuantity" (keyup.enter)="focusNext(wholesaleInput)" />
+                  </div>
+                </div>
               </div>
-              <div class="app-form-group">
-                <label class="app-form-label">7. Current Stock Count</label>
-                <input type="number" class="app-input" #stockInput [(ngModel)]="formProduct.stockQuantity" (keyup.enter)="focusNext(wholesaleInput)" />
-              </div>
-            </div>
 
-            <!-- 8. Wholesale, 9. VAT, 10. Gross Math -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px dashed #cbd5e1;">
-              <div class="app-form-group">
-                <label class="app-form-label">8. Wholesale (Net)</label>
-                <input type="number" step="0.01" class="app-input" #wholesaleInput [(ngModel)]="formProduct.purchasePrice" placeholder="0.00" (keyup.enter)="focusNext(vatInput)" />
+              <!-- SECTION 4: WHOLESALE & VAT (Light Green Dashed) -->
+              <div style="background: #f0fdf4; border: 1px dashed #86efac; border-radius: 12px; padding: 16px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.05em;">💶 Section 4: Wholesale & Tax</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                  <div class="app-form-group">
+                    <label class="app-form-label">8. Wholesale (Net)</label>
+                    <input type="number" step="0.01" class="app-input" style="background: white;" #wholesaleInput [(ngModel)]="formProduct.purchasePrice" placeholder="0.00" (keyup.enter)="focusNext(vatInput)" />
+                  </div>
+                  <div class="app-form-group">
+                    <label class="app-form-label">9. VAT Rate</label>
+                    <select class="app-select" style="background: white;" #vatInput [(ngModel)]="formProduct.taxRate" (change)="focusNext(supplierInput)">
+                      <option [ngValue]="1.06">6%</option>
+                      <option [ngValue]="1.13">13%</option>
+                      <option [ngValue]="1.24">24%</option>
+                    </select>
+                  </div>
+                  <div class="app-form-group">
+                    <label class="app-form-label">10. Gross Wholesale</label>
+                    <input type="text" class="app-input" disabled [value]="((formProduct.purchasePrice || 0) * (formProduct.taxRate || 1)) | currency:'EUR':'symbol':'1.2-2'" style="background: #dcfce7; color: #14532d; font-weight: bold; cursor: not-allowed; border-color: #bbf7d0;" />
+                  </div>
+                </div>
               </div>
-              <div class="app-form-group">
-                <label class="app-form-label">9. VAT Rate</label>
-                <select class="app-select" #vatInput [(ngModel)]="formProduct.taxRate" (change)="focusNext(supplierInput)">
-                  <option [ngValue]="1.06">6%</option>
-                  <option [ngValue]="1.13">13%</option>
-                  <option [ngValue]="1.24">24%</option>
-                </select>
-              </div>
-              <div class="app-form-group">
-                <label class="app-form-label">10. Gross Wholesale</label>
-                <!-- Math Field: (Wholesale * VAT) -->
-                <input type="text" class="app-input" disabled [value]="((formProduct.purchasePrice || 0) * (formProduct.taxRate || 1)) | currency:'EUR':'symbol':'1.2-2'" style="background: #e2e8f0; color: #0f172a; font-weight: bold; cursor: not-allowed;" />
-              </div>
-            </div>
 
-            <!-- 11. Supplier -->
-            <div class="app-form-group" style="margin-bottom: 16px;">
-              <label class="app-form-label">11. 🔗 Link Supplier</label>
-              <select class="app-select" #supplierInput [(ngModel)]="formProduct.supplierId">
-                <option [value]="null" disabled selected>-- Select Supplier --</option>
-                @for (supplier of suppliers(); track supplier.id) {
-                  <option [value]="supplier.id">{{ supplier.name }}</option>
-                }
-              </select>
-            </div>
+              <!-- SECTION 5: VENDOR & STATUS (Light Gray) -->
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 8px;">
+                <h4 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">🔗 Section 5: Link & Status</h4>
+                <div class="app-form-group" style="margin-bottom: 16px;">
+                  <label class="app-form-label">11. Select Vendor / Supplier</label>
+                  <select class="app-select" #supplierInput [(ngModel)]="formProduct.supplierId">
+                    <option [value]="null" disabled selected>-- Select Supplier --</option>
+                    @for (supplier of suppliers(); track supplier.id) {
+                      <option [value]="supplier.id">{{ supplier.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div style="display: flex; background: #ffffff; border-radius: 8px; padding: 12px; gap: 24px; align-items: center; border: 1px solid #cbd5e1;">
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
+                    <input type="checkbox" [(ngModel)]="formProduct.isWeighted" style="width: 18px; height: 18px; cursor: pointer; accent-color: #0b57d0;" /> ⚖️ Scaled Item (By Weight)
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
+                    <input type="checkbox" [(ngModel)]="formProduct.isActive" style="width: 18px; height: 18px; cursor: pointer; accent-color: #16a34a;" /> 🟢 12. Available at Register
+                  </label>
+                </div>
+              </div>
 
-            <!-- 12. Toggles -->
-            <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; gap: 24px; align-items: center; border: 1px dashed #cbd5e1; margin-bottom: 24px;">
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
-                <input type="checkbox" [(ngModel)]="formProduct.isWeighted" style="width: 16px; height: 16px; cursor: pointer;" /> ⚖️ Scaled Item
-              </label>
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; flex: 1;">
-                <input type="checkbox" [(ngModel)]="formProduct.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 12. Status Active
-              </label>
             </div>
 
             <div class="app-form-actions">
