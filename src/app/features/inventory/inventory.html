@@ -50,7 +50,7 @@
     <!-- ⭐ THE UNMISSABLE IMPORT BUTTON -->
     @if (salesService.currentRole() === 'admin') {
       <div>
-        <input type="file" #fileInput style="display: none" accept=".json" (change)="importJsonData($event)" />
+        <input type="file" #fileInput style="display: none" accept=".json, .txt, .csv, .john, */*" (change)="importJsonData($event)" />
         <button type="button" class="app-btn" style="background: #3b82f6; color: white; font-weight: 800; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" (click)="fileInput.click()">
           📥 IMPORT JSON FILE
         </button>

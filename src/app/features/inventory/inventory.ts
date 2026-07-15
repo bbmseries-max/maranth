@@ -278,12 +278,13 @@ export class InventoryComponent {
         // 🔵 SCENARIO B: CATEGORIES
         else if (targetType === 'CATEGORIES') {
           dataArray.forEach(item => {
-            const rawId = item.CategoryID || item.categoryId || item.id || item.ID || item.Category_ID;
+            // ⭐ BULLETPROOF: If ID is missing, auto-generate one so it doesn't fail!
+            const rawId = item.CategoryID || item.categoryId || item.id || item.ID || item.Category_ID || ('CAT-' + Math.floor(Math.random() * 90000));
             if (rawId) {
               const catId = rawId.toString();
               const parsedCat: Category = {
                 id: catId,
-                name: item.CategoryName || item.categoryName || item.name || item.Name || `Category ${catId}`,
+                name: item.CategoryName || item.categoryName || item.name || item.Name || item.category || item.Category || `Category ${catId}`,
                 isActive: (item.Status || item.status) !== 'Inactive'
               };
               this.inventoryService.saveCategoryPayload(parsedCat, true);
