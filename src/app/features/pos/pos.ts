@@ -26,17 +26,14 @@ export class PosComponent implements OnInit {
 
   ngOnInit() {}
 
-  // ⭐ QUICK ACCESS SHELF 1: Scaled/Weighted items
   public weightedProducts = computed(() => {
-    return this.salesService.products().filter(p => p.isWeighted && p.isActive !== false);
+    return this.salesService.products().filter(p => (p.isWeighted === true || String(p.isWeighted).toLowerCase() === 'true') && p.isActive !== false);
   });
 
-  // ⭐ QUICK ACCESS SHELF 2: Loose items (No barcode)
   public looseProducts = computed(() => {
-    return this.salesService.products().filter(p => !p.barcode && !p.isWeighted && p.isActive !== false);
+    return this.salesService.products().filter(p => !p.barcode && p.isActive !== false);
   });
 
-  // 📦 Main Catalog Filter logic
   public filteredCatalogProducts = computed(() => {
     let items = this.salesService.products().filter(p => p.isActive !== false);
     
@@ -53,7 +50,6 @@ export class PosComponent implements OnInit {
       );
     }
 
-    // Map the display category name and inject dividers
     return items.map((p, index) => {
        const displayCategoryName = this.salesService.getCategoryName(p.categoryId);
        const isFirstOfCategory = index === 0 || items[index - 1].categoryId !== p.categoryId;
@@ -65,9 +61,11 @@ export class PosComponent implements OnInit {
     this.salesService.lookupAndScanBarcode(query);
   }
 
-  // ⚖️ THE FIX: This triggers the Weight Modal perfectly!
+  // ⭐ BULLETPROOF WEIGHT CHECK: Catches Firebase String or Boolean!
   public handleProductClick(product: Product) {
-    if (product.isWeighted) {
+    const isScaled = product.isWeighted === true || String(product.isWeighted).toLowerCase() === 'true';
+
+    if (isScaled) {
       this.salesService.activeModal.set({
         type: 'prompt',
         title: '⚖️ Scale Weight (kg)',
@@ -76,7 +74,6 @@ export class PosComponent implements OnInit {
         onConfirm: (val) => {
           const weight = parseFloat(val);
           if (!isNaN(weight) && weight > 0) {
-            // Push the exact typed weight to the basket
             this.salesService.addToBasket(product, undefined, weight);
           }
           this.salesService.closeModal();

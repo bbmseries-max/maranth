@@ -25,31 +25,44 @@
 
 <div class="app-viewport">
 
-  <!-- Tab Bar Header Strip -->
-  <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; align-items: center;">
+  <!-- Tab Bar Header Strip (NOW WITH FIXED BUTTON) -->
+  <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; align-items: center; justify-content: space-between;">
     
-    <a routerLink="/pos" class="app-btn" style="background: #1e293b; color: white; text-decoration: none; margin-right: 16px;">
-      ⬅️ Back to Register
-    </a>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <a routerLink="/pos" class="app-btn" style="background: #1e293b; color: white; text-decoration: none; margin-right: 16px;">
+        ⬅️ Back to Register
+      </a>
 
-    <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'PRODUCTS'" [class.app-btn-secondary]="activeTab() !== 'PRODUCTS'" (click)="switchTab('PRODUCTS')">
-      📦 Stock Inventory
-    </button>
-    
+      <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'PRODUCTS'" [class.app-btn-secondary]="activeTab() !== 'PRODUCTS'" (click)="switchTab('PRODUCTS')">
+        📦 Stock Inventory
+      </button>
+      
+      @if (salesService.currentRole() === 'admin') {
+        <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'CATEGORIES'" [class.app-btn-secondary]="activeTab() !== 'CATEGORIES'" (click)="switchTab('CATEGORIES')">
+          🗂️ Categories Matrix
+        </button>
+        <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'SUPPLIERS'" [class.app-btn-secondary]="activeTab() !== 'SUPPLIERS'" (click)="switchTab('SUPPLIERS')">
+          🚚 Supplier Directory
+        </button>
+      }
+    </div>
+
+    <!-- ⭐ THE UNMISSABLE IMPORT BUTTON -->
     @if (salesService.currentRole() === 'admin') {
-      <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'CATEGORIES'" [class.app-btn-secondary]="activeTab() !== 'CATEGORIES'" (click)="switchTab('CATEGORIES')">
-        🗂️ Categories Matrix
-      </button>
-      <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'SUPPLIERS'" [class.app-btn-secondary]="activeTab() !== 'SUPPLIERS'" (click)="switchTab('SUPPLIERS')">
-        🚚 Supplier Directory
-      </button>
+      <div>
+        <input type="file" #fileInput style="display: none" accept=".json" (change)="importJsonData($event)" />
+        <button type="button" class="app-btn" style="background: #3b82f6; color: white; font-weight: 800; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" (click)="fileInput.click()">
+          📥 IMPORT JSON FILE
+        </button>
+      </div>
     }
+
   </div>
 
   <!-- Main Unified Layout Frame Container -->
   <div style="display: flex; gap: 24px; height: calc(100vh - 110px); box-sizing: border-box; overflow: hidden; position: relative;">
     
-    <!-- LEFT COLUMN: JOURNAL DATA TAB SWITCHER FRAME -->
+    <!-- LEFT COLUMN -->
     <div class="app-card" style="flex: 1.6; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; padding-right: 0;">
       
       <!-- Dynamic Top Tool Action Bar -->
@@ -70,14 +83,6 @@
               <option [value]="cat.id">{{ cat.name }}</option>
             }
           </select>
-        }
-
-        <!-- ⭐ NEW: The button now shows for ALL THREE tabs! -->
-        @if (activeTab() === 'PRODUCTS' || activeTab() === 'CATEGORIES' || activeTab() === 'SUPPLIERS') {
-          <input type="file" #fileInput style="display: none" accept=".json" (change)="importJsonData($event)" />
-          <button type="button" class="app-btn" style="background: #3b82f6; color: white;" (click)="fileInput.click()">
-            📥 Import JSON
-          </button>
         }
 
         <button type="button" class="app-btn app-btn-primary" style="margin-left: auto; background: #16a34a;" (click)="activeTab() === 'PRODUCTS' ? prepareNewProduct() : activeTab() === 'CATEGORIES' ? prepareNewCategory() : prepareNewSupplier()">
@@ -106,7 +111,10 @@
                 @for (product of managedProducts().slice(0, 50); track product.id) {
                   <tr (click)="selectProductToEdit(product)" [style.background]="selectedProduct()?.id === product.id ? '#eff6ff' : 'transparent'" style="cursor: pointer;">
                     <td style="font-family: monospace; font-weight: bold; color: #64748b;">{{ product.id }}</td>
-                    <td style="font-weight: 600; color: #1e293b;">{{ product.name }}</td>
+                    <td style="font-weight: 600; color: #1e293b;">
+                      {{ product.name }}
+                      @if (product.isWeighted === true || $any(product.isWeighted) === 'true') { <span style="font-size: 10px; background: #dcfce7; color: #166534; padding: 2px 4px; border-radius: 4px; margin-left: 4px;">⚖️ Scale</span> }
+                    </td>
                     <td><span class="app-badge info" style="background: #f1f5f9; color: #475569;">{{ salesService.getCategoryName(product.categoryId) }}</span></td>
                     <td style="text-align: right; color: #64748b;">{{ getProductCost(product) | currency:'EUR' }}</td>
                     <td style="text-align: right; font-weight: 600; color: #0f172a;">{{ product.price | currency:'EUR' }}</td>
@@ -239,26 +247,6 @@
               </div>
             </div>
 
-            <div class="app-form-grid" style="margin-bottom: 16px;">
-              <div class="app-form-group">
-                <label class="app-form-label">After Tax Rate (€)</label>
-                <input type="number" step="0.01" class="app-input" [(ngModel)]="formProduct.afterTaxRate" placeholder="0.00" />
-              </div>
-              <div class="app-form-group">
-                <label class="app-form-label">DB Status</label>
-                <input type="text" class="app-input" [(ngModel)]="formProduct.status" placeholder="e.g. Active" />
-              </div>
-              <div class="app-form-group">
-                <label class="app-form-label">DB Status Date</label>
-                <input type="date" class="app-input" [(ngModel)]="formProduct.statusDate" style="cursor: pointer;" />
-              </div>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 16px;">
-              <span style="color: #64748b; font-weight: 500;">Calculated Gross Profit Margin:</span>
-              <strong [style.color]="getFormProfitMargin() >= 0 ? '#166534' : '#991b1b'">{{ getFormProfitMargin() | number:'1.1-2' }}%</strong>
-            </div>
-
             <div class="app-form-group" style="margin-bottom: 16px;">
               <label class="app-form-label">🔗 Link Supplier</label>
               <select class="app-select" [(ngModel)]="formProduct.supplierId">
@@ -340,41 +328,6 @@
             <span style="font-size: 24px; margin-bottom: 8px;">📁</span>
             <p style="margin: 0; font-size: 14px; font-weight: 500;">No Category Selected</p>
             <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Select a category item from the directory list to modify its details.</p>
-          </div>
-        }
-
-        <!-- 📦 Linked Products List -->
-        @if (editingCategory()) {
-          <div style="margin-top: 24px; padding-top: 16px; border-top: 2px dashed #e2e8f0;">
-            <h4 style="margin: 0 0 12px 0; color: #475569; font-size: 14px; display: flex; justify-content: space-between;">
-              <span>Linked Products Registry</span>
-              <span class="app-badge info">{{ getProductsInEditingCategory().length }} items</span>
-            </h4>
-
-            <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; background: #f8fafc;">
-              <table class="app-table">
-                <thead>
-                  <tr>
-                    <th>Barcode/ID</th>
-                    <th>Product Name</th>
-                    <th style="text-align: right;">Stock</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (prod of getProductsInEditingCategory(); track prod.id) {
-                    <tr>
-                      <td style="font-family: monospace; color: #64748b;">{{ prod.id }}</td>
-                      <td style="font-weight: 600; color: #1e293b;">{{ prod.name }}</td>
-                      <td style="text-align: right; font-weight: bold;" [style.color]="prod.stockQuantity <= 5 ? '#ef4444' : '#10b981'">
-                        {{ prod.stockQuantity }} pcs
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 24px 0;">No products assigned to this category.</td></tr>
-                  }
-                </tbody>
-              </table>
-            </div>
           </div>
         }
       }

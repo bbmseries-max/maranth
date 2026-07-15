@@ -159,7 +159,8 @@ export class SalesService {
   public grandTotal = computed(() => this.netSubtotal() + this.taxAmount());
   public totalItems = computed(() => this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0));
 
-  public addToBasket(product: Product, forceRefundState?: boolean): void {
+  // ⭐ ADDED customQty?: number here so it expects the exact weight from the modal
+  public addToBasket(product: Product, forceRefundState?: boolean, customQty?: number): void {
     this.highlightedItemId.set(product.id);
     setTimeout(() => this.highlightedItemId.set(null), 500);
 
@@ -167,7 +168,9 @@ export class SalesService {
 
     this.basket.update((currentBasket) => {
       const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRef);
-      const incrementStep = product.isWeighted ? 0.100 : 1;
+      
+      // ⭐ Use the exact custom weight if provided, otherwise default to adding 0.100kg or 1 unit
+      const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
 
       if (existingIndex > -1) {
         const updatedBasket = [...currentBasket];
@@ -175,7 +178,8 @@ export class SalesService {
         updatedBasket[existingIndex] = { ...existingItem, quantity: parseFloat((existingItem.quantity + incrementStep).toFixed(3)) };
         return updatedBasket;
       } else {
-        const initialQuantity = product.isWeighted ? 0.500 : 1;
+        // ⭐ If it's the first time adding, default to 0.500kg if no exact weight was typed
+        const initialQuantity = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
         return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
       }
     });
@@ -258,7 +262,7 @@ export class SalesService {
     }
   }
 
-    public recallOrder(): void {
+  public recallOrder(): void {
     const suspended = this.suspendedBasket();
     if (suspended && suspended.length > 0) {
       this.basket.set([...suspended]);
@@ -274,22 +278,7 @@ export class SalesService {
     );
 
     if (found) {
-      if (found.isWeighted) {
-        // Pop the modal if they scan a weighted item's barcode!
-        this.activeModal.set({
-          type: 'prompt',
-          title: '⚖️ Scale Weight (kg)',
-          message: `Enter the measured weight for ${found.name}:`,
-          value: '1.000',
-          onConfirm: (val) => {
-            const weight = parseFloat(val);
-            if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
-            this.closeModal();
-          }
-        });
-      } else {
-        this.addToBasket(found);
-      }
+      this.addToBasket(found);
     } else {
       this.activeModal.set({ type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.closeModal() });
     }

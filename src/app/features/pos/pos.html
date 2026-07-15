@@ -1,22 +1,22 @@
+<!-- ⭐ BULLETPROOF INLINE-STYLED MODAL OVERLAY -->
 @if (salesService.activeModal(); as modal) {
-  <div class="pos-modal-overlay is-active" style="z-index: 99999;">
-    <div class="pos-modal-window">
+  <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); display: flex; align-items: center; justify-content: center; z-index: 2147483647; backdrop-filter: blur(4px);">
+    
+    <div style="background: #ffffff; border-radius: 16px; width: 90%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden;">
       
-      <div class="pos-modal-header" 
-           [class.warning-header]="modal.type === 'warning'"
-           [class.success-header]="modal.type === 'success'">
+      <div style="padding: 18px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 20px; font-weight: 700; color: #1e293b;" 
+           [style.borderLeft]="modal.type === 'warning' ? '5px solid #ef4444' : modal.type === 'success' ? '5px solid #10b981' : 'none'">
         {{ modal.title }}
       </div>
       
-      <div class="pos-modal-body" style="white-space: pre-line;">
+      <div style="padding: 24px; font-size: 16px; color: #1e293b; line-height: 1.5; white-space: pre-line;">
         <p style="margin-top: 0;">{{ modal.message }}</p>
         
         @if (modal.type === 'prompt') {
-          <!-- Pressing Enter inside this input automatically confirms the weight! -->
           <input 
             #weightInput
             [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" 
-            class="pos-modal-input" 
+            style="width: 100%; padding: 12px 16px; font-size: 18px; font-weight: 700; border: 2px solid #0b57d0; border-radius: 8px; margin-top: 14px; box-sizing: border-box; color: #0b57d0; background: #ffffff; outline: none;"
             [value]="modal.value" 
             (input)="modal.value = weightInput.value"
             (keyup.enter)="modal.onConfirm(modal.value)"
@@ -26,66 +26,43 @@
         }
       </div>
       
-      <div class="pos-modal-footer">
+      <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px;">
         
         @if (modal.type === 'prompt') {
-          <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.closeModal()">
+          <button style="padding: 12px 24px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; background: #e2e8f0; color: #475569;" (click)="salesService.closeModal()">
             Cancel
           </button>
-          <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">
+          <button style="padding: 12px 24px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; background: #0b57d0; color: white;" (click)="modal.onConfirm(modal.value)">
             Confirm
           </button>
         }
 
         @if (modal.type === 'warning' || modal.type === 'success') {
-          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">
+          <button style="padding: 12px 24px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; background: #ef4444; color: white;" (click)="salesService.closeModal()">
             Dismiss
           </button>
         }
         
       </div>
-
     </div>
   </div>
 }
 
 <div class="pos-container">
   
-  <header class="pos-header" [style.background]="salesService.isRefundMode() ? '#991b1b' : '#1e293b'" style="transition: background 0.3s ease;">
-    
-    <!-- ⭐ LEFT: Brand Logo & Sync Tool -->
-    <div class="header-left">
-      <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px;">🍊 MARANTH</span>
-      <span class="system-tag mobile-hide" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">v2.0</span>
-      
-      @if (salesService.currentRole() === 'admin') {
-        <button class="pos-admin-btn mobile-hide" (click)="salesService.linkCloudFolder()" style="margin-left: 16px;">
-          🔗 Cloud Sync
-        </button>
-      }
-    </div>
-
-    <!-- ⭐ CENTER: Main App Navigation -->
-    <div class="header-center" style="display: flex; gap: 8px; justify-content: center; flex: 1; flex-wrap: wrap;">
-      <a routerLink="/pos" class="header-btn" style="background: #3b82f6;">🛒 POS Register</a>
-      <a routerLink="/inventory" class="header-btn">📦 Inventory</a>
-      
-      @if (salesService.currentRole() === 'admin') {
-        <a routerLink="/reports" class="header-btn">📊 Reports</a>
-      }
-    </div>
-
-    <!-- ⭐ RIGHT: Cashier Profile & Logout -->
-    <div class="header-right">
-      <div class="user-badge mobile-hide" style="background: #0f172a; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; border: 1px solid #334155; text-transform: capitalize;">
-        <span style="color: #60a5fa;">👤</span> {{ salesService.currentCashier() || 'Unknown' }}
-      </div>
-      
-      <button class="header-btn" (click)="onLogout()" style="background: #b91c1c; border: none;">
-        🚪 Logout
+  <header class="pos-header">
+    <div class="header-left" style="display: flex; align-items: center;">
+      <button class="pos-admin-btn" (click)="salesService.linkCloudFolder()">
+        🔗 Cloud Sync Active
       </button>
-    </div>
 
+      <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px; margin-left: 16px;">🍊 MARANTH</span>
+      <span class="system-tag" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">POS System v2.0</span>
+    </div>
+    <div class="header-right">
+      <a routerLink="/reports" class="header-btn btn-reports">📊 Sales Reports</a>
+      <a routerLink="/inventory" class="header-btn btn-inventory">📦 Manage Inventory</a>
+    </div>
   </header>
 
   <div class="pos-main-layout">
@@ -95,14 +72,6 @@
       <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
       <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
         
-        <button 
-          (click)="salesService.isRefundMode.set(!salesService.isRefundMode())" 
-          [style.background]="salesService.isRefundMode() ? '#ef4444' : '#f59e0b'"
-          [style.color]="salesService.isRefundMode() ? 'white' : '#0f172a'"
-          style="border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; text-align: left; transition: background 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2);">
-          {{ salesService.isRefundMode() ? '🔴 CANCEL REFUND MODE' : '↩️ Start Refund / Return' }}
-        </button>
-
         <button 
           (click)="salesService.clearBasket()" 
           [disabled]="salesService.basket().length === 0"
@@ -133,27 +102,11 @@
       <div class="sidebar-scroll-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
         
         <button 
-          (click)="showWeightedShelf.set(!showWeightedShelf())" 
-          [style.background]="showWeightedShelf() ? '#166534' : '#334155'"
-          style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600; color: #ffffff; transition: all 0.2s;">
-          ⚖️ {{ showWeightedShelf() ? 'Hide' : 'Show' }} Scaled Items
-        </button>
-
-        <button 
-          (click)="showLooseShelf.set(!showLooseShelf())" 
-          [style.background]="showLooseShelf() ? '#0369a1' : '#334155'"
-          style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600; color: #ffffff; transition: all 0.2s;">
-          🏷️ {{ showLooseShelf() ? 'Hide' : 'Show' }} Loose Items
-        </button>
-
-        <div style="height: 1px; background: #334155; margin: 4px 0;"></div>
-
-        <button 
           (click)="selectedCategoryId.set('ALL'); searchQuery.set('')" 
-          [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#1e293b'"
-          [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#cbd5e1'"
-          style="border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
-          🌐 Show All Categories
+          [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#334155'"
+          [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#f8fafc'"
+          style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600;">
+          🌐 Show All Items
         </button>
 
         @for (cat of salesService.categories(); track cat.id) {
@@ -177,50 +130,15 @@
           <input 
             #searchInput
             type="text" 
-            placeholder="Scan barcode or search..." 
+            placeholder="Scan barcode or type product name to search..." 
             (keydown.enter)="onSearchSubmit(searchInput.value); searchInput.value = ''"
             style="border: none; background: transparent; outline: none; width: 100%; height: 36px; font-size: 15px; font-weight: 500; color: #1e293b;"
             autocomplete="off"
             autofocus
           />
+          <span style="font-size: 11px; color: #94a3b8; font-weight: 600; white-space: nowrap; background: #e2e8f0; padding: 3px 6px; border-radius: 4px;">Press [ENTER]</span>
         </div>
       </div>
-
-      <!-- ⭐ QUICK ACCESS SHELF 1: WEIGHTED -->
-      @if (showWeightedShelf() && weightedProducts().length > 0) {
-        <div class="quick-access-shelf">
-          <div class="qa-header" style="color: #166534;">⚖️ Quick Access: Scaled Produce & Meat</div>
-          <div class="qa-scroll-track" style="grid-template-rows: repeat(3, 1fr); padding-bottom: 4px;">
-            @for (prod of weightedProducts(); track prod.id) {
-              <div class="qa-card" (click)="handleProductClick(prod)">
-                <div class="qa-name">{{ prod.name }}</div>
-                <div class="qa-bottom">
-                  <span class="qa-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
-                  <span class="qa-badge weighted">⚖️ Scale</span>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- ⭐ QUICK ACCESS SHELF 2: LOOSE -->
-      @if (showLooseShelf() && looseProducts().length > 0) {
-        <div class="quick-access-shelf">
-          <div class="qa-header" style="color: #0369a1;">🏷️ Quick Access: Loose Items (No Barcode)</div>
-          <div class="qa-scroll-track" style="grid-template-rows: repeat(3, 1fr); padding-bottom: 4px;">
-            @for (prod of looseProducts(); track prod.id) {
-              <div class="qa-card" (click)="handleProductClick(prod)">
-                <div class="qa-name">{{ prod.name }}</div>
-                <div class="qa-bottom">
-                  <span class="qa-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
-                  <span class="qa-badge">🏷️ Loose</span>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
 
       <div class="catalog-scroll-viewport">
         <div class="grid-layout-scroll">
@@ -229,14 +147,17 @@
             @if (prod.isFirstOfCategory) {
               <div class="category-divider-row" style="grid-column: 1 / -1; display: flex; align-items: center; margin-top: 12px; margin-bottom: 4px;">
                 <span style="font-weight: 700; font-size: 13px; color: #64748b; text-transform: uppercase; background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">
-                  📁 {{ prod.displayCategoryName }}
+                  📁 {{ prod.displayCategoryName || salesService.getCategoryName(prod.categoryId) }}
                 </span>
               </div>
             }
 
             <div class="product-item-card" (click)="handleProductClick(prod)">
               <div class="prod-details">
-                <span class="prod-name">{{ prod.name }}</span>
+                <span class="prod-name">
+                  {{ prod.name }}
+                  @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { <span style="font-size: 10px; background: #dcfce7; color: #166534; padding: 2px 4px; border-radius: 4px; margin-left: 4px; vertical-align: top;">⚖️</span> }
+                </span>
                 <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
               </div>
 
@@ -244,7 +165,7 @@
               @let liveStock = liveProduct ? liveProduct.stockQuantity : prod.stockQuantity;
 
               <div class="prod-stock-badge" [class.low-stock]="liveStock <= 5">
-                Stock: {{ liveStock }} {{ prod.isWeighted ? 'kg' : 'pcs' }}
+                Stock: {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
               </div>
             </div>
 

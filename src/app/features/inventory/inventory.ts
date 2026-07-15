@@ -172,12 +172,12 @@ export class InventoryComponent {
         const jsonText = e.target?.result as string;
         const rawData = JSON.parse(jsonText);
         
-        // 🧠 Smart Array Extractor: Converts regular arrays OR Dictionary objects (like { "1": {...} }) into a loopable list!
+        // 🧠 Smart Array Extractor (Upgraded for more Access formats!)
         let dataArray: any[] = [];
         if (Array.isArray(rawData)) {
           dataArray = rawData;
-        } else if (rawData.RECORDS || rawData.data || rawData.items) {
-          dataArray = rawData.RECORDS || rawData.data || rawData.items;
+        } else if (rawData.RECORDS || rawData.data || rawData.items || rawData.categories || rawData.suppliers || rawData.products) {
+          dataArray = rawData.RECORDS || rawData.data || rawData.items || rawData.categories || rawData.suppliers || rawData.products;
         } else if (typeof rawData === 'object' && rawData !== null) {
           dataArray = Object.values(rawData);
         }
@@ -185,9 +185,22 @@ export class InventoryComponent {
         if (dataArray.length === 0) throw new Error("No valid data found in file.");
         
         let importCount = 0;
+        const sample = dataArray[0] || {};
 
-        // 🟢 SCENARIO A: PRODUCTS Tab
-        if (this.activeTab() === 'PRODUCTS') {
+        // 🕵️ AUTO-DETECT FILE TYPE (Ignores what tab you are on!)
+        let targetType = 'CATEGORIES'; // Default
+        
+        // Check for Product signatures
+        if (sample.Price !== undefined || sample.price !== undefined || sample.Barcode !== undefined || sample.barcode !== undefined || sample.ProductID !== undefined || sample.Blerje !== undefined) {
+          targetType = 'PRODUCTS';
+        } 
+        // Check for Supplier signatures
+        else if (sample.Phone !== undefined || sample.phone !== undefined || sample.Contact !== undefined || sample.contact !== undefined || sample.SupplierID !== undefined || sample.CompanyName !== undefined) {
+          targetType = 'SUPPLIERS';
+        }
+
+        // 🟢 SCENARIO A: PRODUCTS
+        if (targetType === 'PRODUCTS') {
           const normalizeDate = (rawDate: any): string => {
             if (!rawDate) return '';
             const strDate = String(rawDate).trim();
@@ -236,10 +249,10 @@ export class InventoryComponent {
           });
 
         } 
-        // 🔵 SCENARIO B: CATEGORIES Tab
-        else if (this.activeTab() === 'CATEGORIES') {
+        // 🔵 SCENARIO B: CATEGORIES
+        else if (targetType === 'CATEGORIES') {
           dataArray.forEach(item => {
-            const rawId = item.CategoryID || item.categoryId || item.id || item.ID;
+            const rawId = item.CategoryID || item.categoryId || item.id || item.ID || item.Category_ID;
             if (rawId) {
               const catId = rawId.toString();
               const parsedCat: Category = {
@@ -256,8 +269,8 @@ export class InventoryComponent {
             type: 'success', title: '✅ Matrix Sync Complete', message: `Successfully loaded ${importCount} categories into the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal()
           });
         }
-        // 🟠 SCENARIO C: SUPPLIERS Tab
-        else if (this.activeTab() === 'SUPPLIERS') {
+        // 🟠 SCENARIO C: SUPPLIERS
+        else if (targetType === 'SUPPLIERS') {
           dataArray.forEach(item => {
             const rawId = item.SupplierID || item.supplierId || item.id || item.ID;
             if (rawId) {
