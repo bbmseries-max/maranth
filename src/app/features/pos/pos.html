@@ -78,59 +78,69 @@
 
   <div class="pos-main-layout">
     
-    <aside class="pos-sidebar-panel" style="color: #fff;">
-  
-      <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
-      <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
-        
-        <button 
-          (click)="salesService.clearBasket()" 
-          [disabled]="salesService.basket().length === 0"
-          style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
-          [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
-          🗑️ Clear Current Sale
-        </button>
+    <aside class="pos-sidebar-panel" [class.expanded]="isSidebarMobileOpen()" style="color: #fff;">
+      
+      <!-- ⭐ NEW: Mobile Toggle Button (Hidden on Desktop) -->
+      <div class="sidebar-mobile-toggle" (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
+        <span style="font-weight: 700; font-size: 14px;">📁 Menu & Categories</span>
+        <span style="font-size: 12px;">{{ isSidebarMobileOpen() ? '🔼' : '🔽' }}</span>
+      </div>
 
-        @if (!salesService.suspendedBasket()) {
+      <!-- ⭐ NEW: Collapsible Wrapper -->
+      <div class="sidebar-collapsible-content">
+        <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
+        <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+          
           <button 
-            (click)="salesService.suspendOrder()" 
+            (click)="salesService.clearBasket()" 
             [disabled]="salesService.basket().length === 0"
-            style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
+            style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
             [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
-            ⏸️ Suspend Order
+            🗑️ Clear Current Sale
           </button>
-        } @else {
+
+          @if (!salesService.suspendedBasket()) {
+            <button 
+              (click)="salesService.suspendOrder()" 
+              [disabled]="salesService.basket().length === 0"
+              style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
+              [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
+              ⏸️ Suspend Order
+            </button>
+          } @else {
+            <button 
+              (click)="salesService.recallOrder()" 
+              style="background: #eab308; color: #0f172a; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; text-align: left;">
+              🔄 Recall Held Order (1)
+            </button>
+          }
+
+        </div>
+
+        <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Catalog Filters</div>
+        <div class="sidebar-scroll-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
+          
+          <!-- ⭐ Added isSidebarMobileOpen.set(false) to auto-close menu on phone -->
           <button 
-            (click)="salesService.recallOrder()" 
-            style="background: #eab308; color: #0f172a; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; text-align: left;">
-            🔄 Recall Held Order (1)
+            (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false)" 
+            [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#334155'"
+            [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#f8fafc'"
+            style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600;">
+            🌐 Show All Items
           </button>
-        }
 
+          @for (cat of salesService.categories(); track cat.id) {
+            <!-- ⭐ Added isSidebarMobileOpen.set(false) here too -->
+            <button 
+              (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false)" 
+              [style.background]="selectedCategoryId() === cat.id ? '#3b82f6' : '#1e293b'"
+              [style.color]="selectedCategoryId() === cat.id ? '#ffffff' : '#cbd5e1'"
+              style="border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
+              📁 {{ cat.name }}
+            </button>
+          }
+        </div>
       </div>
-
-      <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Catalog Filters</div>
-      <div class="sidebar-scroll-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
-        
-        <button 
-          (click)="selectedCategoryId.set('ALL'); searchQuery.set('')" 
-          [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#334155'"
-          [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#f8fafc'"
-          style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600;">
-          🌐 Show All Items
-        </button>
-
-        @for (cat of salesService.categories(); track cat.id) {
-          <button 
-            (click)="selectedCategoryId.set(cat.id); searchQuery.set('')" 
-            [style.background]="selectedCategoryId() === cat.id ? '#3b82f6' : '#1e293b'"
-            [style.color]="selectedCategoryId() === cat.id ? '#ffffff' : '#cbd5e1'"
-            style="border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
-            📁 {{ cat.name }}
-          </button>
-        }
-      </div>
-
     </aside>
 
     <section class="main-catalog-panel">

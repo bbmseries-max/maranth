@@ -23,6 +23,7 @@ export class PosComponent implements OnInit {
 
   public showWeightedShelf = signal<boolean>(false);
   public showLooseShelf = signal<boolean>(false);
+  public isSidebarMobileOpen = signal<boolean>(false); // ⭐ NEW: Tracks if mobile menu is open
 
   ngOnInit() {}
 

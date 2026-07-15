@@ -43,6 +43,67 @@ align-items: center;
 gap: 12px;
 }
 
+!important;
+flex-direction: column !important;
+background: #1e293b;
+border-radius: 12px;
+padding: 12px;
+box-sizing: border-box;
+}
+
+/* ⭐ NEW: Mobile Sidebar Toggle Classes */
+.sidebar-mobile-toggle {
+display: none;
+justify-content: space-between;
+align-items: center;
+background: #334155;
+padding: 10px 14px;
+border-radius: 8px;
+cursor: pointer;
+color: white;
+transition: background 0.2s;
+}
+
+.sidebar-mobile-toggle:hover {
+background: #475569;
+}
+
+.sidebar-collapsible-content {
+display: flex;
+flex-direction: column;
+flex: 1;
+overflow: hidden;
+}
+
+.checkout-basket-panel {
+/* ... existing code ... /
+/ TABLET (Under 1024px) */
+@media (max-width: 1024px) {
+.pos-main-layout {
+flex-direction: column !important;
+overflow-y: auto !important;
+height: auto !important;
+}
+
+.pos-sidebar-panel {
+width: 100% !important;
+flex: 0 0 auto !important;
+padding: 8px !important; /* Tighter padding on mobile */
+}
+
+/* ⭐ NEW: Mobile Sidebar Logic /
+.sidebar-mobile-toggle {
+display: flex;
+}
+.sidebar-collapsible-content {
+display: none;
+margin-top: 12px;
+max-height: 40vh; / Constrains height so categories are scrollable */
+}
+.pos-sidebar-panel.expanded .sidebar-collapsible-content {
+display: flex;
+}
+
 .pos-main-layout {
 display: flex !important;
 flex-direction: row !important;
