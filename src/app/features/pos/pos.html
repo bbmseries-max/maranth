@@ -1,22 +1,20 @@
-<!-- ⭐ BULLETPROOF INLINE-STYLED MODAL OVERLAY -->
 @if (salesService.activeModal(); as modal) {
-  <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); display: flex; align-items: center; justify-content: center; z-index: 2147483647; backdrop-filter: blur(4px);">
-    
-    <div style="background: #ffffff; border-radius: 16px; width: 90%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden;">
-      
-      <div style="padding: 18px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 20px; font-weight: 700; color: #1e293b;" 
-           [style.borderLeft]="modal.type === 'warning' ? '5px solid #ef4444' : modal.type === 'success' ? '5px solid #10b981' : 'none'">
+  <div class="pos-modal-overlay is-active" style="z-index: 99999;">
+    <div class="pos-modal-window">
+      <div class="pos-modal-header" 
+           [class.warning-header]="modal.type === 'warning'" 
+           [class.success-header]="modal.type === 'success'">
         {{ modal.title }}
       </div>
       
-      <div style="padding: 24px; font-size: 16px; color: #1e293b; line-height: 1.5; white-space: pre-line;">
+      <div class="pos-modal-body" style="white-space: pre-line;">
         <p style="margin-top: 0;">{{ modal.message }}</p>
         
         @if (modal.type === 'prompt') {
           <input 
             #weightInput
             [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" 
-            style="width: 100%; padding: 12px 16px; font-size: 18px; font-weight: 700; border: 2px solid #0b57d0; border-radius: 8px; margin-top: 14px; box-sizing: border-box; color: #0b57d0; background: #ffffff; outline: none;"
+            class="pos-modal-input" 
             [value]="modal.value" 
             (input)="modal.value = weightInput.value"
             (keyup.enter)="modal.onConfirm(modal.value)"
@@ -26,23 +24,21 @@
         }
       </div>
       
-      <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px;">
-        
+      <div class="pos-modal-footer">
         @if (modal.type === 'prompt') {
-          <button style="padding: 12px 24px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; background: #e2e8f0; color: #475569;" (click)="salesService.closeModal()">
+          <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.closeModal()">
             Cancel
           </button>
-          <button style="padding: 12px 24px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; background: #0b57d0; color: white;" (click)="modal.onConfirm(modal.value)">
+          <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">
             Confirm
           </button>
         }
 
         @if (modal.type === 'warning' || modal.type === 'success') {
-          <button style="padding: 12px 24px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; background: #ef4444; color: white;" (click)="salesService.closeModal()">
+          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">
             Dismiss
           </button>
         }
-        
       </div>
     </div>
   </div>
@@ -61,32 +57,27 @@
     </div>
     
     <div class="header-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-      
-      <!-- ⭐ RESTORED: Live Cashier Status Badge -->
       <div style="background: #0f172a; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; color: white; font-size: 13px; display: flex; align-items: center; gap: 8px;">
         <span style="font-weight: 600;">👤 {{ salesService.currentCashier() || 'Unknown' }}</span>
         <span style="background: #0ea5e9; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase;">{{ salesService.currentRole() || 'CASHIER' }}</span>
       </div>
 
-      <a routerLink="/reports" class="header-btn btn-reports">📊 Reports</a>
-      <a routerLink="/inventory" class="header-btn btn-inventory">📦 Inventory</a>
+      <a routerLink="/reports" class="header-btn btn-reports mobile-hide">📊 Reports</a>
+      <a routerLink="/inventory" class="header-btn btn-inventory mobile-hide">📦 Inventory</a>
       
-      <!-- ⭐ RESTORED: The Logout Button -->
       <button (click)="onLogout()" class="header-btn" style="background: #ef4444; border: none;">🚪 Logout</button>
     </div>
   </header>
 
   <div class="pos-main-layout">
     
+    <!-- LEFT PANEL: Sidebar -->
     <aside class="pos-sidebar-panel" [class.expanded]="isSidebarMobileOpen()" style="color: #fff;">
-      
-      <!-- ⭐ NEW: Mobile Toggle Button (Hidden on Desktop) -->
       <div class="sidebar-mobile-toggle" (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
         <span style="font-weight: 700; font-size: 14px;">📁 Menu & Categories</span>
         <span style="font-size: 12px;">{{ isSidebarMobileOpen() ? '🔼' : '🔽' }}</span>
       </div>
 
-      <!-- ⭐ NEW: Collapsible Wrapper -->
       <div class="sidebar-collapsible-content">
         <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
         <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
@@ -114,13 +105,11 @@
               🔄 Recall Held Order (1)
             </button>
           }
-
         </div>
 
         <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Catalog Filters</div>
         <div class="sidebar-scroll-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
           
-          <!-- ⭐ Added isSidebarMobileOpen.set(false) to auto-close menu on phone -->
           <button 
             (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false)" 
             [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#334155'"
@@ -130,7 +119,6 @@
           </button>
 
           @for (cat of salesService.categories(); track cat.id) {
-            <!-- ⭐ Added isSidebarMobileOpen.set(false) here too -->
             <button 
               (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false)" 
               [style.background]="selectedCategoryId() === cat.id ? '#3b82f6' : '#1e293b'"
@@ -144,7 +132,6 @@
     </aside>
 
     <section class="main-catalog-panel">
-        
       <div class="search-action-bar" style="background: #ffffff; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; flex: 0 0 auto;">
         <div class="search-input-wrapper">
           <span style="font-size: 16px; color: #94a3b8; margin-right: 8px;">🔍</span>
@@ -161,7 +148,6 @@
         </div>
       </div>
 
-      <!-- ⭐ NEW: QUICK TOGGLE BUTTONS FOR SHELVES -->
       <div style="display: flex; gap: 8px; padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap;">
         <button class="app-btn" [style.background]="showWeightedShelf() ? '#16a34a' : '#e2e8f0'" [style.color]="showWeightedShelf() ? 'white' : '#475569'" (click)="showWeightedShelf.set(!showWeightedShelf())" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border: none; cursor: pointer; border-radius: 6px;">
           ⚖️ Toggle Scaled Items
@@ -171,10 +157,8 @@
         </button>
       </div>
 
-      <!-- ⭐ RESTORED: QUICK ACCESS SHELVES -->
       @if ((showWeightedShelf() && weightedProducts().length > 0) || (showLooseShelf() && looseProducts().length > 0)) {
         <div class="quick-access-shelf">
-          
           @if (showWeightedShelf() && weightedProducts().length > 0) {
             <div class="qa-header">⚖️ Scaled Produce (Weighed)</div>
             <div class="qa-scroll-track" style="margin-bottom: 12px;">
@@ -204,14 +188,12 @@
               }
             </div>
           }
-
         </div>
       }
 
       <div class="catalog-scroll-viewport">
         <div class="grid-layout-scroll">
           @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
-            
             @if (prod.isFirstOfCategory) {
               <div class="category-divider-row" style="grid-column: 1 / -1; display: flex; align-items: center; margin-top: 12px; margin-bottom: 4px;">
                 <span style="font-weight: 700; font-size: 13px; color: #64748b; text-transform: uppercase; background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">
@@ -246,20 +228,15 @@
       </div>
     </section>
 
-      <!-- ⭐ 1. Add the mobile-open class and the swipe down button -->
     <section class="checkout-basket-panel" [class.mobile-open]="isMobileBasketOpen()">
-      
-      <!-- Mobile Drawer Pull-Down Button -->
       <button class="mobile-close-basket-btn" (click)="isMobileBasketOpen.set(false)">
         ⬇️ Swipe down to hide checkout ⬇️
       </button>
- <app-shopping-basket></app-shopping-basket>
-    </section>
 
-  </div>
-    <section class="checkout-basket-panel">
       <app-shopping-basket></app-shopping-basket>
     </section>
+
+  </div> <!-- ⭐ CLOSES pos-main-layout -->
 
   @if (salesService.basket().length > 0) {
     <div class="mobile-basket-fab" (click)="isMobileBasketOpen.set(true)">
@@ -274,5 +251,4 @@
     </div>
   }
 
-
-</div>
+</div> <!-- ⭐ CLOSES pos-container -->
