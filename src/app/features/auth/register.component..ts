@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -19,8 +19,15 @@ export class RegisterComponent {
   public pin = signal<string>('');
   public confirmPin = signal<string>('');
   
-  // ✨ Renamed to bust the compiler cache!
+  // ⭐ NEW: Manager authorization PIN
+  public managerPin = signal<string>('');
+  
   public assignedRole: 'admin' | 'cashier' = 'cashier';
+
+  // ⭐ NEW: Check if this is a brand new system
+  public isFirstSetup = computed(() => {
+    return this.salesService.registeredCashiers().length === 0;
+  });
 
   public onRegister(): void {
     const user = this.username().trim();
@@ -29,7 +36,7 @@ export class RegisterComponent {
 
     if (!user || !p1 || !p2) {
       this.salesService.activeModal.set({
-        type: 'warning', title: '⚠️ Missing Fields', message: 'Please fill out all fields.', value: '', onConfirm: () => this.salesService.closeModal()
+        type: 'warning', title: '⚠️ Missing Fields', message: 'Please fill out all basic fields.', value: '', onConfirm: () => this.salesService.closeModal()
       });
       return;
     }
@@ -48,8 +55,33 @@ export class RegisterComponent {
       return;
     }
 
-    // Try to save the user to the Master Brain WITH the assigned role!
-    const success = this.salesService.registerNewCashier(user, p1, this.assignedRole);
+    // ⭐ NEW: Manager Approval Check!
+    if (!this.isFirstSetup()) {
+      const mPin = this.managerPin().trim();
+      
+      if (!mPin) {
+        this.salesService.activeModal.set({
+          type: 'warning', title: '⛔ Approval Required', message: 'An existing Admin PIN is required to authorize new accounts.', value: '', onConfirm: () => this.salesService.closeModal()
+        });
+        return;
+      }
+
+      // Check if the typed manager PIN belongs to an actual Admin
+      const admins = this.salesService.registeredCashiers().filter(u => u.role === 'admin');
+      const validAdmin = admins.find(a => a.pin === mPin);
+
+      if (!validAdmin) {
+        this.salesService.activeModal.set({
+          type: 'warning', title: '⛔ Access Denied', message: 'Invalid Admin PIN. Registration blocked.', value: '', onConfirm: () => this.salesService.closeModal()
+        });
+        return;
+      }
+    }
+
+    // If it's the first setup, FORCE the role to be Admin
+    const finalRole = this.isFirstSetup() ? 'admin' : this.assignedRole;
+
+    const success = this.salesService.registerNewCashier(user, p1, finalRole);
 
     if (success) {
       this.salesService.loginCashier(user);
