@@ -162,6 +162,35 @@ export class SalesService {
 
     const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
 
+    // 🛡️ THE FIX: Strict Inventory Stock Guardrail
+    if (!isRef) {
+      // Find the absolute latest stock level from the cloud
+      const liveProduct = this.products().find(p => p.id === product.id) || product;
+      const currentQtyInBasket = this.basket().find(item => item.product.id === product.id && !item.isRefund)?.quantity || 0;
+      
+      let intendedQty = 0;
+      if (currentQtyInBasket > 0) {
+        const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
+        intendedQty = parseFloat((currentQtyInBasket + incrementStep).toFixed(3));
+      } else {
+        intendedQty = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
+      }
+
+      const availableStock = parseFloat(liveProduct.stockQuantity as any) || 0;
+
+      // If we have 0 stock, or if adding this pushes us over the limit!
+      if (availableStock <= 0 || intendedQty > availableStock) {
+        this.activeModal.set({
+          type: 'warning',
+          title: '⚠️ Insufficient Stock',
+          message: `Cannot add ${liveProduct.name} to the basket.\n\nAvailable in Store: ${availableStock}\nRequested Amount: ${intendedQty}`,
+          value: '',
+          onConfirm: () => this.closeModal()
+        });
+        return; // 🛑 Abort the addition entirely!
+      }
+    }
+
     this.basket.update((currentBasket) => {
       const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRef);
       
