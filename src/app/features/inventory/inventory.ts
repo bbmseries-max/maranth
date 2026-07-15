@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -16,6 +16,9 @@ import { Product, Category, Supplier } from '../../shared/services/pos-data.mode
 export class InventoryComponent {
   public salesService = inject(SalesService);
   public inventoryService = inject(InventoryService);
+
+  // 🎯 Allows Angular to grab the barcode input field to auto-focus it
+  @ViewChild('newBarcodeFocus') barcodeInputRef!: ElementRef<HTMLInputElement>;
 
   public activeTab = signal<'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS'>('PRODUCTS');
 
@@ -79,8 +82,23 @@ export class InventoryComponent {
       stockQuantity: 0,
       price: 0,
       purchasePrice: 0,
+      taxRate: 1.24, // Default to 24% VAT
       isWeighted: false
     };
+
+    // 🎯 Wait a tiny fraction of a second for the UI to render, then grab focus!
+    setTimeout(() => {
+      if (this.barcodeInputRef?.nativeElement) {
+        this.barcodeInputRef.nativeElement.focus();
+      }
+    }, 50);
+  }
+
+  // 🎯 Helper to instantly jump the cursor to the next box when you press Enter
+  public focusNext(nextElement: any): void {
+    if (nextElement && nextElement.focus) {
+      nextElement.focus();
+    }
   }
 
   public selectProductToEdit(product: Product): void {
