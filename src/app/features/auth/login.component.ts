@@ -29,7 +29,7 @@ export class LoginComponent {
         title: '⚠️ Missing Fields',
         message: 'Please enter both your Cashier ID and secure PIN.',
         value: '',
-        onConfirm: () => this.salesService.activeModal.set(null)
+        onConfirm: () => this.salesService.closeModal()
       });
       return;
     }
@@ -51,7 +51,7 @@ export class LoginComponent {
         title: '⛔ Access Denied',
         message: 'Invalid Cashier ID or PIN. Please try again.',
         value: '',
-        onConfirm: () => this.salesService.activeModal.set(null)
+        onConfirm: () => this.salesService.closeModal()
       });
       
       this.password.set(''); // Clear password for retry

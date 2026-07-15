@@ -27,7 +27,7 @@
       <div class="pos-modal-footer">
         
         @if (modal.type === 'prompt') {
-          <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.activeModal.set(null)">
+          <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.closeModal()">
             Cancel
           </button>
           <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">
@@ -36,7 +36,7 @@
         }
 
         @if (modal.type === 'warning' || modal.type === 'success') {
-          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.activeModal.set(null)">
+          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">
             Dismiss
           </button>
         }

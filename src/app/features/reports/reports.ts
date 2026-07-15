@@ -6,7 +6,7 @@ import { SalesService } from '../../shared/services/sales';
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink],
+  imports: [CommonModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })
@@ -156,7 +156,7 @@ export class ReportsComponent {
       onConfirm: () => {
          this.salesService.transactions.set([]);
          this.selectedTxnId.set(null);
-         this.salesService.activeModal.set(null);
+         this.salesService.closeModal();
       }
     });
   }

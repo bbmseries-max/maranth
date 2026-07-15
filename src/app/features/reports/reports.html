@@ -1,3 +1,28 @@
+@if (salesService.activeModal(); as modal) {
+  <div class="pos-modal-overlay is-active" style="z-index: 99999;">
+    <div class="pos-modal-window">
+      <div class="pos-modal-header" [class.warning-header]="modal.type === 'warning'" [class.success-header]="modal.type === 'success'">
+        {{ modal.title }}
+      </div>
+      <div class="pos-modal-body" style="white-space: pre-line;">
+        <p style="margin-top: 0;">{{ modal.message }}</p>
+        @if (modal.type === 'prompt') {
+          <input #promptInput [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'text'" class="pos-modal-input" [value]="modal.value" (input)="modal.value = promptInput.value" autofocus />
+        }
+      </div>
+      <div class="pos-modal-footer">
+        @if (modal.type === 'prompt') {
+          <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.closeModal()">Cancel</button>
+          <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">Confirm</button>
+        }
+        @if (modal.type === 'warning' || modal.type === 'success') {
+          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">Dismiss</button>
+        }
+      </div>
+    </div>
+  </div>
+}
+
 <div class="app-viewport">
   
   <div class="app-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">

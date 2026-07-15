@@ -93,7 +93,7 @@ export class InventoryComponent implements OnInit {
   public saveCategoryChanges(): void {
     if (!this.formCategory.name) {
       this.salesService.activeModal.set({
-        type: 'warning', title: '⚠️ Required Field', message: 'Category Name is mandatory!', value: '', onConfirm: () => this.salesService.activeModal.set(null)
+        type: 'warning', title: '⚠️ Required Field', message: 'Category Name is mandatory!', value: '', onConfirm: () => this.salesService.closeModal()
       });
       return;
     }
@@ -102,7 +102,7 @@ export class InventoryComponent implements OnInit {
       this.formCategory.id = this.formCategory.id || Math.floor(1000 + Math.random() * 9000).toString();
       if (this.categories().some(c => c.id === this.formCategory.id)) {
         this.salesService.activeModal.set({
-          type: 'warning', title: '⚠️ Collision', message: 'ID collision detected. Save again to retry.', value: '', onConfirm: () => this.salesService.activeModal.set(null)
+          type: 'warning', title: '⚠️ Collision', message: 'ID collision detected. Save again to retry.', value: '', onConfirm: () => this.salesService.closeModal()
         });
         return;
       }
@@ -112,7 +112,7 @@ export class InventoryComponent implements OnInit {
     this.clearAllWorkbenches();
     
     this.salesService.activeModal.set({
-      type: 'success', title: '✅ Success', message: 'Category registry updated!', value: '', onConfirm: () => this.salesService.activeModal.set(null)
+      type: 'success', title: '✅ Success', message: 'Category registry updated!', value: '', onConfirm: () => this.salesService.closeModal()
     });
   }
 
@@ -165,7 +165,7 @@ export class InventoryComponent implements OnInit {
   public saveSupplierChanges(): void {
     if (!this.formSupplier.name) {
       this.salesService.activeModal.set({
-        type: 'warning', title: '⚠️ Required Field', message: 'Supplier Business Name is mandatory!', value: '', onConfirm: () => this.salesService.activeModal.set(null)
+        type: 'warning', title: '⚠️ Required Field', message: 'Supplier Business Name is mandatory!', value: '', onConfirm: () => this.salesService.closeModal()
       });
       return;
     }
@@ -178,7 +178,7 @@ export class InventoryComponent implements OnInit {
     this.clearAllWorkbenches();
     
     this.salesService.activeModal.set({
-      type: 'success', title: '✅ Success', message: 'Supplier directory updated!', value: '', onConfirm: () => this.salesService.activeModal.set(null)
+      type: 'success', title: '✅ Success', message: 'Supplier directory updated!', value: '', onConfirm: () => this.salesService.closeModal()
     });
   }
 
@@ -193,7 +193,7 @@ export class InventoryComponent implements OnInit {
           this.inventoryService.updateProductExpiry(product.id, newDate);
           if (this.selectedProduct()?.id === product.id) this.formProduct.expire = newDate;
           this.salesService.activeModal.set({
-            type: 'success', title: '✅ Date Updated', message: 'Expiration date modified on the fly!', value: '', onConfirm: () => this.salesService.activeModal.set(null)
+            type: 'success', title: '✅ Date Updated', message: 'Expiration date modified on the fly!', value: '', onConfirm: () => this.salesService.closeModal()
           });
         }
       }
@@ -260,11 +260,12 @@ export class InventoryComponent implements OnInit {
 
   public saveProductChanges(): void {
     if (!this.formProduct.id || !this.formProduct.name) {
-      this.salesService.activeModal.set({ type: 'warning', title: '⚠️ Required Fields', message: 'Barcode ID and Product Name are mandatory!', value: '', onConfirm: () => this.salesService.activeModal.set(null) });
+      this.salesService.activeModal.set({ type: 'warning', title: '⚠️ Required Fields', message: 'Barcode ID and Product Name are mandatory!', value: '', onConfirm: () => this.salesService.closeModal() });
       return;
     }
+    
     if (this.isCreatingNew() && this.salesService.products().some(p => p.id?.toString() === this.formProduct.id.toString())) {
-      this.salesService.activeModal.set({ type: 'warning', title: '⚠️ Collision', message: 'Operation Aborted: This Barcode / ID already exists!', value: '', onConfirm: () => this.salesService.activeModal.set(null) });
+      this.salesService.activeModal.set({ type: 'warning', title: '⚠️ Collision', message: 'Operation Aborted: This Barcode / ID already exists!', value: '', onConfirm: () => this.salesService.closeModal() });
       return;
     }
 
@@ -277,7 +278,7 @@ export class InventoryComponent implements OnInit {
     this.inventoryService.saveProductPayload(structuredPayload.id, structuredPayload);
     this.selectedProduct.set(null);
     this.isCreatingNew.set(false);
-    this.salesService.activeModal.set({ type: 'success', title: '✅ Success', message: 'System Inventory records updated successfully!', value: '', onConfirm: () => this.salesService.activeModal.set(null) });
+    this.salesService.activeModal.set({ type: 'success', title: '✅ Success', message: 'System Inventory records updated successfully!', value: '', onConfirm: () => this.salesService.closeModal() });
   }
 
   public toggleProductStatus(): void {

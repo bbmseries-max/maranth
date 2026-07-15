@@ -249,12 +249,12 @@ export class SalesService {
       title: '✅ Transaction Processed', 
       message: `Ticket ${receipt.id} processed €${receipt.grandTotal.toFixed(2)} via ${method}.`, 
       value: '', 
-      onConfirm: () => this.activeModal.set(null)
+      onConfirm: () => this.closeModal()
     });
 
     setTimeout(() => {
       if (this.activeModal()?.title === '✅ Transaction Processed') {
-        this.activeModal.set(null);
+        this.closeModal();
       }
     }, 2000);
   }
@@ -285,7 +285,7 @@ export class SalesService {
       this.addToBasket(found);
     } else {
       this.activeModal.set({
-        type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.activeModal.set(null)
+        type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.closeModal()
       });
     }
   }
@@ -330,11 +330,18 @@ export class SalesService {
     this.activeModal.set({
       type: 'prompt', title: '🔗 Link Cloud Folder', message: 'Establish a secure sync connection to backup your daily Z-Reports.', value: '',
       onConfirm: () => {
-         this.activeModal.set(null);
+         this.closeModal();
          setTimeout(() => {
-            this.activeModal.set({ type: 'success', title: '✅ Folder Linked', message: 'Successfully established sync connection!', value: '', onConfirm: () => this.activeModal.set(null) });
+            this.activeModal.set({ type: 'success', title: '✅ Folder Linked', message: 'Successfully established sync connection!', value: '', onConfirm: () => this.closeModal() });
          }, 400);
       }
     });
+  }
+
+  // ⭐ NEW: A dedicated method to guarantee the modal closes properly
+  public closeModal(): void {
+    // Setting to a completely new object reference briefly forces Angular to flush the UI
+    this.activeModal.set({ type: 'warning', title: '', message: '', value: '', onConfirm: () => {} });
+    setTimeout(() => this.activeModal.set(null), 10);
   }
 }
