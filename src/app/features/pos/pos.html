@@ -50,18 +50,29 @@
 
 <div class="pos-container">
   
-  <header class="pos-header">
-    <div class="header-left" style="display: flex; align-items: center;">
+  <header class="pos-header" style="flex-wrap: wrap;">
+    <div class="header-left" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
       <button class="pos-admin-btn" (click)="salesService.linkCloudFolder()">
         🔗 Cloud Sync Active
       </button>
 
-      <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px; margin-left: 16px;">🍊 MARANTH</span>
-      <span class="system-tag" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">POS System v2.0</span>
+      <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px; margin-left: 8px;">🍊 MARANTH</span>
+      <span class="system-tag mobile-hide" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">POS System v2.0</span>
     </div>
-    <div class="header-right">
-      <a routerLink="/reports" class="header-btn btn-reports">📊 Sales Reports</a>
-      <a routerLink="/inventory" class="header-btn btn-inventory">📦 Manage Inventory</a>
+    
+    <div class="header-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      
+      <!-- ⭐ RESTORED: Live Cashier Status Badge -->
+      <div style="background: #0f172a; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; color: white; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+        <span style="font-weight: 600;">👤 {{ salesService.currentCashier() || 'Unknown' }}</span>
+        <span style="background: #0ea5e9; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase;">{{ salesService.currentRole() || 'CASHIER' }}</span>
+      </div>
+
+      <a routerLink="/reports" class="header-btn btn-reports">📊 Reports</a>
+      <a routerLink="/inventory" class="header-btn btn-inventory">📦 Inventory</a>
+      
+      <!-- ⭐ RESTORED: The Logout Button -->
+      <button (click)="onLogout()" class="header-btn" style="background: #ef4444; border: none;">🚪 Logout</button>
     </div>
   </header>
 
