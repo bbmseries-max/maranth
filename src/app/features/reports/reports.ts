@@ -12,7 +12,6 @@ import { SalesService } from '../../shared/services/sales';
 })
 export class ReportsComponent {
   public salesService = inject(SalesService);
-
   public todayDate = new Date();
 
   // --- 🎛️ FILTERS ---
@@ -25,32 +24,7 @@ export class ReportsComponent {
     if (explicitCategories && explicitCategories.length > 0) {
       return [{id: 'ALL', name: '🌐 All Categories'}, ...explicitCategories];
     }
-
-    const catMap = new Map<string, string>();
-    this.salesService.products().forEach(p => {
-      const id = (p.categoryId || (p as any).category_id)?.toString().trim();
-      if (!id) return;
-      if (!catMap.has(id)) {
-        let name = `Category ${id}`;
-        switch (id) {
-          case '5605': name = 'Shkolla - Lojra'; break;
-          case '5619': name = 'Xartika kouzinas - Banjo'; break;
-          case '5614': name = 'Freska Fruta'; break;
-          case '5613': name = 'Freska laxanika'; break;
-          case '5636': name = 'Karta ananeosis'; break;
-          case '5606': name = 'Caj zesto - Rofimata'; break;
-          case '5609': name = 'Cikles - Karameles'; break;
-          case '5622': name = 'Idi kapnistou -Pipes - Anaptires'; break;
-          case '5627': name = 'Zootrofes - Axesuar katikidion'; break;
-          case '5635': name = 'Veze'; break;
-        }
-        catMap.set(id, name);
-      }
-    });
-
-    const deduced = Array.from(catMap, ([id, name]) => ({ id, name }));
-    deduced.sort((a, b) => a.name.localeCompare(b.name));
-    return [{id: 'ALL', name: '🌐 All Categories'}, ...deduced];
+    return [{id: 'ALL', name: '🌐 All Categories'}];
   });
 
   // 🚚 Dynamic Supplier Extractor
@@ -59,24 +33,16 @@ export class ReportsComponent {
     if (explicitSuppliers && explicitSuppliers.length > 0) {
        return [{id: 'ALL', name: '🚚 All Suppliers'}, ...explicitSuppliers];
     }
-
-    const supMap = new Map<string, string>();
-    this.salesService.products().forEach(p => {
-      const id = (p as any).supplierId?.toString().trim();
-      if (!id) return;
-      if (!supMap.has(id)) {
-         supMap.set(id, `Supplier ${id}`);
-      }
-    });
-    
-    const deduced = Array.from(supMap, ([id, name]) => ({ id, name }));
-    deduced.sort((a, b) => a.name.localeCompare(b.name));
-    return [{id: 'ALL', name: '🚚 All Suppliers'}, ...deduced];
+    return [{id: 'ALL', name: '🚚 All Suppliers'}];
   });
 
   // --- 💶 REVENUE METRICS ---
   public totalRevenue = computed(() => {
     return this.salesService.transactions().reduce((sum, tx) => sum + tx.grandTotal, 0);
+  });
+
+  public totalTax = computed(() => {
+    return this.salesService.transactions().reduce((sum, tx) => sum + (tx.taxAmount || 0), 0);
   });
 
   public cashRevenue = computed(() => {
@@ -95,12 +61,30 @@ export class ReportsComponent {
     return this.salesService.transactions().length;
   });
 
+  // --- 📦 INVENTORY VALUATION METRICS ---
+  public totalInventoryCost = computed(() => {
+    return this.salesService.products()
+      .filter(p => p.stockQuantity > 0)
+      .reduce((sum, p) => sum + (p.stockQuantity * (p.purchasePrice || 0)), 0);
+  });
+
+  public totalInventoryRetail = computed(() => {
+    return this.salesService.products()
+      .filter(p => p.stockQuantity > 0)
+      .reduce((sum, p) => sum + (p.stockQuantity * (p.price || 0)), 0);
+  });
+
+  public totalStockItems = computed(() => {
+    return this.salesService.products()
+      .filter(p => p.stockQuantity > 0)
+      .reduce((sum, p) => sum + p.stockQuantity, 0);
+  });
+
   // --- 🏆 PRODUCT LEADERBOARD ---
   public filteredTopSellingProducts = computed(() => {
     let topProducts = this.salesService.topSellingProducts();
     const allProducts = this.salesService.products();
     
-    // Filter by Category
     if (this.selectedCategoryId() !== 'ALL') {
       topProducts = topProducts.filter(tp => {
          const prod = allProducts.find(p => p.id === tp.id);
@@ -108,7 +92,6 @@ export class ReportsComponent {
       });
     }
     
-    // Filter by Supplier
     if (this.selectedSupplierId() !== 'ALL') {
       topProducts = topProducts.filter(tp => {
          const prod = allProducts.find(p => p.id === tp.id);
@@ -143,7 +126,6 @@ export class ReportsComponent {
 
   // --- ⚡ ACTIONS ---
   public printZReport() {
-    // Triggers the browser's native print dialog
     window.print();
   }
 
@@ -151,7 +133,7 @@ export class ReportsComponent {
     this.salesService.activeModal.set({
       type: 'warning',
       title: '⚠️ Clear Ledger',
-      message: 'Are you sure you want to permanently erase all sales history from the Cloud?',
+      message: 'Are you sure you want to permanently erase all sales history?',
       value: '',
       onConfirm: () => {
          this.salesService.clearLedger();
