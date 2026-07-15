@@ -253,12 +253,15 @@
       <button class="mobile-close-basket-btn" (click)="isMobileBasketOpen.set(false)">
         ⬇️ Swipe down to hide checkout ⬇️
       </button>
+ <app-shopping-basket></app-shopping-basket>
+    </section>
 
+  </div>
     <section class="checkout-basket-panel">
       <app-shopping-basket></app-shopping-basket>
     </section>
 
-   @if (salesService.basket().length > 0) {
+  @if (salesService.basket().length > 0) {
     <div class="mobile-basket-fab" (click)="isMobileBasketOpen.set(true)">
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 20px;">🛒</span>
@@ -270,3 +273,6 @@
       <span style="font-size: 18px;">{{ salesService.grandTotal() | currency:'EUR':'symbol':'1.2-2' }}</span>
     </div>
   }
+
+
+</div>
