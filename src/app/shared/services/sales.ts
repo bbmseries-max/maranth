@@ -272,13 +272,40 @@ export class SalesService {
 
   public lookupAndScanBarcode(query: string): void {
     const queryLower = query.toLowerCase().trim();
-    const found = this.products().find(p => 
+    
+    // 1. Try exact Barcode or ID
+    let found = this.products().find(p => 
       (p.barcode && p.barcode.toLowerCase() === queryLower) || 
       (p.id && p.id.toString().toLowerCase() === queryLower)
     );
 
+    // 2. Try Exact Name
+    if (!found) {
+      found = this.products().find(p => p.name && p.name.toLowerCase() === queryLower);
+    }
+
+    // 3. Try Partial Name (e.g. typing "feta" finds "Feta Cheese")
+    if (!found) {
+      found = this.products().find(p => p.name && p.name.toLowerCase().includes(queryLower));
+    }
+
     if (found) {
-      this.addToBasket(found);
+      const isScaled = found.isWeighted === true || String(found.isWeighted).toLowerCase() === 'true';
+      if (isScaled) {
+        this.activeModal.set({
+          type: 'prompt',
+          title: '⚖️ Scale Weight (kg)',
+          message: `Enter the measured weight for ${found.name}:`,
+          value: '1.000',
+          onConfirm: (val) => {
+            const weight = parseFloat(val);
+            if (!isNaN(weight) && weight > 0) this.addToBasket(found!, undefined, weight);
+            this.closeModal();
+          }
+        });
+      } else {
+        this.addToBasket(found);
+      }
     } else {
       this.activeModal.set({ type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.closeModal() });
     }

@@ -172,14 +172,22 @@ export class InventoryComponent {
         const jsonText = e.target?.result as string;
         const rawData = JSON.parse(jsonText);
         
-        // 🧠 Smart Array Extractor (Upgraded for more Access formats!)
+        // 🧠 BULLETPROOF Extractor: Digs through wrappers like {"categories": {...}}
+        let extracted = rawData;
+        if (!Array.isArray(rawData)) {
+          if (rawData.RECORDS) extracted = rawData.RECORDS;
+          else if (rawData.data) extracted = rawData.data;
+          else if (rawData.items) extracted = rawData.items;
+          else if (rawData.categories) extracted = rawData.categories;
+          else if (rawData.suppliers) extracted = rawData.suppliers;
+          else if (rawData.products) extracted = rawData.products;
+        }
+
         let dataArray: any[] = [];
-        if (Array.isArray(rawData)) {
-          dataArray = rawData;
-        } else if (rawData.RECORDS || rawData.data || rawData.items || rawData.categories || rawData.suppliers || rawData.products) {
-          dataArray = rawData.RECORDS || rawData.data || rawData.items || rawData.categories || rawData.suppliers || rawData.products;
-        } else if (typeof rawData === 'object' && rawData !== null) {
-          dataArray = Object.values(rawData);
+        if (Array.isArray(extracted)) {
+          dataArray = extracted;
+        } else if (typeof extracted === 'object' && extracted !== null) {
+          dataArray = Object.values(extracted);
         }
 
         if (dataArray.length === 0) throw new Error("No valid data found in file.");

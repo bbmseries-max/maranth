@@ -151,6 +151,43 @@
         </div>
       </div>
 
+      <!-- ⭐ RESTORED: QUICK ACCESS SHELVES -->
+      @if (weightedProducts().length > 0 || looseProducts().length > 0) {
+        <div class="quick-access-shelf">
+          
+          @if (weightedProducts().length > 0) {
+            <div class="qa-header">⚖️ Scaled Produce (Weighed)</div>
+            <div class="qa-scroll-track" style="margin-bottom: 12px;">
+              @for (prod of weightedProducts(); track prod.id) {
+                <div class="qa-card" (click)="handleProductClick(prod)">
+                  <span class="qa-name">{{ prod.name }}</span>
+                  <div class="qa-bottom">
+                    <span class="qa-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+                    <span class="qa-badge weighted">⚖️</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (looseProducts().length > 0) {
+            <div class="qa-header">🏷️ Loose Items (No Barcode)</div>
+            <div class="qa-scroll-track">
+              @for (prod of looseProducts(); track prod.id) {
+                <div class="qa-card" (click)="handleProductClick(prod)">
+                  <span class="qa-name">{{ prod.name }}</span>
+                  <div class="qa-bottom">
+                    <span class="qa-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+                    <span class="qa-badge">📦</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+      }
+
       <div class="catalog-scroll-viewport">
         <div class="grid-layout-scroll">
           @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
