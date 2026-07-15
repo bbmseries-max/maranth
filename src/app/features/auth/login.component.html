@@ -1,87 +1,48 @@
 <div class="login-viewport">
   
-  <div class="login-card" style="max-width: 480px;">
+  <div class="login-card">
     
     <div class="brand-section">
-      <!-- ⭐ Dynamically change the title -->
-      <div class="logo-circle" [style.background]="isFirstSetup() ? '#fef08a' : '#e0f2fe'" [style.color]="isFirstSetup() ? '#ca8a04' : '#0284c7'">{{ isFirstSetup() ? '👑' : '➕' }}</div>
-      <h1 class="brand-title">{{ isFirstSetup() ? 'Initial Setup' : 'New Cashier' }}</h1>
-      <p class="brand-subtitle">{{ isFirstSetup() ? 'Create Master Admin' : 'Register Terminal Access' }}</p>
+      <div class="logo-circle">🍊</div>
+      <h1 class="brand-title">MARANTH</h1>
+      <p class="brand-subtitle">Secure Terminal Access</p>
     </div>
     
-    <form class="login-form" (ngSubmit)="onRegister()">
+    <form class="login-form" (ngSubmit)="onLogin()">
       
       <div class="app-form-group">
-        <label class="app-form-label">Create a Cashier ID / Username</label>
+        <label class="app-form-label">Cashier ID / Username</label>
         <div class="input-with-icon">
           <span class="input-icon">👤</span>
-          <input type="text" class="app-input custom-login-input" [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" placeholder="e.g. maria_cashier" autocomplete="off" autofocus>
+          <input type="text" class="app-input custom-login-input" [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" placeholder="e.g. admin" autocomplete="off" autofocus>
         </div>
       </div>
-
-      <!-- ⭐ Force the first user to be an Admin visually -->
-      @if (isFirstSetup()) {
-        <div class="app-form-group" style="margin-top: 16px;">
-          <label class="app-form-label">Assigned Privilege Role</label>
-          <div class="input-with-icon">
-            <span class="input-icon">🛡️</span>
-            <input type="text" class="app-input custom-login-input" disabled value="Master Store Admin (Required)" style="background: #f8fafc; color: #64748b; font-weight: bold;" />
-          </div>
-        </div>
-      } @else {
-        <div class="app-form-group" style="margin-top: 16px;">
-          <label class="app-form-label">Assign Privilege Role</label>
-          <div class="input-with-icon">
-            <span class="input-icon">🛡️</span>
-            <select class="app-input custom-login-input" [(ngModel)]="assignedRole" name="role">
-              <option value="cashier">Standard Cashier (Register & Stock Only)</option>
-              <option value="admin">Store Admin (Full Access)</option>
-            </select>
-          </div>
-        </div>
-      }
       
-      <div style="display: flex; gap: 16px; margin-top: 16px;">
-        <div class="app-form-group" style="flex: 1;">
-          <label class="app-form-label">Create 4-Digit PIN</label>
-          <div class="input-with-icon">
-            <span class="input-icon">🔒</span>
-            <input type="password" class="app-input custom-login-input" [ngModel]="pin()" (ngModelChange)="pin.set($event)" name="pin" placeholder="••••">
-          </div>
-        </div>
-
-        <div class="app-form-group" style="flex: 1;">
-          <label class="app-form-label">Confirm PIN</label>
-          <div class="input-with-icon">
-            <span class="input-icon">🔒</span>
-            <input type="password" class="app-input custom-login-input" [ngModel]="confirmPin()" (ngModelChange)="confirmPin.set($event)" name="confirmPin" placeholder="••••">
-          </div>
+      <div class="app-form-group" style="margin-top: 16px;">
+        <label class="app-form-label">Authorization PIN</label>
+        <div class="input-with-icon">
+          <span class="input-icon">🔒</span>
+          <input type="password" class="app-input custom-login-input" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" placeholder="••••">
         </div>
       </div>
-
-      <!-- ⭐ NEW: The Security Lock (Only shows if users already exist) -->
-      @if (!isFirstSetup()) {
-        <div class="app-form-group" style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed #cbd5e1;">
-          <label class="app-form-label" style="color: #991b1b; font-weight: 800;">⚠️ Manager Authorization</label>
-          <div class="input-with-icon">
-            <span class="input-icon">🗝️</span>
-            <input type="password" class="app-input custom-login-input" [ngModel]="managerPin()" (ngModelChange)="managerPin.set($event)" name="managerPin" placeholder="Enter existing Admin PIN..." style="border-color: #fca5a5; background: #fef2f2;">
-          </div>
-          <p style="margin: 4px 0 0 0; font-size: 11px; color: #94a3b8;">An admin must approve this new account.</p>
-        </div>
-      }
       
-      <button type="submit" class="app-btn app-btn-primary login-btn" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 24px;">
-        ✅ Register & Login
+      <button type="submit" class="app-btn app-btn-primary login-btn" style="margin-top: 32px;">
+        Unlock Register ➔
       </button>
 
+      <!-- Link to Register Screen -->
       <div style="margin-top: 20px; text-align: center;">
-        <a routerLink="/login" style="color: #64748b; font-size: 14px; font-weight: 600; text-decoration: none;">
-          ⬅️ Back to Login Screen
+        <a routerLink="/register" style="color: #3b82f6; font-size: 14px; font-weight: 600; text-decoration: none;">
+          Need a Cashier ID? Register here.
         </a>
       </div>
 
     </form>
+
+    <div class="footer-note">
+      POS System v2.0 • Authorized Personnel Only
+    </div>
+
   </div>
 
   @if (salesService.activeModal(); as modal) {

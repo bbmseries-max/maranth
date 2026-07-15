@@ -1,6 +1,18 @@
 import { Injectable, signal, computed, effect } from '@angular/core';
 import { Product, BasketItem, Category, Supplier, TransactionRecord, POSModal } from './pos-data.models';
 
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDVlkxyVZIPEgXSukJxPEWK3WLnjoujsjU",
+  authDomain: "maranth-pos.firebaseapp.com",
+  projectId: "maranth-pos",
+  storageBucket: "maranth-pos.firebasestorage.app",
+  messagingSenderId: "71739745426",
+  appId: "1:71739745426:web:cf0dbdcfbdf29fe10ef24b"
+};
+
 const DEFAULT_CATEGORIES: Category[] = [
   { id: '5605', name: 'Shkolla - Lojra', isActive: true },
   { id: '5619', name: 'Xartika kouzinas - Banjo', isActive: true },
@@ -20,57 +32,92 @@ const DEFAULT_SUPPLIERS: Supplier[] = [
   { id: "3", name: "Tasty", contact: "Kostas", phone: "6936172563", notes: "Snacks", isActive: true }
 ];
 
-// ⭐ Added status, statusDate, and afterTaxRate to match the Access DB
-const DEFAULT_PRODUCTS: Product[] = [
-  { id: '1001', barcode: '5201234567890', name: 'Milo (Apples)', price: 1.20, stockQuantity: 50, categoryId: '5614', isActive: true, isWeighted: true, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' },
-  { id: '1002', barcode: '5209876543210', name: 'Clipper Lighter', price: 1.50, stockQuantity: 120, categoryId: '5622', isActive: true, isWeighted: false, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' },
-  { id: '1003', barcode: '5201111222233', name: 'Nutria Olive Oil 2L', price: 12.50, stockQuantity: 24, categoryId: '5613', supplierId: '2', isActive: true, isWeighted: false, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' },
-  { id: '1004', barcode: '5203333444455', name: 'Feta Cheese', price: 8.90, stockQuantity: 15, categoryId: '5635', isActive: true, isWeighted: true, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' },
-  { id: '1005', barcode: '5205555666677', name: 'Lays Tasty 90g', price: 1.80, stockQuantity: 30, categoryId: '5605', supplierId: '3', isActive: true, isWeighted: false, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' }
-];
-
 @Injectable({
   providedIn: 'root'
 })
 export class SalesService {
-  // ⭐ Core State
-  public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier'}[]>(this.loadData('maranth_cashiers', []));
+  private db: any;
+
+  // ⭐ Cloud Synced State (Starts empty, fills from Firebase instantly)
+  public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier'}[]>([]);
+  public transactions = signal<TransactionRecord[]>([]);
+  public products = signal<Product[]>([]);
+  public categories = signal<Category[]>([]);
+  public suppliers = signal<Supplier[]>([]);
+
+  // ⭐ Local Terminal State (Active Cart)
   public currentCashier = signal<string | null>(localStorage.getItem('maranth_active_cashier') || null);
   public currentRole = signal<'admin' | 'cashier' | null>(localStorage.getItem('maranth_active_role') as any || null);
+  public basket = signal<BasketItem[]>(this.loadLocalData('maranth_basket', []));
+  public suspendedBasket = signal<BasketItem[] | null>(this.loadLocalData('maranth_suspended', null));
   
-  public basket = signal<BasketItem[]>(this.loadData('maranth_basket', []));
-  public suspendedBasket = signal<BasketItem[] | null>(this.loadData('maranth_suspended', null));
-  public transactions = signal<TransactionRecord[]>(this.loadData('maranth_transactions', []));
-  
-  public products = signal<Product[]>(this.loadData('maranth_products', DEFAULT_PRODUCTS));
-  public categories = signal<Category[]>(this.loadData('maranth_categories', DEFAULT_CATEGORIES));
-  public suppliers = signal<Supplier[]>(this.loadData('maranth_suppliers', DEFAULT_SUPPLIERS));
-
   public isRefundMode = signal<boolean>(false);
   public highlightedItemId = signal<string | null>(null);
   public activeModal = signal<POSModal | null>(null);
 
   constructor() {
-    // 💾 Auto-save all state changes directly to the Local Storage "Cloud"
+    // 1. Initialize Firebase App
+    const app = initializeApp(firebaseConfig);
+    this.db = getFirestore(app);
+
+    // 2. Establish Real-Time Sync Connections
+    this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
+    this.setupCloudSync('products', this.products, 'maranth_products');
+    this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
+    this.setupCloudSync('categories', this.categories, 'maranth_categories', DEFAULT_CATEGORIES);
+    this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers', DEFAULT_SUPPLIERS);
+
+    // 3. Save Active Basket to local memory only
     effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
     effect(() => localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket())));
-    effect(() => localStorage.setItem('maranth_transactions', JSON.stringify(this.transactions())));
-    effect(() => localStorage.setItem('maranth_products', JSON.stringify(this.products())));
-    effect(() => localStorage.setItem('maranth_categories', JSON.stringify(this.categories())));
-    effect(() => localStorage.setItem('maranth_suppliers', JSON.stringify(this.suppliers())));
-    effect(() => localStorage.setItem('maranth_cashiers', JSON.stringify(this.registeredCashiers())));
   }
 
-  private loadData(key: string, fallback: any): any {
+  private loadLocalData(key: string, fallback: any): any {
     const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : fallback;
+  }
+
+  private setupCloudSync(collectionName: string, targetSignal: any, storageKey: string, fallbackData: any[] = []) {
+    onSnapshot(collection(this.db, collectionName), (snapshot) => {
+      
+      if (snapshot.empty) {
+        // 🚀 SCENARIO A: Firebase is empty! Let's check LocalStorage and MIGRATE the data up!
+        const localData = localStorage.getItem(storageKey);
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          if (parsed && parsed.length > 0) {
+            console.log(`⬆️ Migrating ${collectionName} from LocalStorage to Firebase Cloud...`);
+            parsed.forEach((item: any) => {
+              const docId = (item.id || item.username).toString();
+              setDoc(doc(this.db, collectionName, docId), item);
+            });
+            return; // Exit early. The database will catch the changes and fire this snapshot again.
+          }
+        }
+
+        // 🌱 SCENARIO B: Brand new system. Plant the seeds!
+        if (fallbackData.length > 0) {
+          console.log(`🌱 Seeding default ${collectionName}...`);
+          fallbackData.forEach((item: any) => {
+            const docId = (item.id || item.username).toString();
+            setDoc(doc(this.db, collectionName, docId), item);
+          });
+          return;
+        }
+      }
+
+      // 🔄 SCENARIO C: Normal Operation. Read live cloud data into the Angular Signal.
+      const data = snapshot.docs.map(doc => doc.data());
+      targetSignal.set(data);
+    });
   }
 
   public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier'): boolean {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
     
-    this.registeredCashiers.update(users => [...users, { username, pin, role }]);
+    // 🔥 Write directly to Cloud!
+    setDoc(doc(this.db, 'cashiers', username), { username, pin, role });
     return true; 
   }
 
@@ -157,10 +204,6 @@ export class SalesService {
     this.basket.set([]);
   }
 
-  public clearLedger(): void {
-    this.transactions.set([]);
-  }
-
   public processPayment(method: 'Cash' | 'Card' | 'Debit'): void {
     const currentBasket = this.basket();
     if (currentBasket.length === 0) return;
@@ -175,20 +218,21 @@ export class SalesService {
       paymentMethod: method
     };
 
-    // Update inventory stock levels
-    this.products.update(prods => {
-      const updated = [...prods];
-      currentBasket.forEach(item => {
-        const index = updated.findIndex(p => p.id === item.product.id);
-        if (index > -1) {
-          const change = item.isRefund ? item.quantity : -item.quantity;
-          updated[index] = { ...updated[index], stockQuantity: parseFloat((updated[index].stockQuantity + change).toFixed(3)) };
-        }
-      });
-      return updated;
+    // 🔥 1. Sync Live Inventory Levels to Cloud
+    currentBasket.forEach(item => {
+      const product = this.products().find(p => p.id === item.product.id);
+      if (product) {
+        const change = item.isRefund ? item.quantity : -item.quantity;
+        const newQuantity = parseFloat((product.stockQuantity + change).toFixed(3));
+        
+        // Push the update to Firebase
+        setDoc(doc(this.db, 'products', product.id.toString()), { ...product, stockQuantity: newQuantity });
+      }
     });
 
-    this.transactions.update(logs => [receipt, ...logs]);
+    // 🔥 2. Push Receipt to Cloud Ledger
+    setDoc(doc(this.db, 'transactions', receipt.id), receipt);
+
     this.clearBasket();
     this.isRefundMode.set(false);
     
@@ -270,44 +314,37 @@ export class SalesService {
 
   public linkCloudFolder() {
     this.activeModal.set({
-      type: 'prompt', title: '🔗 Link Cloud Sync', message: 'Establish a secure sync connection to backup your daily Z-Reports.', value: '',
-      onConfirm: () => {
-         this.closeModal();
-         setTimeout(() => {
-            this.activeModal.set({ type: 'success', title: '✅ Live Cloud Sync Active', message: 'The system is successfully backing up in real-time!', value: '', onConfirm: () => this.closeModal() });
-         }, 400);
-      }
+      type: 'success', title: '✅ Live Cloud Sync Active', message: 'The system is successfully linked to Google Firebase!', value: '', onConfirm: () => this.closeModal()
     });
   }
 
+  // 🔥 Firebase Database Modifiers
   public updateProductExpiry(productId: string, newDate: string): void {
-    this.products.update(prods => prods.map(p => p.id?.toString() === productId.toString() ? { ...p, expire: newDate } : p));
+    const product = this.products().find(p => p.id?.toString() === productId.toString());
+    if (product) {
+      setDoc(doc(this.db, 'products', productId.toString()), { ...product, expire: newDate });
+    }
   }
 
   public saveProduct(productId: string, payload: Product): void {
-    this.products.update(prods => {
-      const exists = prods.some(p => p.id?.toString() === productId.toString());
-      return exists ? prods.map(p => p.id?.toString() === productId.toString() ? payload : p) : [...prods, payload];
-    });
+    setDoc(doc(this.db, 'products', productId.toString()), payload);
   }
 
   public saveCategory(payload: Category): void {
-    this.categories.update(cats => {
-      const exists = cats.some(c => c.id?.toString() === payload.id.toString());
-      return exists ? cats.map(c => c.id?.toString() === payload.id.toString() ? payload : c) : [...cats, payload];
-    });
+    setDoc(doc(this.db, 'categories', payload.id.toString()), payload);
   }
 
   public saveSupplier(payload: Supplier): void {
-    this.suppliers.update(sups => {
-      const exists = sups.some(s => s.id?.toString() === payload.id.toString());
-      return exists ? sups.map(s => s.id?.toString() === payload.id.toString() ? payload : s) : [...sups, payload];
-    });
+    setDoc(doc(this.db, 'suppliers', payload.id.toString()), payload);
+  }
+
+  public clearLedger(): void {
+    // 🔥 Deletes the entire ledger from the Cloud!
+    this.transactions().forEach(tx => deleteDoc(doc(this.db, 'transactions', tx.id)));
   }
 
   public closeModal(): void {
     this.activeModal.set(null);
-    // Double flush to ensure Angular detects the UI removal
     setTimeout(() => this.activeModal.set(null), 10);
   }
 }
