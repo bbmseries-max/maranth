@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common'; 
 import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
@@ -23,7 +23,17 @@ export class PosComponent implements OnInit {
 
   public showWeightedShelf = signal<boolean>(false);
   public showLooseShelf = signal<boolean>(false);
-  public isSidebarMobileOpen = signal<boolean>(false); // ⭐ NEW: Tracks if mobile menu is open
+   public isSidebarMobileOpen = signal<boolean>(false); // ⭐ Tracks if mobile menu is open
+  public isMobileBasketOpen = signal<boolean>(false); // ⭐ NEW: Tracks if the checkout drawer
+
+constructor() {
+    // ⭐ NEW: Auto-close the mobile basket drawer if it empties (e.g. after successful payment!)
+    effect(() => {
+      if (this.salesService.basket().length === 0) {
+        this.isMobileBasketOpen.set(false);
+      }
+    }, { allowSignalWrites: true });
+  }
 
   ngOnInit() {}
 

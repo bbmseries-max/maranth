@@ -340,6 +340,103 @@ display: none !important;
 }
 }
 
+/* STREAMING_CHUNK: Mobile Floating Basket Classes */
+.mobile-basket-fab {
+display: none;
+}
+.mobile-close-basket-btn {
+display: none;
+}
+
+.pos-sidebar-panel {
+width: 100% !important;
+flex: 0 0 auto !important;
+padding: 10px !important;
+min-height: min-content;
+}
+
+.checkout-basket-panel {
+width: 100% !important;
+flex: 0 0 auto !important;
+position: fixed !important;
+bottom: -120% !important; /* Hides it below the screen */
+left: 0 !important;
+height: 85vh !important;
+z-index: 1000 !important;
+border-radius: 24px 24px 0 0 !important;
+box-shadow: 0 -10px 40px rgba(0,0,0,0.3) !important;
+transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+margin: 0 !important;
+}
+
+.checkout-basket-panel.mobile-open {
+bottom: 0 !important; /* Slides it up into view! */
+}
+
+.mobile-basket-fab {
+display: flex !important;
+position: fixed;
+bottom: 20px;
+left: 5%;
+width: 90%;
+background: #0b57d0;
+color: white;
+padding: 16px 24px;
+border-radius: 99px;
+align-items: center;
+justify-content: space-between;
+box-shadow: 0 10px 25px rgba(11, 87, 208, 0.4);
+z-index: 999;
+font-weight: 700;
+font-size: 15px;
+cursor: pointer;
+box-sizing: border-box;
+}
+
+.mobile-close-basket-btn {
+display: block !important;
+width: 100%;
+padding: 16px;
+text-align: center;
+background: #f1f5f9;
+color: #0f172a;
+font-weight: 800;
+font-size: 14px;
+border: none;
+border-bottom: 1px solid #cbd5e1;
+cursor: pointer;
+border-radius: 24px 24px 0 0;
+}
+
+.main-catalog-panel {
+width: 100% !important;
+flex: 0 0 auto !important;
+min-height: 500px;
+}
+
+/* ⭐ Mobile Sidebar Expand/Collapse Logic */
+.sidebar-mobile-toggle {
+display: flex !important;
+}
+
+.sidebar-collapsible-content {
+display: none !important; /* Hidden by default on mobile /
+margin-top: 12px;
+max-height: 50vh; / Constrains height so categories are scrollable */
+}
+
+/* When expanded class is applied by Angular, show the content */
+.pos-sidebar-panel.expanded .sidebar-collapsible-content {
+display: flex !important;
+}
+
+
+@media (max-width: 768px) {
+.mobile-hide {
+display: none !important;
+}
+}
+
 /* STREAMING_CHUNK: Responsive Media Queries (Mobile & Tablet) */
 @media (max-width: 1024px) {
 .pos-main-layout {
