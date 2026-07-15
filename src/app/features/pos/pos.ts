@@ -65,6 +65,7 @@ export class PosComponent implements OnInit {
     this.salesService.lookupAndScanBarcode(query);
   }
 
+  // ⚖️ THE FIX: This triggers the Weight Modal perfectly!
   public handleProductClick(product: Product) {
     if (product.isWeighted) {
       this.salesService.activeModal.set({

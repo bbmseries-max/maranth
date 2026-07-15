@@ -1,5 +1,5 @@
 @if (salesService.activeModal(); as modal) {
-  <div class="pos-modal-overlay is-active">
+  <div class="pos-modal-overlay is-active" style="z-index: 99999;">
     <div class="pos-modal-window">
       
       <div class="pos-modal-header" 
@@ -12,12 +12,14 @@
         <p style="margin-top: 0;">{{ modal.message }}</p>
         
         @if (modal.type === 'prompt') {
+          <!-- Pressing Enter inside this input automatically confirms the weight! -->
           <input 
             #weightInput
             [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" 
             class="pos-modal-input" 
             [value]="modal.value" 
             (input)="modal.value = weightInput.value"
+            (keyup.enter)="modal.onConfirm(modal.value)"
             [attr.step]="modal.title?.includes('Date') ? null : '0.001'"
             autofocus
           />
@@ -49,35 +51,34 @@
 
 <div class="pos-container">
   
-  <header class="pos-header" [style.background]="salesService.isRefundMode() ? '#991b1b' : '#1e293b'" style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 60px; border-bottom: 1px solid #334155; transition: background 0.3s ease;">
+  <header class="pos-header" [style.background]="salesService.isRefundMode() ? '#991b1b' : '#1e293b'" style="transition: background 0.3s ease;">
     
     <!-- ⭐ LEFT: Brand Logo & Sync Tool -->
-    <div class="header-left" style="display: flex; align-items: center; flex: 1;">
+    <div class="header-left">
       <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px;">🍊 MARANTH</span>
-      <span class="system-tag" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">v2.0</span>
+      <span class="system-tag mobile-hide" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">v2.0</span>
       
       @if (salesService.currentRole() === 'admin') {
-        <button class="pos-admin-btn" (click)="salesService.linkCloudFolder()" style="margin-left: 16px;">
+        <button class="pos-admin-btn mobile-hide" (click)="salesService.linkCloudFolder()" style="margin-left: 16px;">
           🔗 Cloud Sync
         </button>
       }
     </div>
 
     <!-- ⭐ CENTER: Main App Navigation -->
-    <div class="header-center" style="display: flex; gap: 12px; justify-content: center; flex: 1;">
+    <div class="header-center" style="display: flex; gap: 8px; justify-content: center; flex: 1; flex-wrap: wrap;">
       <a routerLink="/pos" class="header-btn" style="background: #3b82f6;">🛒 POS Register</a>
-      <a routerLink="/inventory" class="header-btn">📦 Manage Inventory</a>
+      <a routerLink="/inventory" class="header-btn">📦 Inventory</a>
       
       @if (salesService.currentRole() === 'admin') {
-        <a routerLink="/reports" class="header-btn">📊 Sales Reports</a>
+        <a routerLink="/reports" class="header-btn">📊 Reports</a>
       }
     </div>
 
     <!-- ⭐ RIGHT: Cashier Profile & Logout -->
-    <div class="header-right" style="display: flex; gap: 12px; align-items: center; justify-content: flex-end; flex: 1;">
-      <div style="background: #0f172a; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; border: 1px solid #334155; text-transform: capitalize;">
-        <!-- ✨ Added the Role flag right here! -->
-        <span style="color: #60a5fa;">👤</span> {{ salesService.currentCashier() || 'Unknown' }} ({{ salesService.currentRole() }})
+    <div class="header-right">
+      <div class="user-badge mobile-hide" style="background: #0f172a; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; border: 1px solid #334155; text-transform: capitalize;">
+        <span style="color: #60a5fa;">👤</span> {{ salesService.currentCashier() || 'Unknown' }}
       </div>
       
       <button class="header-btn" (click)="onLogout()" style="background: #b91c1c; border: none;">
@@ -176,13 +177,12 @@
           <input 
             #searchInput
             type="text" 
-            placeholder="Scan barcode or type product name to search..." 
+            placeholder="Scan barcode or search..." 
             (keydown.enter)="onSearchSubmit(searchInput.value); searchInput.value = ''"
             style="border: none; background: transparent; outline: none; width: 100%; height: 36px; font-size: 15px; font-weight: 500; color: #1e293b;"
             autocomplete="off"
             autofocus
           />
-          <span style="font-size: 11px; color: #94a3b8; font-weight: 600; white-space: nowrap; background: #e2e8f0; padding: 3px 6px; border-radius: 4px;">Press [ENTER]</span>
         </div>
       </div>
 

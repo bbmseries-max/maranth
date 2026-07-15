@@ -1,3 +1,4 @@
+/* STREAMING_CHUNK: Defining core variables and host layout */
 :host {
 display: block;
 height: 100%;
@@ -22,6 +23,7 @@ overflow: hidden !important;
 box-sizing: border-box;
 }
 
+/* STREAMING_CHUNK: Styling the header and main layout */
 .pos-header {
 display: flex !important;
 justify-content: space-between !important;
@@ -32,6 +34,13 @@ background: #1e293b;
 padding: 0 20px;
 border-bottom: 1px solid #334155;
 box-sizing: border-box;
+gap: 16px;
+}
+
+.header-left, .header-right {
+display: flex;
+align-items: center;
+gap: 12px;
 }
 
 .pos-main-layout {
@@ -45,6 +54,7 @@ overflow: hidden !important;
 box-sizing: border-box;
 }
 
+/* STREAMING_CHUNK: Structuring the 3-panel column distribution */
 .pos-sidebar-panel {
 flex: 0 0 20% !important;
 width: 20% !important;
@@ -68,6 +78,7 @@ overflow: hidden !important;
 box-sizing: border-box;
 }
 
+/* STREAMING_CHUNK: Configuring the catalog scrolling viewport */
 .main-catalog-panel {
 flex: 1 1 auto !important;
 width: auto !important;
@@ -94,6 +105,7 @@ padding: 16px;
 background-color: var(--pos-bg-main);
 }
 
+/* STREAMING_CHUNK: Styling the individual product item cards */
 .product-item-card {
 background: var(--pos-bg-card);
 border: 1px solid var(--border-light);
@@ -121,6 +133,7 @@ flex-direction: column;
 gap: 6px;
 }
 
+/* STREAMING_CHUNK: Formatting product names and prices */
 .prod-name {
 font-weight: 700;
 
@@ -162,6 +175,7 @@ padding-left: 4px;
 
 }
 
+/* STREAMING_CHUNK: Defining stock badges and search input */
 .prod-stock-badge {
 margin-top: 10px;
 font-size: 11px;
@@ -196,7 +210,7 @@ background: var(--pos-bg-card);
 box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
 }
 
-/* Quick Access Shelf Styles */
+/* STREAMING_CHUNK: Quick Access Shelf Styles */
 .quick-access-shelf {
 background: #f8fafc;
 border-bottom: 2px solid var(--border-light);
@@ -282,6 +296,7 @@ background: #dcfce7;
 color: #166534;
 }
 
+/* STREAMING_CHUNK: Configuring the modal overlay and window */
 .pos-modal-overlay {
 position: fixed;
 top: 0;
@@ -295,7 +310,7 @@ display: none !important;
 
 align-items: center;
 justify-content: center;
-z-index: 9999;
+z-index: 99999;
 
 opacity: 0;
 transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -321,6 +336,7 @@ transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 
 .pos-modal-overlay.is-active .pos-modal-window { transform: scale(1); }
 
+/* STREAMING_CHUNK: Setting up modal headers, bodies, and inputs */
 .pos-modal-header {
 padding: 18px 24px;
 background: #f8fafc;
@@ -361,6 +377,7 @@ background: #ffffff;
 outline: none;
 }
 
+/* STREAMING_CHUNK: Finalizing modal footer and header links */
 .pos-modal-footer {
 padding: 16px 24px;
 background: #f8fafc;
@@ -387,7 +404,7 @@ transition: background 0.15s ease;
 .pos-modal-btn-danger { background: var(--accent-danger); color: white; }
 .pos-modal-btn-danger:hover { background: #be123c; }
 
-a.header-btn {
+.header-btn {
 text-decoration: none !important;
 color: white !important;
 background: #334155;
@@ -399,7 +416,7 @@ transition: background 0.2s;
 cursor: pointer;
 }
 
-a.header-btn:hover { background: #475569; }
+.header-btn:hover { background: #475569; }
 
 .pos-admin-btn {
 background: #3b82f6;
@@ -412,3 +429,70 @@ font-weight: 600;
 cursor: pointer;
 }
 .pos-admin-btn:hover { background: #2563eb; }
+
+/* =======================================================
+📱 RESPONSIVE MOBILE & TABLET MEDIA QUERIES
+======================================================= */
+
+/* TABLET (Under 1024px) */
+@media (max-width: 1024px) {
+.pos-main-layout {
+flex-direction: column !important;
+overflow-y: auto !important;
+height: auto !important;
+}
+
+.pos-sidebar-panel {
+width: 100% !important;
+flex: 0 0 auto !important;
+}
+
+.main-catalog-panel {
+width: 100% !important;
+flex: 0 0 auto !important;
+height: 65vh !important;
+}
+
+.checkout-basket-panel {
+width: 100% !important;
+flex: 0 0 auto !important;
+height: 70vh !important;
+}
+
+.grid-layout-scroll {
+grid-template-columns: repeat(2, 1fr) !important;
+}
+}
+
+/* MOBILE PHONES (Under 600px) */
+@media (max-width: 600px) {
+.grid-layout-scroll {
+grid-template-columns: 1fr !important;
+}
+
+.pos-header {
+height: auto !important;
+flex-direction: column !important;
+align-items: stretch !important;
+padding: 16px;
+}
+
+.header-left, .header-right, .header-center {
+justify-content: space-between;
+width: 100%;
+}
+
+.mobile-hide {
+display: none !important;
+}
+
+.header-btn {
+flex: 1;
+text-align: center;
+padding: 10px 8px;
+}
+
+.qa-card {
+width: 140px;
+}
+}
