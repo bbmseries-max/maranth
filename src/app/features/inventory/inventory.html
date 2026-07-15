@@ -70,8 +70,10 @@
               <option [value]="cat.id">{{ cat.name }}</option>
             }
           </select>
-          
-          <!-- ⭐ NEW: Hidden File Input and Visible Import Button -->
+        }
+
+        <!-- ⭐ NEW: The button now shows for BOTH Products and Categories! -->
+        @if (activeTab() === 'PRODUCTS' || activeTab() === 'CATEGORIES') {
           <input type="file" #fileInput style="display: none" accept=".json" (change)="importJsonData($event)" />
           <button type="button" class="app-btn" style="background: #3b82f6; color: white;" (click)="fileInput.click()">
             📥 Import JSON
