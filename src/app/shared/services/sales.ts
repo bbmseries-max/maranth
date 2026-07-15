@@ -258,7 +258,7 @@ export class SalesService {
     }
   }
 
-  public recallOrder(): void {
+    public recallOrder(): void {
     const suspended = this.suspendedBasket();
     if (suspended && suspended.length > 0) {
       this.basket.set([...suspended]);
@@ -274,7 +274,22 @@ export class SalesService {
     );
 
     if (found) {
-      this.addToBasket(found);
+      if (found.isWeighted) {
+        // Pop the modal if they scan a weighted item's barcode!
+        this.activeModal.set({
+          type: 'prompt',
+          title: '⚖️ Scale Weight (kg)',
+          message: `Enter the measured weight for ${found.name}:`,
+          value: '1.000',
+          onConfirm: (val) => {
+            const weight = parseFloat(val);
+            if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
+            this.closeModal();
+          }
+        });
+      } else {
+        this.addToBasket(found);
+      }
     } else {
       this.activeModal.set({ type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.closeModal() });
     }

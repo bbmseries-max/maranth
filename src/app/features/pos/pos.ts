@@ -66,7 +66,24 @@ export class PosComponent implements OnInit {
   }
 
   public handleProductClick(product: Product) {
-    this.salesService.addToBasket(product);
+    if (product.isWeighted) {
+      this.salesService.activeModal.set({
+        type: 'prompt',
+        title: '⚖️ Scale Weight (kg)',
+        message: `Please enter the exact weight for ${product.name}:`,
+        value: '1.000',
+        onConfirm: (val) => {
+          const weight = parseFloat(val);
+          if (!isNaN(weight) && weight > 0) {
+            // Push the exact typed weight to the basket
+            this.salesService.addToBasket(product, undefined, weight);
+          }
+          this.salesService.closeModal();
+        }
+      });
+    } else {
+      this.salesService.addToBasket(product);
+    }
   }
 
   public onLogout() {
