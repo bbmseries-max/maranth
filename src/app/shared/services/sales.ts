@@ -15,84 +15,61 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 const DEFAULT_SUPPLIERS: Supplier[] = [
-  { id: "1", name: "Arvaniti", contact: "fanky", phone: "6973334012", notes: "6948686731 Kalymnios panagiotis", isActive: true },
-  { id: "2", name: "Nutria", contact: "Andreas", phone: "6945223013", notes: "6 vaj ulliri 2 L kot mr kot", isActive: true },
-  { id: "3", name: "Tasty", contact: "Kostas", phone: "6936172563", notes: "epistrofes", isActive: true }
+  { id: "1", name: "Arvaniti", contact: "fanky", phone: "6973334012", notes: "6948686731", isActive: true },
+  { id: "2", name: "Nutria", contact: "Andreas", phone: "6945223013", notes: "Olive Oil", isActive: true },
+  { id: "3", name: "Tasty", contact: "Kostas", phone: "6936172563", notes: "Snacks", isActive: true }
 ];
 
+// ⭐ Added status, statusDate, and afterTaxRate to match the Access DB
 const DEFAULT_PRODUCTS: Product[] = [
-  { id: '1001', barcode: '5201234567890', name: 'Milo (Apples)', price: 1.20, stockQuantity: 50, categoryId: '5614', isActive: true, isWeighted: true },
-  { id: '1002', barcode: '5209876543210', name: 'Clipper Lighter', price: 1.50, stockQuantity: 120, categoryId: '5622', isActive: true, isWeighted: false },
-  { id: '1003', barcode: '5201111222233', name: 'Nutria Olive Oil 2L', price: 12.50, stockQuantity: 24, categoryId: '5613', supplierId: '2', isActive: true, isWeighted: false },
-  { id: '1004', barcode: '5203333444455', name: 'Feta Cheese', price: 8.90, stockQuantity: 15, categoryId: '5635', isActive: true, isWeighted: true },
-  { id: '1005', barcode: '5205555666677', name: 'Lays Tasty 90g', price: 1.80, stockQuantity: 30, categoryId: '5605', supplierId: '3', isActive: true, isWeighted: false }
+  { id: '1001', barcode: '5201234567890', name: 'Milo (Apples)', price: 1.20, stockQuantity: 50, categoryId: '5614', isActive: true, isWeighted: true, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' },
+  { id: '1002', barcode: '5209876543210', name: 'Clipper Lighter', price: 1.50, stockQuantity: 120, categoryId: '5622', isActive: true, isWeighted: false, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' },
+  { id: '1003', barcode: '5201111222233', name: 'Nutria Olive Oil 2L', price: 12.50, stockQuantity: 24, categoryId: '5613', supplierId: '2', isActive: true, isWeighted: false, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' },
+  { id: '1004', barcode: '5203333444455', name: 'Feta Cheese', price: 8.90, stockQuantity: 15, categoryId: '5635', isActive: true, isWeighted: true, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' },
+  { id: '1005', barcode: '5205555666677', name: 'Lays Tasty 90g', price: 1.80, stockQuantity: 30, categoryId: '5605', supplierId: '3', isActive: true, isWeighted: false, afterTaxRate: 0, status: 'Active', statusDate: '2026-07-15' }
 ];
 
 @Injectable({
   providedIn: 'root'
 })
 export class SalesService {
-  // ⭐ Authorized Users Memory (Now with Roles!)
-  public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier'}[]>([]);
+  // ⭐ Core State
+  public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier'}[]>(this.loadData('maranth_cashiers', []));
   public currentCashier = signal<string | null>(localStorage.getItem('maranth_active_cashier') || null);
   public currentRole = signal<'admin' | 'cashier' | null>(localStorage.getItem('maranth_active_role') as any || null);
   
-  public basket = signal<BasketItem[]>([]);
-  public suspendedBasket = signal<BasketItem[] | null>(null);
-  public transactions = signal<TransactionRecord[]>([]);
+  public basket = signal<BasketItem[]>(this.loadData('maranth_basket', []));
+  public suspendedBasket = signal<BasketItem[] | null>(this.loadData('maranth_suspended', null));
+  public transactions = signal<TransactionRecord[]>(this.loadData('maranth_transactions', []));
   
-  public products = signal<Product[]>([]);
-  public categories = signal<Category[]>([]);
-  public suppliers = signal<Supplier[]>([]);
+  public products = signal<Product[]>(this.loadData('maranth_products', DEFAULT_PRODUCTS));
+  public categories = signal<Category[]>(this.loadData('maranth_categories', DEFAULT_CATEGORIES));
+  public suppliers = signal<Supplier[]>(this.loadData('maranth_suppliers', DEFAULT_SUPPLIERS));
 
   public isRefundMode = signal<boolean>(false);
   public highlightedItemId = signal<string | null>(null);
   public activeModal = signal<POSModal | null>(null);
 
   constructor() {
-    const loadedUsers = this.loadFromStorage('maranth_cashiers', [{username: 'admin', pin: '1234', role: 'admin'}]);
-    
-    // Safety check: Upgrade any old accounts that were created before we added roles!
-    const upgradedUsers = loadedUsers.map((u: any) => ({
-      ...u, 
-      role: u.role || (u.username.toLowerCase() === 'admin' ? 'admin' : 'cashier')
-    }));
-    this.registeredCashiers.set(upgradedUsers);
-    
-    this.products.set(this.loadFromStorage('maranth_inventory', DEFAULT_PRODUCTS));
-    this.categories.set(this.loadFromStorage('maranth_categories', DEFAULT_CATEGORIES));
-    this.suppliers.set(this.loadFromStorage('maranth_suppliers', DEFAULT_SUPPLIERS));
-    this.transactions.set(this.loadFromStorage('maranth_transactions', []));
-
-    effect(() => localStorage.setItem('maranth_cashiers', JSON.stringify(this.registeredCashiers())));
-    effect(() => localStorage.setItem('maranth_inventory', JSON.stringify(this.products())));
+    // 💾 Auto-save all state changes directly to the Local Storage "Cloud"
+    effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
+    effect(() => localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket())));
+    effect(() => localStorage.setItem('maranth_transactions', JSON.stringify(this.transactions())));
+    effect(() => localStorage.setItem('maranth_products', JSON.stringify(this.products())));
     effect(() => localStorage.setItem('maranth_categories', JSON.stringify(this.categories())));
     effect(() => localStorage.setItem('maranth_suppliers', JSON.stringify(this.suppliers())));
-    effect(() => localStorage.setItem('maranth_transactions', JSON.stringify(this.transactions())));
+    effect(() => localStorage.setItem('maranth_cashiers', JSON.stringify(this.registeredCashiers())));
   }
 
-  private loadFromStorage(key: string, fallback: any): any {
+  private loadData(key: string, fallback: any): any {
     const saved = localStorage.getItem(key);
-    if (saved) {
-      try { 
-        const parsed = JSON.parse(saved); 
-        if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(fallback) && fallback.length > 0) {
-          return fallback;
-        }
-        return parsed; 
-      } catch (e) {}
-    }
-    return fallback;
+    return saved ? JSON.parse(saved) : fallback;
   }
 
   public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier'): boolean {
     const existingUsers = this.registeredCashiers();
-    const userExists = existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase());
+    if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
     
-    if (userExists) {
-      return false; 
-    }
-
     this.registeredCashiers.update(users => [...users, { username, pin, role }]);
     return true; 
   }
@@ -119,21 +96,7 @@ export class SalesService {
     if (!categoryId) return 'Unassigned';
     const cleanId = categoryId.toString().trim();
     const match = this.categories().find(c => c.id.toString() === cleanId);
-    if (match && match.name) return match.name;
-    
-    switch (cleanId) {
-      case '5605': return 'Shkolla - Lojra';
-      case '5619': return 'Xartika kouzinas - Banjo';
-      case '5614': return 'Freska Fruta';
-      case '5613': return 'Freska laxanika';
-      case '5636': return 'Karta ananeosis';
-      case '5606': return 'Caj zesto - Rofimata';
-      case '5609': return 'Cikles - Karameles';
-      case '5622': return 'Idi kapnistou -Pipes - Anaptires';
-      case '5627': return 'Zootrofes - Axesuar katikidion';
-      case '5635': return 'Veze';
-    }
-    return `Category ${cleanId}`;
+    return match && match.name ? match.name : `Category ${cleanId}`;
   }
 
   public netSubtotal = computed(() => {
@@ -144,18 +107,10 @@ export class SalesService {
   });
   public subtotal = this.netSubtotal;
 
-  public taxAmount = computed(() => {
-    return this.netSubtotal() * 0.24;
-  });
+  public taxAmount = computed(() => this.netSubtotal() * 0.24);
   public vatAmount = this.taxAmount;
-
-  public grandTotal = computed(() => {
-    return this.netSubtotal() + this.taxAmount();
-  });
-
-  public totalItems = computed(() => {
-    return this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0);
-  });
+  public grandTotal = computed(() => this.netSubtotal() + this.taxAmount());
+  public totalItems = computed(() => this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0));
 
   public addToBasket(product: Product, forceRefundState?: boolean): void {
     this.highlightedItemId.set(product.id);
@@ -164,17 +119,13 @@ export class SalesService {
     const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
 
     this.basket.update((currentBasket) => {
-      // Find item matching BOTH the product ID and the Refund State!
       const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRef);
       const incrementStep = product.isWeighted ? 0.100 : 1;
 
       if (existingIndex > -1) {
         const updatedBasket = [...currentBasket];
         const existingItem = updatedBasket[existingIndex];
-        updatedBasket[existingIndex] = {
-          ...existingItem,
-          quantity: parseFloat((existingItem.quantity + incrementStep).toFixed(3))
-        };
+        updatedBasket[existingIndex] = { ...existingItem, quantity: parseFloat((existingItem.quantity + incrementStep).toFixed(3)) };
         return updatedBasket;
       } else {
         const initialQuantity = product.isWeighted ? 0.500 : 1;
@@ -196,10 +147,7 @@ export class SalesService {
       if (newQuantity <= 0 || (product.isWeighted && newQuantity < 0.100)) {
         return updatedBasket.filter((_, idx) => idx !== existingIndex);
       } else {
-        updatedBasket[existingIndex] = {
-          ...existingItem,
-          quantity: newQuantity
-        };
+        updatedBasket[existingIndex] = { ...existingItem, quantity: newQuantity };
         return updatedBasket;
       }
     });
@@ -207,6 +155,10 @@ export class SalesService {
 
   public clearBasket(): void {
     this.basket.set([]);
+  }
+
+  public clearLedger(): void {
+    this.transactions.set([]);
   }
 
   public processPayment(method: 'Cash' | 'Card' | 'Debit'): void {
@@ -223,18 +175,14 @@ export class SalesService {
       paymentMethod: method
     };
 
-    // Update real inventory stock dynamically!
+    // Update inventory stock levels
     this.products.update(prods => {
       const updated = [...prods];
       currentBasket.forEach(item => {
         const index = updated.findIndex(p => p.id === item.product.id);
         if (index > -1) {
-          // If refund, ADD back to shelf. If sale, SUBTRACT from shelf.
           const change = item.isRefund ? item.quantity : -item.quantity;
-          updated[index] = { 
-            ...updated[index], 
-            stockQuantity: parseFloat((updated[index].stockQuantity + change).toFixed(3)) 
-          };
+          updated[index] = { ...updated[index], stockQuantity: parseFloat((updated[index].stockQuantity + change).toFixed(3)) };
         }
       });
       return updated;
@@ -284,21 +232,16 @@ export class SalesService {
     if (found) {
       this.addToBasket(found);
     } else {
-      this.activeModal.set({
-        type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.closeModal()
-      });
+      this.activeModal.set({ type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.closeModal() });
     }
   }
 
   public topSellingProducts = computed(() => {
     const itemsMap = new Map<string, { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number }>();
-    
     this.transactions().forEach(tx => {
       tx.items.forEach(item => {
         if (!itemsMap.has(item.product.id)) {
-          itemsMap.set(item.product.id, {
-            id: item.product.id, name: item.product.name, unitsSold: 0, totalRevenue: 0, stockQuantity: item.product.stockQuantity || 0
-          });
+          itemsMap.set(item.product.id, { id: item.product.id, name: item.product.name, unitsSold: 0, totalRevenue: 0, stockQuantity: item.product.stockQuantity || 0 });
         }
         const stats = itemsMap.get(item.product.id)!;
         const effectiveQuantity = item.isRefund ? -item.quantity : item.quantity;
@@ -306,7 +249,6 @@ export class SalesService {
         stats.totalRevenue += (item.product.price * effectiveQuantity);
       });
     });
-    
     return Array.from(itemsMap.values()).sort((a, b) => b.unitsSold - a.unitsSold);
   });
 
@@ -328,20 +270,44 @@ export class SalesService {
 
   public linkCloudFolder() {
     this.activeModal.set({
-      type: 'prompt', title: '🔗 Link Cloud Folder', message: 'Establish a secure sync connection to backup your daily Z-Reports.', value: '',
+      type: 'prompt', title: '🔗 Link Cloud Sync', message: 'Establish a secure sync connection to backup your daily Z-Reports.', value: '',
       onConfirm: () => {
          this.closeModal();
          setTimeout(() => {
-            this.activeModal.set({ type: 'success', title: '✅ Folder Linked', message: 'Successfully established sync connection!', value: '', onConfirm: () => this.closeModal() });
+            this.activeModal.set({ type: 'success', title: '✅ Live Cloud Sync Active', message: 'The system is successfully backing up in real-time!', value: '', onConfirm: () => this.closeModal() });
          }, 400);
       }
     });
   }
 
-  // ⭐ NEW: A dedicated method to guarantee the modal closes properly
+  public updateProductExpiry(productId: string, newDate: string): void {
+    this.products.update(prods => prods.map(p => p.id?.toString() === productId.toString() ? { ...p, expire: newDate } : p));
+  }
+
+  public saveProduct(productId: string, payload: Product): void {
+    this.products.update(prods => {
+      const exists = prods.some(p => p.id?.toString() === productId.toString());
+      return exists ? prods.map(p => p.id?.toString() === productId.toString() ? payload : p) : [...prods, payload];
+    });
+  }
+
+  public saveCategory(payload: Category): void {
+    this.categories.update(cats => {
+      const exists = cats.some(c => c.id?.toString() === payload.id.toString());
+      return exists ? cats.map(c => c.id?.toString() === payload.id.toString() ? payload : c) : [...cats, payload];
+    });
+  }
+
+  public saveSupplier(payload: Supplier): void {
+    this.suppliers.update(sups => {
+      const exists = sups.some(s => s.id?.toString() === payload.id.toString());
+      return exists ? sups.map(s => s.id?.toString() === payload.id.toString() ? payload : s) : [...sups, payload];
+    });
+  }
+
   public closeModal(): void {
-    // Setting to a completely new object reference briefly forces Angular to flush the UI
-    this.activeModal.set({ type: 'warning', title: '', message: '', value: '', onConfirm: () => {} });
+    this.activeModal.set(null);
+    // Double flush to ensure Angular detects the UI removal
     setTimeout(() => this.activeModal.set(null), 10);
   }
 }

@@ -70,6 +70,12 @@
               <option [value]="cat.id">{{ cat.name }}</option>
             }
           </select>
+          
+          <!-- ⭐ NEW: Hidden File Input and Visible Import Button -->
+          <input type="file" #fileInput style="display: none" accept=".json" (change)="importJsonData($event)" />
+          <button type="button" class="app-btn" style="background: #3b82f6; color: white;" (click)="fileInput.click()">
+            📥 Import JSON
+          </button>
         }
 
         <button type="button" class="app-btn app-btn-primary" style="margin-left: auto; background: #16a34a;" (click)="activeTab() === 'PRODUCTS' ? prepareNewProduct() : activeTab() === 'CATEGORIES' ? prepareNewCategory() : prepareNewSupplier()">
@@ -231,6 +237,22 @@
               <div class="app-form-group">
                 <label class="app-form-label">Retail Price (€)</label>
                 <input type="number" step="0.01" class="app-input" [(ngModel)]="formProduct.price" placeholder="0.00" />
+              </div>
+            </div>
+
+            <!-- ⭐ NEW: Database Specific Fields -->
+            <div class="app-form-grid" style="margin-bottom: 16px;">
+              <div class="app-form-group">
+                <label class="app-form-label">After Tax Rate (€)</label>
+                <input type="number" step="0.01" class="app-input" [(ngModel)]="formProduct.afterTaxRate" placeholder="0.00" />
+              </div>
+              <div class="app-form-group">
+                <label class="app-form-label">DB Status</label>
+                <input type="text" class="app-input" [(ngModel)]="formProduct.status" placeholder="e.g. Active" />
+              </div>
+              <div class="app-form-group">
+                <label class="app-form-label">DB Status Date</label>
+                <input type="date" class="app-input" [(ngModel)]="formProduct.statusDate" style="cursor: pointer;" />
               </div>
             </div>
 

@@ -10,6 +10,12 @@ export interface Product {
   sku?: string;
   purchasePrice?: number;
   taxRate?: number;
+  
+  // ⭐ NEW ACCESS DATABASE FIELDS
+  afterTaxRate?: number;
+  status?: string;
+  statusDate?: string;
+
   supplierId?: string;
   minStockWarning?: number;
   notes?: string;

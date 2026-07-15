@@ -36,6 +36,140 @@ export class InventoryComponent implements OnInit {
   public showInactive = signal<boolean>(true);
   public selectedProduct = signal<Product | null>(null);
 
+  // ⭐ SMART JSON Bulk Import Engine
+  public importJsonData(event: any): void {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        let rawText = e.target?.result as string;
+        
+        // 🛠️ SANITATION 1: Fix trailing commas (e.g., `},]`) commonly left by export tools
+        rawText = rawText.replace(/,\s*]/g, ']').replace(/,\s*}/g, '}');
+        
+        // 🛠️ SANITATION 2: Remove unprintable control chars from Access exports (like \u0001)
+        rawText = rawText.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+
+        // 🛠️ SANITATION 3: Fix stray backslashes (like C:\Images) that break JSON parsers
+        rawText = rawText.replace(/\\(?!["\\/bfnrt]|u[0-9a-fA-F]{4})/g, "\\\\");
+
+        // 🛠️ SANITATION 4: Escape literal newlines & tabs hidden INSIDE text fields!
+        // This looks inside every "quoted string" and neutralizes literal enters/tabs from Excel.
+        rawText = rawText.replace(/"(?:[^"\\]|\\.)*"/g, (match) => {
+          return match
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t')
+            .replace(/[\x00-\x1F]/g, ''); // Nuke any remaining invisible gremlins
+        });
+
+        // Now parse the perfectly clean text!
+        const importedData = JSON.parse(rawText);
+        
+        // Handle both Array format (New) and Object-Map format (Old)
+        let dataArray: any[] = [];
+        if (Array.isArray(importedData)) {
+          dataArray = importedData;
+        } else if (typeof importedData === 'object' && importedData !== null) {
+          dataArray = Object.values(importedData);
+        }
+
+        // 🗓️ NEW: Date Translator Helper
+        const normalizeDate = (rawDate: any): string => {
+          if (!rawDate) return '';
+          const strDate = String(rawDate).trim();
+          if (strDate.includes('/')) {
+            const parts = strDate.split('/');
+            if (parts.length === 3) {
+              let year = parts[2];
+              if (year.length === 2) year = '20' + year; // Convert '22' to '2022'
+              let month = parts[0].padStart(2, '0');
+              let day = parts[1].padStart(2, '0');
+              // Safety swap if Excel exported Day/Month instead of Month/Day
+              if (parseInt(month) > 12) {
+                const temp = month; month = day; day = temp;
+              }
+              return `${year}-${month}-${day}`;
+            }
+          }
+          return strDate;
+        };
+        
+        if (dataArray.length > 0) {
+          let importCount = 0;
+          
+          this.salesService.products.update(prods => {
+            const currentProds = [...prods];
+            
+            dataArray.forEach(item => {
+              // Find the ID (checking both your new 'ProductID' and old 'id')
+              const rawId = item.ProductID || item.id || item.Barcode || item.barcode;
+              
+              if (rawId) {
+                const itemId = rawId.toString();
+                const existingIndex = currentProds.findIndex(p => p.id?.toString() === itemId);
+                
+                // 🧠 The "Smart Mapper": Translates your Excel column names to Maranth fields!
+                const parsedItem: Product = {
+                  id: itemId,
+                  barcode: (item.Barcode || item.barcode || '').toString(),
+                  name: item.Product || item.name || 'Unknown Item',
+                  categoryId: (item.Category || item.categoryId || 'ALL').toString(),
+                  price: parseFloat(item.Price || item.price) || 0,
+                  purchasePrice: parseFloat(item.Blerje || item.purchasePrice) || 0,
+                  stockQuantity: parseFloat(item.Cope || item.stockQuantity) || 0,
+                  taxRate: parseFloat(item.FPA || item.taxRate) || 1.24,
+                  afterTaxRate: parseFloat(item.AfterFPA || item.afterTaxRate) || 0,
+                  
+                  // ⭐ Use the Date Translator here!
+                  expire: normalizeDate(item.Expire || item.expire),
+                  statusDate: normalizeDate(item.StatusDate || item.statusDate),
+                  
+                  notes: item.Shenime || item.notes || '',
+                  status: item.Status || item.status || 'Active',
+                  // Auto-disable product if status says 'Inactive'
+                  isActive: (item.Status || item.status) !== 'Inactive',
+                  isWeighted: item.isWeighted === true || item.isWeighted === 'true' // Fallback
+                };
+
+                if (existingIndex > -1) {
+                  // Update existing
+                  currentProds[existingIndex] = { ...currentProds[existingIndex], ...parsedItem };
+                } else {
+                  // Add new
+                  currentProds.push(parsedItem);
+                }
+                importCount++;
+              }
+            });
+            return currentProds;
+          });
+
+          this.salesService.activeModal.set({
+            type: 'success', title: '✅ Database Synced', message: `Successfully loaded ${importCount} products into the catalog!`, value: '', onConfirm: () => this.salesService.closeModal()
+          });
+
+        } else {
+          throw new Error("No valid data found in file.");
+        }
+      } catch (error) {
+        // Log the exact error to the console so we can see it if it fails again
+        console.error("JSON Import Error:", error);
+        
+        this.salesService.activeModal.set({
+          type: 'warning', title: '⚠️ Import Failed', message: 'Could not read the JSON file. Please check the format.', value: '', onConfirm: () => this.salesService.closeModal()
+        });
+      }
+      
+      // Clear the input so you can import the same file again if needed
+      event.target.value = '';
+    };
+    
+    reader.readAsText(file);
+  }
+
   public formProduct = {
     id: '',
     barcode: '',
@@ -43,6 +177,9 @@ export class InventoryComponent implements OnInit {
     price: 0,
     purchasePrice: 0,
     taxRate: 1.24,       
+    afterTaxRate: 0,     // ⭐ NEW
+    status: '',          // ⭐ NEW
+    statusDate: '',      // ⭐ NEW
     categoryId: '5622',  
     supplierId: '1',
     stockQuantity: 0,
@@ -70,6 +207,7 @@ export class InventoryComponent implements OnInit {
     
     this.formProduct = {
       id: '', barcode: '', name: '', price: 0, purchasePrice: 0, taxRate: 1.24,
+      afterTaxRate: 0, status: '', statusDate: '', // ⭐ NEW
       categoryId: this.selectedCategory() !== 'ALL' ? this.selectedCategory() : '5622', 
       supplierId: '1', stockQuantity: 0, minStockWarning: 5,
       isActive: true, expire: '', notes: '', isWeighted: false
@@ -240,7 +378,9 @@ export class InventoryComponent implements OnInit {
     this.selectedProduct.set(product);
     this.formProduct = {
       id: product.id?.toString() || '', barcode: (product as any).barcode || product.id?.toString() || '', name: product.name || '', price: product.price || 0,
-      purchasePrice: (product as any).purchasePrice || 0, taxRate: (product as any).taxRate || 1.24, categoryId: product.categoryId || '5622',
+      purchasePrice: (product as any).purchasePrice || 0, taxRate: (product as any).taxRate || 1.24, 
+      afterTaxRate: product.afterTaxRate || 0, status: product.status || '', statusDate: product.statusDate || '', // ⭐ NEW
+      categoryId: product.categoryId || '5622',
       supplierId: (product as any).supplierId || '1', stockQuantity: product.stockQuantity || 0, minStockWarning: (product as any).minStockWarning || 5,
       isActive: product.isActive !== false, expire: product.expire || '', notes: (product as any).notes || '', isWeighted: (product as any).isWeighted || false
     };
@@ -250,7 +390,9 @@ export class InventoryComponent implements OnInit {
     this.selectedProduct.set(null);
     this.isCreatingNew.set(true);
     this.formProduct = {
-      id: '', barcode: '', name: '', price: 0, purchasePrice: 0, taxRate: 1.24, categoryId: this.selectedCategory() !== 'ALL' ? this.selectedCategory() : '5622',
+      id: '', barcode: '', name: '', price: 0, purchasePrice: 0, taxRate: 1.24, 
+      afterTaxRate: 0, status: '', statusDate: '', // ⭐ NEW
+      categoryId: this.selectedCategory() !== 'ALL' ? this.selectedCategory() : '5622',
       supplierId: '1', stockQuantity: 0, minStockWarning: 5, isActive: true, expire: '', notes: '', isWeighted: false
     };
   }
@@ -269,9 +411,11 @@ export class InventoryComponent implements OnInit {
       return;
     }
 
+    // ⭐ Included new fields in the payload mapping
     const structuredPayload: Product = {
       id: this.formProduct.id, name: this.formProduct.name, price: this.formProduct.price, stockQuantity: this.formProduct.stockQuantity,
       categoryId: this.formProduct.categoryId, isActive: this.formProduct.isActive, expire: this.formProduct.expire,
+      afterTaxRate: this.formProduct.afterTaxRate, status: this.formProduct.status, statusDate: this.formProduct.statusDate,
       ...({ barcode: this.formProduct.barcode, purchasePrice: this.formProduct.purchasePrice, taxRate: this.formProduct.taxRate, supplierId: this.formProduct.supplierId, minStockWarning: this.formProduct.minStockWarning, notes: this.formProduct.notes, isWeighted: this.formProduct.isWeighted } as any)
     };
 

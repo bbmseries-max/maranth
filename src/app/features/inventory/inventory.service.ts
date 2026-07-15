@@ -53,37 +53,18 @@ export class InventoryService {
 
   public updateProductExpiry(productId: string | undefined, newDate: string): void {
     if (!productId) return;
-    this.salesService.products.update(allProducts => {
-      return allProducts.map(p => 
-        p.id?.toString() === productId.toString() 
-          ? { ...p, expire: newDate } as Product
-          : p
-      );
-    });
+    this.salesService.updateProductExpiry(productId, newDate);
   }
 
   public saveProductPayload(productId: string, structuredPayload: Product): void {
-    this.salesService.products.update(allProducts => {
-      const exists = allProducts.some(p => p.id?.toString() === productId.toString());
-      if (!exists) return [...allProducts, structuredPayload];
-      
-      return allProducts.map(p => 
-        p.id?.toString() === productId.toString() ? structuredPayload : p
-      );
-    });
+    this.salesService.saveProduct(productId, structuredPayload);
   }
 
   public saveCategoryPayload(structuredPayload: Category, isCreatingNew: boolean): void {
-    this.salesService.categories.update(all => {
-      if (isCreatingNew) return [...all, structuredPayload];
-      return all.map(c => c.id === structuredPayload.id ? structuredPayload : c);
-    });
+    this.salesService.saveCategory(structuredPayload);
   }
 
   public saveSupplierPayload(structuredPayload: Supplier, isCreatingNew: boolean): void {
-    this.salesService.suppliers.update(all => {
-      if (isCreatingNew) return [...all, structuredPayload];
-      return all.map(s => s.id === structuredPayload.id ? structuredPayload : s);
-    });
+    this.salesService.saveSupplier(structuredPayload);
   }
 }

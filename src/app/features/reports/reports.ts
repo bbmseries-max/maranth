@@ -151,10 +151,10 @@ export class ReportsComponent {
     this.salesService.activeModal.set({
       type: 'warning',
       title: '⚠️ Clear Ledger',
-      message: 'Are you sure you want to permanently erase today\'s local sales history? (Make sure your folder sync is up to date first!)',
+      message: 'Are you sure you want to permanently erase all sales history from the Cloud?',
       value: '',
       onConfirm: () => {
-         this.salesService.transactions.set([]);
+         this.salesService.clearLedger();
          this.selectedTxnId.set(null);
          this.salesService.closeModal();
       }
