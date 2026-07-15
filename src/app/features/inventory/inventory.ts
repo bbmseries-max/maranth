@@ -191,9 +191,10 @@ export class InventoryComponent {
 
         // 🧹 THE FIX: The "Data Car Wash" for Microsoft Access files!
         let cleanText = jsonText
-           .replace(/^[\uFEFF\u200B]/, '') // 1. Strip invisible Byte-Order-Markers at the start of the file
-           .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '') // 2. Strip raw binary control bytes (like \u0001 from PicProd)
-           .replace(/,\s*([\]}])/g, '$1'); // 3. Fix dangling trailing commas (a common database export bug)
+           .replace(/^[\uFEFF\u200B]/, '') // 1. Strip invisible Byte-Order-Markers
+           .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '') // 2. Strip raw binary control bytes
+           .replace(/\\(?!["\\/bfnrtu])/g, '\\\\') // 🚨 3. THE NEW FIX: Escapes stray backslashes! (e.g., "Size 1\2" -> "Size 1\\2")
+           .replace(/,\s*([\]}])/g, '$1'); // 4. Fix dangling trailing commas
 
         const rawData = JSON.parse(cleanText);
         
