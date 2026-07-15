@@ -34,74 +34,6 @@ background: #1e293b;
 padding: 0 20px;
 border-bottom: 1px solid #334155;
 box-sizing: border-box;
-gap: 16px;
-}
-
-.header-left, .header-right {
-display: flex;
-align-items: center;
-gap: 12px;
-}
-
-!important;
-flex-direction: column !important;
-background: #1e293b;
-border-radius: 12px;
-padding: 12px;
-box-sizing: border-box;
-}
-
-/* ⭐ NEW: Mobile Sidebar Toggle Classes */
-.sidebar-mobile-toggle {
-display: none;
-justify-content: space-between;
-align-items: center;
-background: #334155;
-padding: 10px 14px;
-border-radius: 8px;
-cursor: pointer;
-color: white;
-transition: background 0.2s;
-}
-
-.sidebar-mobile-toggle:hover {
-background: #475569;
-}
-
-.sidebar-collapsible-content {
-display: flex;
-flex-direction: column;
-flex: 1;
-overflow: hidden;
-}
-
-.checkout-basket-panel {
-/* ... existing code ... /
-/ TABLET (Under 1024px) */
-@media (max-width: 1024px) {
-.pos-main-layout {
-flex-direction: column !important;
-overflow-y: auto !important;
-height: auto !important;
-}
-
-.pos-sidebar-panel {
-width: 100% !important;
-flex: 0 0 auto !important;
-padding: 8px !important; /* Tighter padding on mobile */
-}
-
-/* ⭐ NEW: Mobile Sidebar Logic /
-.sidebar-mobile-toggle {
-display: flex;
-}
-.sidebar-collapsible-content {
-display: none;
-margin-top: 12px;
-max-height: 40vh; / Constrains height so categories are scrollable */
-}
-.pos-sidebar-panel.expanded .sidebar-collapsible-content {
-display: flex;
 }
 
 .pos-main-layout {
@@ -125,6 +57,7 @@ background: #1e293b;
 border-radius: 12px;
 padding: 12px;
 box-sizing: border-box;
+transition: all 0.3s ease;
 }
 
 .checkout-basket-panel {
@@ -139,7 +72,6 @@ overflow: hidden !important;
 box-sizing: border-box;
 }
 
-/* STREAMING_CHUNK: Configuring the catalog scrolling viewport */
 .main-catalog-panel {
 flex: 1 1 auto !important;
 width: auto !important;
@@ -194,7 +126,6 @@ flex-direction: column;
 gap: 6px;
 }
 
-/* STREAMING_CHUNK: Formatting product names and prices */
 .prod-name {
 font-weight: 700;
 
@@ -236,7 +167,6 @@ padding-left: 4px;
 
 }
 
-/* STREAMING_CHUNK: Defining stock badges and search input */
 .prod-stock-badge {
 margin-top: 10px;
 font-size: 11px;
@@ -271,65 +201,64 @@ background: var(--pos-bg-card);
 box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
 }
 
-/* STREAMING_CHUNK: Quick Access Shelf Styles */
+/* STREAMING_CHUNK: Quick Access Shelves */
 .quick-access-shelf {
-background: #f8fafc;
-border-bottom: 2px solid var(--border-light);
+background: #ffffff;
 padding: 12px 16px;
+border-bottom: 1px solid var(--border-light);
 flex: 0 0 auto;
 }
 
 .qa-header {
 font-size: 12px;
-font-weight: 700;
+font-weight: 800;
 color: #64748b;
 text-transform: uppercase;
 letter-spacing: 0.05em;
-margin-bottom: 10px;
+margin-bottom: 8px;
 }
 
 .qa-scroll-track {
-display: grid;
-grid-template-rows: repeat(2, 1fr);
-grid-auto-flow: column;
-gap: 10px;
+display: flex;
+gap: 12px;
 overflow-x: auto;
 padding-bottom: 8px;
 }
 
-.qa-scroll-track::-webkit-scrollbar { height: 6px; }
-.qa-scroll-track::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-.qa-scroll-track::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-.qa-scroll-track::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.qa-scroll-track::-webkit-scrollbar {
+height: 6px;
+}
+.qa-scroll-track::-webkit-scrollbar-thumb {
+background: #cbd5e1;
+border-radius: 3px;
+}
 
 .qa-card {
-background: #ffffff;
-border: 1px solid var(--border-light);
-border-bottom: 2px solid var(--border-light);
+flex: 0 0 auto;
+width: 140px;
+background: #f8fafc;
+border: 1px solid #e2e8f0;
 border-radius: 8px;
-padding: 10px 12px;
-width: 170px;
+padding: 10px;
 cursor: pointer;
-display: flex;
-flex-direction: column;
-justify-content: space-between;
-transition: all 0.15s ease;
+transition: all 0.2s;
 }
 
 .qa-card:hover {
-border-color: var(--accent-primary);
-background: #e0f2fe;
-transform: translateY(-1px);
+background: #f1f5f9;
+border-color: #94a3b8;
+transform: translateY(-2px);
 }
 
 .qa-name {
-font-weight: 700;
+display: block;
 font-size: 13px;
-color: var(--text-primary);
-margin-bottom: 8px;
+font-weight: 700;
+color: #1e293b;
 white-space: nowrap;
 overflow: hidden;
 text-overflow: ellipsis;
+margin-bottom: 6px;
 }
 
 .qa-bottom {
@@ -339,131 +268,41 @@ align-items: center;
 }
 
 .qa-price {
-font-weight: 800;
-color: var(--accent-primary);
 font-size: 14px;
+font-weight: 800;
+color: #0b57d0;
 }
 
-.qa-badge {
-background: #f1f5f9;
-color: #475569;
-padding: 3px 6px;
-border-radius: 4px;
-font-size: 10px;
-font-weight: 700;
-}
-.qa-badge.weighted {
-background: #dcfce7;
-color: #166534;
-}
-
-/* STREAMING_CHUNK: Configuring the modal overlay and window */
-.pos-modal-overlay {
-position: fixed;
-top: 0;
-left: 0;
-width: 100vw;
-height: 100vh;
-background: rgba(15, 23, 42, 0.6);
-backdrop-filter: blur(4px);
-
-display: none !important;
-
+/* STREAMING_CHUNK: Mobile Toggle Classes */
+.sidebar-mobile-toggle {
+display: none;
+justify-content: space-between;
 align-items: center;
-justify-content: center;
-z-index: 99999;
-
-opacity: 0;
-transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.pos-modal-overlay.is-active {
-display: flex !important;
-
-opacity: 1;
-}
-
-.pos-modal-window {
-background: var(--pos-bg-card);
-border-radius: 16px;
-width: 90%;
-max-width: 480px;
-box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-border: 1px solid var(--border-light);
-overflow: hidden;
-transform: scale(0.92);
-transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.pos-modal-overlay.is-active .pos-modal-window { transform: scale(1); }
-
-/* STREAMING_CHUNK: Setting up modal headers, bodies, and inputs */
-.pos-modal-header {
-padding: 18px 24px;
-background: #f8fafc;
-border-bottom: 1px solid var(--border-light);
-font-size: 20px;
-font-weight: 700;
-color: var(--text-primary);
-}
-
-.pos-modal-header.warning-header {
-border-left: 5px solid var(--accent-danger);
-color: #991b1b;
-}
-
-.pos-modal-body {
-padding: 24px;
-font-size: 16px;
-color: var(--text-primary);
-line-height: 1.5;
-}
-
-.pos-modal-input {
-width: 100%;
+background: #334155;
 padding: 12px 16px;
-font-size: 18px;
-font-weight: 700;
-border: 2px solid var(--border-light);
-border-radius: 8px;
-margin-top: 14px;
-box-sizing: border-box;
-color: var(--accent-primary);
-background: var(--hover-tint);
-}
-
-.pos-modal-input:focus {
-border-color: var(--accent-primary);
-background: #ffffff;
-outline: none;
-}
-
-/* STREAMING_CHUNK: Finalizing modal footer and header links */
-.pos-modal-footer {
-padding: 16px 24px;
-background: #f8fafc;
-border-top: 1px solid var(--border-light);
-display: flex;
-justify-content: flex-end;
-gap: 12px;
-}
-
-.pos-modal-btn {
-padding: 12px 24px;
-font-size: 15px;
-font-weight: 700;
 border-radius: 8px;
 cursor: pointer;
-border: none;
-transition: background 0.15s ease;
+color: white;
+transition: background 0.2s;
+border: 1px solid #475569;
 }
 
-.pos-modal-btn-cancel { background: #e2e8f0; color: #475569; }
-.pos-modal-btn-cancel:hover { background: #cbd5e1; }
-.pos-modal-btn-confirm { background: var(--accent-primary); color: white; }
-.pos-modal-btn-confirm:hover { background: #0274be; }
-.pos-modal-btn-danger { background: var(--accent-danger); color: white; }
-.pos-modal-btn-danger:hover { background: #be123c; }
+.sidebar-mobile-toggle:hover {
+background: #475569;
+}
+
+.sidebar-collapsible-content {
+display: flex;
+flex-direction: column;
+flex: 1;
+overflow: hidden;
+}
+
+/* STREAMING_CHUNK: Buttons and Utility */
+.header-right {
+display: flex;
+gap: 12px;
+}
 
 .header-btn {
 text-decoration: none !important;
@@ -477,7 +316,9 @@ transition: background 0.2s;
 cursor: pointer;
 }
 
-.header-btn:hover { background: #475569; }
+.header-btn:hover {
+background: #475569;
+}
 
 .pos-admin-btn {
 background: #3b82f6;
@@ -489,13 +330,17 @@ font-size: 12px;
 font-weight: 600;
 cursor: pointer;
 }
-.pos-admin-btn:hover { background: #2563eb; }
+.pos-admin-btn:hover {
+background: #2563eb;
+}
 
-/* =======================================================
-📱 RESPONSIVE MOBILE & TABLET MEDIA QUERIES
-======================================================= */
+@media (max-width: 768px) {
+.mobile-hide {
+display: none !important;
+}
+}
 
-/* TABLET (Under 1024px) */
+/* STREAMING_CHUNK: Responsive Media Queries (Mobile & Tablet) */
 @media (max-width: 1024px) {
 .pos-main-layout {
 flex-direction: column !important;
@@ -506,54 +351,46 @@ height: auto !important;
 .pos-sidebar-panel {
 width: 100% !important;
 flex: 0 0 auto !important;
-}
-
-.main-catalog-panel {
-width: 100% !important;
-flex: 0 0 auto !important;
-height: 65vh !important;
+padding: 10px !important;
+min-height: min-content;
 }
 
 .checkout-basket-panel {
 width: 100% !important;
 flex: 0 0 auto !important;
-height: 70vh !important;
+min-height: 400px;
+}
+
+.main-catalog-panel {
+width: 100% !important;
+flex: 0 0 auto !important;
+min-height: 500px;
 }
 
 .grid-layout-scroll {
 grid-template-columns: repeat(2, 1fr) !important;
 }
+
+/* ⭐ Mobile Sidebar Expand/Collapse Logic */
+.sidebar-mobile-toggle {
+display: flex !important;
 }
 
-/* MOBILE PHONES (Under 600px) */
+.sidebar-collapsible-content {
+display: none !important; /* Hidden by default on mobile /
+margin-top: 12px;
+max-height: 50vh; / Constrains height so categories are scrollable */
+}
+
+/* When expanded class is applied by Angular, show the content */
+.pos-sidebar-panel.expanded .sidebar-collapsible-content {
+display: flex !important;
+}
+}
+
+/* Fix for very small phones */
 @media (max-width: 600px) {
 .grid-layout-scroll {
-grid-template-columns: 1fr !important;
-}
-
-.pos-header {
-height: auto !important;
-flex-direction: column !important;
-align-items: stretch !important;
-padding: 16px;
-}
-
-.header-left, .header-right, .header-center {
-justify-content: space-between;
-width: 100%;
-}
-
-.mobile-hide {
-display: none !important;
-}
-
-.header-btn {
-flex: 1;
-text-align: center;
-padding: 10px 8px;
-}
-
-.qa-card {
-width: 140px;
+grid-template-columns: repeat(1, 1fr) !important;
 }
 }
