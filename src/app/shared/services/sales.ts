@@ -116,6 +116,9 @@ export class SalesService {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
     
+    // ⭐ THE FIX: Tell local memory about the new user immediately so the login doesn't fail!
+    this.registeredCashiers.update(users => [...users, { username, pin, role }]);
+
     // 🔥 Write directly to Cloud!
     setDoc(doc(this.db, 'cashiers', username), { username, pin, role });
     return true; 
