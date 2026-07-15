@@ -190,15 +190,20 @@ export class InventoryComponent {
         const jsonText = e.target?.result as string;
         const rawData = JSON.parse(jsonText);
         
-        // 🧠 BULLETPROOF Extractor: Digs through wrappers like {"categories": {...}}
+        // 🧠 BULLETPROOF Extractor: Digs through wrappers like {"Category": {...}}
         let extracted = rawData;
         if (!Array.isArray(rawData)) {
-          if (rawData.RECORDS) extracted = rawData.RECORDS;
-          else if (rawData.data) extracted = rawData.data;
-          else if (rawData.items) extracted = rawData.items;
-          else if (rawData.categories) extracted = rawData.categories;
-          else if (rawData.suppliers) extracted = rawData.suppliers;
-          else if (rawData.products) extracted = rawData.products;
+          // ⭐ Find the first key that matches any known pattern, IGNORING capitalization
+          const foundKey = Object.keys(rawData).find(k => 
+            ['records', 'data', 'items', 'categories', 'category', 'suppliers', 'supplier', 'products', 'product'].includes(k.toLowerCase())
+          );
+          
+          if (foundKey && Array.isArray(rawData[foundKey])) {
+            extracted = rawData[foundKey];
+          } else {
+            // ⭐ Ultimate Fallback: Just grab the first array it can find inside the object!
+            extracted = Object.values(rawData).find(val => Array.isArray(val)) || rawData;
+          }
         }
 
         let dataArray: any[] = [];
