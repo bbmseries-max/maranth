@@ -333,10 +333,14 @@ export class InventoryComponent {
         }
         
       } catch (error: any) {
-        // ⭐ Log the exact error to the console just in case!
-        console.error("JSON Import Error Details:", error.message);
+        // ⭐ THE FIX: Show the EXACT error on the screen so we can solve the mystery!
+        const exactError = error.message || String(error);
         this.salesService.activeModal.set({
-          type: 'warning', title: '⚠️ Import Failed', message: 'Could not read the JSON file. Check format.', value: '', onConfirm: () => this.salesService.closeModal()
+          type: 'warning', 
+          title: '⚠️ Import Failed', 
+          message: `The file broke at this exact spot:\n\n${exactError}\n\nPlease copy this error and send it to me!`, 
+          value: '', 
+          onConfirm: () => this.salesService.closeModal()
         });
       }
       
