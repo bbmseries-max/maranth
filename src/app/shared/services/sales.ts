@@ -13,108 +13,6 @@ const firebaseConfig = {
   appId: "1:71739745426:web:cf0dbdcfbdf29fe10ef24b"
 };
 
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: "5605", name: "Shkolla - Lojra", isActive: true },
-  { id: "5606", name: "Caj zesto - Rofimata", isActive: true },
-  { id: "5607", name: "Caj I ftohte - Cold Ice Tea", isActive: true },
-  { id: "5608", name: "XARTAKIA - Filtrakia", isActive: true },
-  { id: "5609", name: "Cikles - Karameles", isActive: true },
-  { id: "5610", name: "Keik kulurakia - Τυποποιημένα γλυκά", isActive: true },
-  { id: "5611", name: "Djath - Τυροκομικά", isActive: true },
-  { id: "5612", name: "Farmaci - Farmakeytika", isActive: true },
-  { id: "5613", name: "Φρέσκα λαχανικά - laxanika", isActive: true },
-  { id: "5614", name: "Φρέσκα φρούτα - Fruta", isActive: true },
-  { id: "5615", name: "Φρέσκες σαλάτες - Salates", isActive: true },
-  { id: "5616", name: "Fresko psomi", isActive: true },
-  { id: "5617", name: "Fisikos ximos - Froutopoto", isActive: true },
-  { id: "5618", name: "Xalvades - Taxinia", isActive: true },
-  { id: "5619", name: "Xartika kouzinas - Banjo", isActive: true },
-  { id: "5620", name: "Psomi tost - Tortilla", isActive: true },
-  { id: "5621", name: "Champagnes", isActive: true },
-  { id: "5622", name: "Idi kapnistou -Pipes - Anaptires", isActive: true },
-  { id: "5623", name: "Kurasan", isActive: true },
-  { id: "5624", name: "Sandwiches - Kria  - Ilios", isActive: true },
-  { id: "5625", name: "Rum - Tequila - Cognac - Liqueur - Aperitivo", isActive: true },
-  { id: "5626", name: "Whiskey - Vodka - Gin", isActive: true },
-  { id: "5627", name: "Zootrofes - Axesuar katikidion", isActive: true },
-  { id: "5628", name: "Alevri - Maja - Simigdhali", isActive: true },
-  { id: "5629", name: "Almira biskota - Rizogofretes", isActive: true },
-  { id: "5630", name: "Tzatziki - Salces Psigiu", isActive: true },
-  { id: "5631", name: "Anapsiktika", isActive: true },
-  { id: "5632", name: "Antivaktiridiaka Sanitary", isActive: true },
-  { id: "5633", name: "Aporipantika - Malaktika", isActive: true },
-  { id: "5635", name: "Veze - gjalp", isActive: true },
-  { id: "5636", name: "Karta - Typos", isActive: true },
-  { id: "5637", name: "Vafes - Jialistika papoutsion - Pati", isActive: true },
-  { id: "5638", name: "Vrefika proionta", isActive: true },
-  { id: "5639", name: "Galaktokomika", isActive: true },
-  { id: "5640", name: "Galaktokomika", isActive: true },
-  { id: "5641", name: "Glika Biskota", isActive: true },
-  { id: "5642", name: "Glikismata", isActive: true },
-  { id: "5643", name: "Dimitriaka - Mpares dimitriakon", isActive: true },
-  { id: "5644", name: "Idi zaxaroplastikis", isActive: true },
-  { id: "5645", name: "Eidi kathariotitas somatos - malion", isActive: true },
-  { id: "5646", name: "Idi kapnou - Poura - Nargile", isActive: true },
-  { id: "5647", name: "Eidi kapnou - Tsigara", isActive: true },
-  { id: "5648", name: "Idi kouzinas", isActive: true },
-  { id: "5649", name: "Idi Party", isActive: true },
-  { id: "5650", name: "Idi peripiisis malion", isActive: true },
-  { id: "5651", name: "Idi peripiisis somatos", isActive: true },
-  { id: "5652", name: "Idi prosopikis igiinis", isActive: true },
-  { id: "5653", name: "Idi prosopikis frontidas", isActive: true },
-  { id: "5654", name: "Idi raptikis", isActive: true },
-  { id: "5655", name: "Idi stomatikis igiinis", isActive: true },
-  { id: "5656", name: "Zahari - Glikantikes usies", isActive: true },
-  { id: "5657", name: "Zaxarodi", isActive: true },
-  { id: "5658", name: "Zimarika - Makaronia", isActive: true },
-  { id: "5659", name: "Isotonika - Energiaka pota", isActive: true },
-  { id: "5660", name: "Katharistika kuzinas", isActive: true },
-  { id: "5661", name: "Katharistika spitiu", isActive: true },
-  { id: "5662", name: "Kalson", isActive: true },
-  { id: "5663", name: "Kaseria", isActive: true },
-  { id: "5664", name: "Katepsigmena thalasina - laxanika", isActive: true },
-  { id: "5665", name: "Katepsigmena fagita - Proionta zimis", isActive: true },
-  { id: "5666", name: "Kafedes", isActive: true },
-  { id: "5667", name: "Kolonies - Eidi kalintikon", isActive: true },
-  { id: "5668", name: "Konserves", isActive: true },
-  { id: "5669", name: "Krasia", isActive: true },
-  { id: "5670", name: "Kremes galaktos", isActive: true },
-  { id: "5671", name: "Kritsinia - Friganies - Paximadia", isActive: true },
-  { id: "5672", name: "Ladi - Lemoni - Ksidi", isActive: true },
-  { id: "5673", name: "Bataries - Lampes - Ilektrologika", isActive: true },
-  { id: "5674", name: "Baharika - Alati", isActive: true },
-  { id: "5675", name: "Bires birra", isActive: true },
-  { id: "5676", name: "Nero", isActive: true },
-  { id: "5677", name: "Ksiri karpi - Apoksiramena fruta", isActive: true },
-  { id: "5678", name: "Oikiakos exoplismos", isActive: true },
-  { id: "5680", name: "Uza - Tsipoura", isActive: true },
-  { id: "5681", name: "Pagos - Karvouna - Pellet - Fiali ygraeriou", isActive: true },
-  { id: "5682", name: "Paidika giaourtia - Galata", isActive: true },
-  { id: "5683", name: "Pediki peripiisi", isActive: true },
-  { id: "5684", name: "Panes enilikon", isActive: true },
-  { id: "5685", name: "Panes morou", isActive: true },
-  { id: "5686", name: "Patatakia - Garidakia - Pop corn", isActive: true },
-  { id: "5687", name: "Pralina - Meli - Marmelada- Komposta", isActive: true },
-  { id: "5688", name: "Profilaktika - Durex", isActive: true },
-  { id: "5689", name: "Proteinouxa proionta", isActive: true },
-  { id: "5690", name: "Retsines", isActive: true },
-  { id: "5691", name: "Rizi - Ospria - Trahanas", isActive: true },
-  { id: "5692", name: "Saltses - Proionta magirikis", isActive: true },
-  { id: "5693", name: "Skoni kakao - Rofimata sokolatas", isActive: true },
-  { id: "5694", name: "Sokolatoeidi Cokollata", isActive: true },
-  { id: "5696", name: "Ekklisiastika", isActive: true },
-  { id: "5697", name: "Entomoapothitika", isActive: true },
-  { id: "5698", name: "Ergalia", isActive: true },
-  { id: "5699", name: "Alantika", isActive: true },
-  { id: "5700", name: "PAGOTA", isActive: true }
-];
-
-const DEFAULT_SUPPLIERS: Supplier[] = [
-  { id: "1", name: "Arvaniti", contact: "fanky", phone: "6973334012", notes: "6948686731", isActive: true },
-  { id: "2", name: "Nutria", contact: "Andreas", phone: "6945223013", notes: "Olive Oil", isActive: true },
-  { id: "3", name: "Tasty", contact: "Kostas", phone: "6936172563", notes: "Snacks", isActive: true }
-];
-
 @Injectable({
   providedIn: 'root'
 })
@@ -143,12 +41,12 @@ export class SalesService {
     const app = initializeApp(firebaseConfig);
     this.db = getFirestore(app);
 
-    // 2. Establish Real-Time Sync Connections
+    // 2. Establish Real-Time Sync Connections (Fallbacks removed!)
     this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
     this.setupCloudSync('products', this.products, 'maranth_products');
     this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
-    this.setupCloudSync('categories', this.categories, 'maranth_categories', DEFAULT_CATEGORIES);
-    this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers', DEFAULT_SUPPLIERS);
+    this.setupCloudSync('categories', this.categories, 'maranth_categories');
+    this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
 
     // 3. Save Active Basket to local memory only
     effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
@@ -232,17 +130,29 @@ export class SalesService {
     return match && match.name ? match.name : `Category ${cleanId}`;
   }
 
+  // ⭐ THE FIX: The shelf price is the GROSS price (includes VAT)
+  public grandTotal = computed(() => {
+    return this.basket().reduce((acc, item) => {
+      const lineGross = item.product.price * item.quantity;
+      return acc + (item.isRefund ? -lineGross : lineGross);
+    }, 0);
+  });
+
+  // ⭐ THE FIX: Calculate Net by extracting the VAT from each item's gross price
   public netSubtotal = computed(() => {
     return this.basket().reduce((acc, item) => {
-      const lineTotal = item.product.price * item.quantity;
-      return acc + (item.isRefund ? -lineTotal : lineTotal);
+      const taxRate = item.product.taxRate || 1.24; // Default to 24% if missing
+      const lineGross = item.product.price * item.quantity;
+      const lineNet = lineGross / taxRate;
+      return acc + (item.isRefund ? -lineNet : lineNet);
     }, 0);
   });
   public subtotal = this.netSubtotal;
 
-  public taxAmount = computed(() => this.netSubtotal() * 0.24);
+  // ⭐ THE FIX: VAT is just the difference between Gross and Net
+  public taxAmount = computed(() => this.grandTotal() - this.netSubtotal());
   public vatAmount = this.taxAmount;
-  public grandTotal = computed(() => this.netSubtotal() + this.taxAmount());
+
   public totalItems = computed(() => this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0));
 
   // ⭐ ADDED customQty?: number here so it expects the exact weight from the modal
