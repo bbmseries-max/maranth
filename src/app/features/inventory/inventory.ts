@@ -188,7 +188,14 @@ export class InventoryComponent {
     reader.onload = (e) => {
       try {
         const jsonText = e.target?.result as string;
-        const rawData = JSON.parse(jsonText);
+
+        // 🧹 THE FIX: The "Data Car Wash" for Microsoft Access files!
+        let cleanText = jsonText
+           .replace(/^[\uFEFF\u200B]/, '') // 1. Strip invisible Byte-Order-Markers at the start of the file
+           .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '') // 2. Strip raw binary control bytes (like \u0001 from PicProd)
+           .replace(/,\s*([\]}])/g, '$1'); // 3. Fix dangling trailing commas (a common database export bug)
+
+        const rawData = JSON.parse(cleanText);
         
         // 🧠 BULLETPROOF Extractor: Digs through wrappers like {"Category": {...}}
         let extracted = rawData;
@@ -325,8 +332,9 @@ export class InventoryComponent {
           });
         }
         
-      } catch (error) {
-        console.error("JSON Import Error:", error);
+      } catch (error: any) {
+        // ⭐ Log the exact error to the console just in case!
+        console.error("JSON Import Error Details:", error.message);
         this.salesService.activeModal.set({
           type: 'warning', title: '⚠️ Import Failed', message: 'Could not read the JSON file. Check format.', value: '', onConfirm: () => this.salesService.closeModal()
         });
