@@ -89,12 +89,34 @@ export class PosComponent implements OnInit {
   });
 
 constructor() {
-    // ⭐ NEW: Auto-close the mobile basket drawer if it empties (e.g. after successful payment!)
+    // ⭐ Auto-focus the search bar whenever the "Brain" sends a pulse!
+    effect(() => {
+      const trigger = this.salesService.focusSearchTrigger();
+      
+      // Do NOT steal focus if a modal popup is open (like the Weight Scale!)
+      if (trigger > 0 && !this.salesService.activeModal() && this.searchInput?.nativeElement) {
+        setTimeout(() => {
+          this.searchInput.nativeElement.focus();
+        }, 50);
+      }
+    });
+
     effect(() => {
       if (this.salesService.basket().length === 0) {
         this.isMobileBasketOpen.set(false);
       }
     }, { allowSignalWrites: true });
+  }
+
+  // ⭐ If they hit ENTER, only clear the bar if it was an exact Barcode scan!
+  public onSearchEnter(query: string): void {
+    const wasBarcode = this.salesService.scanBarcodeExact(query);
+    if (wasBarcode) {
+      this.searchQuery.set('');
+      if (this.searchInput?.nativeElement) {
+        this.searchInput.nativeElement.value = '';
+      }
+    }
   }
 
   ngOnInit() {}

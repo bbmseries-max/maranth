@@ -19,14 +19,12 @@ const firebaseConfig = {
 export class SalesService {
   private db: any;
 
-  // ⭐ Cloud Synced State
   public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier', isApproved?: boolean}[]>([]);
   public transactions = signal<TransactionRecord[]>([]);
   public products = signal<Product[]>([]);
   public categories = signal<Category[]>([]);
   public suppliers = signal<Supplier[]>([]);
 
-  // ⭐ Local Terminal State (Active Cart)
   public currentCashier = signal<string | null>(localStorage.getItem('maranth_active_cashier') || null);
   public currentRole = signal<'admin' | 'cashier' | null>(localStorage.getItem('maranth_active_role') as any || null);
   public basket = signal<BasketItem[]>(this.loadLocalData('maranth_basket', []));
@@ -35,6 +33,9 @@ export class SalesService {
   public isRefundMode = signal<boolean>(false);
   public highlightedItemId = signal<string | null>(null);
   public activeModal = signal<POSModal | null>(null);
+
+  // ⭐ NEW: Search Auto-Focus Trigger
+  public focusSearchTrigger = signal<number>(0);
 
   constructor() {
     const app = initializeApp(firebaseConfig);
@@ -62,12 +63,15 @@ export class SalesService {
     });
   }
 
+  // ⭐ NEW: Call this to force the search bar to grab focus!
+  public triggerSearchFocus(): void {
+    this.focusSearchTrigger.set(Date.now());
+  }
+
   public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier', forceApproval: boolean = false): boolean {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
-    
     const isApproved = forceApproval || existingUsers.length === 0;
-
     this.registeredCashiers.update(users => [...users, { username, pin, role, isApproved }]);
     setDoc(doc(this.db, 'cashiers', username), { username, pin, role, isApproved });
     return true; 
@@ -138,15 +142,12 @@ export class SalesService {
     if (!isRef) {
       const liveProduct = this.products().find(p => p.id === product.id) || product;
       
-      // =========================================================
-      // ⭐ THE FIX: STRICT EXPIRATION GUARDRAIL
-      // =========================================================
       if (liveProduct.expire) {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset today's time to midnight
+        today.setHours(0, 0, 0, 0); 
         
         const expDate = new Date(liveProduct.expire);
-        expDate.setHours(0, 0, 0, 0); // Reset expiration time to midnight
+        expDate.setHours(0, 0, 0, 0); 
 
         if (expDate < today) {
           this.activeModal.set({
@@ -156,13 +157,10 @@ export class SalesService {
             value: '',
             onConfirm: () => this.closeModal()
           });
-          return; // 🛑 Completely abort the scan!
+          return; 
         }
       }
 
-      // =========================================================
-      // 🛡️ THE EXISTING: STRICT STOCK GUARDRAIL
-      // =========================================================
       const currentQtyInBasket = this.basket().find(item => item.product.id === product.id && !item.isRefund)?.quantity || 0;
       let intendedQty = 0;
       
@@ -187,10 +185,8 @@ export class SalesService {
       }
     }
 
-    // If it passed both guardrails, add it!
     this.basket.update((currentBasket) => {
       const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRef);
-      
       const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
 
       if (existingIndex > -1) {
@@ -203,6 +199,9 @@ export class SalesService {
         return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
       }
     });
+
+    // ⭐ Grab focus after adding an item!
+    this.triggerSearchFocus();
   }
 
   public removeFromBasket(product: Product, isRefund: boolean = false): void {
@@ -222,10 +221,14 @@ export class SalesService {
         return updatedBasket;
       }
     });
+
+    // ⭐ Grab focus after removing an item!
+    this.triggerSearchFocus();
   }
 
   public clearBasket(): void {
     this.basket.set([]);
+    this.triggerSearchFocus();
   }
 
   public processPayment(method: 'Cash' | 'Card' | 'Debit'): void {
@@ -283,24 +286,20 @@ export class SalesService {
     if (suspended && suspended.length > 0) {
       this.basket.set([...suspended]);
       this.suspendedBasket.set(null);
+      this.triggerSearchFocus();
     }
   }
 
-  public lookupAndScanBarcode(query: string): void {
+  // ⭐ THE FIX: Only Auto-Add if it's an exact barcode!
+  public scanBarcodeExact(query: string): boolean {
     const queryLower = query.toLowerCase().trim();
+    if (!queryLower) return false;
     
-    let found = this.products().find(p => 
+    // 1. ONLY try exact Barcode or ID (No name matching here!)
+    const found = this.products().find(p => 
       (p.barcode && p.barcode.toLowerCase() === queryLower) || 
       (p.id && p.id.toString().toLowerCase() === queryLower)
     );
-
-    if (!found) {
-      found = this.products().find(p => p.name && p.name.toLowerCase() === queryLower);
-    }
-
-    if (!found) {
-      found = this.products().find(p => p.name && p.name.toLowerCase().includes(queryLower));
-    }
 
     if (found) {
       const isScaled = found.isWeighted === true || String(found.isWeighted).toLowerCase() === 'true';
@@ -312,16 +311,18 @@ export class SalesService {
           value: '1.000',
           onConfirm: (val) => {
             const weight = parseFloat(val);
-            if (!isNaN(weight) && weight > 0) this.addToBasket(found!, undefined, weight);
+            if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
             this.closeModal();
+            setTimeout(() => this.triggerSearchFocus(), 100);
           }
         });
       } else {
         this.addToBasket(found);
       }
-    } else {
-      this.activeModal.set({ type: 'warning', title: '⚠️ Item Not Found', message: `No product matching: ${query}`, value: '', onConfirm: () => this.closeModal() });
+      return true; // Successfully matched a barcode!
     }
+
+    return false; // Not a barcode. Return false so the UI leaves the text for filtering!
   }
 
   public topSellingProducts = computed(() => {

@@ -166,7 +166,9 @@
             #searchInput
             type="text" 
             placeholder="Scan barcode or type product name to search..." 
-            (keydown.enter)="onSearchSubmit(searchInput.value); searchInput.value = ''"
+            [value]="searchQuery()"
+            (input)="searchQuery.set(searchInput.value)"
+            (keydown.enter)="onSearchEnter(searchInput.value)"
             style="border: none; background: transparent; outline: none; width: 100%; height: 36px; font-size: 15px; font-weight: 500; color: #1e293b;"
             autocomplete="off"
             autofocus
