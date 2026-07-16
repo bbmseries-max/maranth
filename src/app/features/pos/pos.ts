@@ -138,7 +138,7 @@ export class PosComponent implements OnInit, AfterViewInit {
       if (this.searchInput?.nativeElement) {
         this.searchInput.nativeElement.focus();
       }
-    }, 100);
+    }, 150);
   }
 
   public onSearchEnter(query: string): void {
