@@ -141,31 +141,23 @@ export class PosComponent implements OnInit, AfterViewInit {
     }, 100);
   }
 
-  // ====================================================================
-  // ⭐ THE FIX: SMART SEARCH INTERCEPTOR
-  // ====================================================================
   public onSearchEnter(query: string): void {
     const cleanQuery = query.trim();
     if (!cleanQuery) return;
 
-    // 1. Check if it is a valid barcode in the system
     const wasBarcode = this.salesService.scanBarcodeExact(cleanQuery);
     
     if (wasBarcode) {
-      // Success! Clear the box for the next scan.
       this.searchQuery.set('');
       if (this.searchInput?.nativeElement) {
         this.searchInput.nativeElement.value = '';
       }
     } else {
-      // 2. It failed to find an item. Let's analyze what the scanner/user inputted!
-      const isNumericBarcode = /^\d{7,14}$/.test(cleanQuery); // Standard 7-14 digit retail barcode
+      const isNumericBarcode = /^\d{7,14}$/.test(cleanQuery);
       const isUrl = cleanQuery.toLowerCase().startsWith('http') || cleanQuery.toLowerCase().startsWith('www');
-      const isLongQrHash = cleanQuery.length > 15 && !cleanQuery.includes(' '); // QR codes usually have no spaces
+      const isLongQrHash = cleanQuery.length > 15 && !cleanQuery.includes(' ');
 
       if (isNumericBarcode || isUrl || isLongQrHash) {
-        // This was definitely a Scanner input, NOT a manually typed word search.
-        // We MUST clear the box so it doesn't ruin the grid filtering!
         this.searchQuery.set('');
         if (this.searchInput?.nativeElement) {
           this.searchInput.nativeElement.value = '';
@@ -181,15 +173,17 @@ export class PosComponent implements OnInit, AfterViewInit {
            title: '⚠️ Scan Failed',
            message: msg,
            value: '',
-           onConfirm: () => {
-             this.salesService.closeModal();
-             setTimeout(() => this.salesService.triggerSearchFocus(), 50);
-           }
+           onConfirm: () => {} // Handled by auto-timeout below
         });
+
+        // ⭐ THE FIX: Self-destruct the modal after 1000ms (1 second) and instantly grab focus!
+        setTimeout(() => {
+          if (this.salesService.activeModal()?.title === '⚠️ Scan Failed') {
+            this.salesService.closeModal();
+            setTimeout(() => this.salesService.triggerSearchFocus(), 50);
+          }
+        }, 1000);
       }
-      
-      // 3. If it wasn't a barcode or a QR code (e.g. they typed "Feta" or "Juice"),
-      // we do absolutely NOTHING. The text stays in the box to continue filtering the screen!
     }
   }
 
