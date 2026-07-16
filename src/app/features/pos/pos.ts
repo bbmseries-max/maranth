@@ -173,10 +173,10 @@ export class PosComponent implements OnInit, AfterViewInit {
            title: '⚠️ Scan Failed',
            message: msg,
            value: '',
-           onConfirm: () => {} // Handled by auto-timeout below
+           onConfirm: () => {} 
         });
 
-        // ⭐ THE FIX: Self-destruct the modal after 1000ms (1 second) and instantly grab focus!
+        // ⭐ THE FIX: Changed to 2 full seconds (2000ms)
         setTimeout(() => {
           if (this.salesService.activeModal()?.title === '⚠️ Scan Failed') {
             this.salesService.closeModal();

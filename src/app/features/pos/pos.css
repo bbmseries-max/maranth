@@ -320,7 +320,7 @@
 }
 
 .sidebar-collapsible-content {
-  display: none !important; /* hidden by default globally */
+  display: none !important; 
   flex-direction: column;
   height: 100%;
   margin-top: 12px;
@@ -332,118 +332,148 @@
   display: flex !important;
 }
 
+/* =====================================================================
+   ⭐ NEW: BEAUTIFUL PC-ONLY BRAND ANIMATION 
+   ===================================================================== */
+.animated-brand-container {
+  margin-top: auto; /* Pushes it perfectly to the bottom of the sidebar */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 0 10px 0;
+  pointer-events: none; /* So it doesn't interrupt clicks */
+}
+
+.animated-brand-text {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  
+  /* The moving flowing color gradient */
+  background: linear-gradient(
+    270deg, 
+    #0ea5e9, /* Light Blue */
+    #8b5cf6, /* Purple */
+    #f59e0b, /* Orange */
+    #10b981  /* Emerald Green */
+  );
+  background-size: 300% 300%;
+  
+  /* Clips the background into the shape of the text */
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  
+  /* Beautiful glowing drop shadow */
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
+  
+  /* Fire the dual animations */
+  animation: 
+    brandColorFlow 8s ease infinite,
+    brandFloat 4s ease-in-out infinite;
+  
+  opacity: 0.85;
+}
+
+@keyframes brandColorFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes brandFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.05); }
+}
+/* ===================================================================== */
+
+
 /* STREAMING_CHUNK: Responsive Media Queries (Mobile & Tablet) */
+@media (max-width: 1024px) {
+  
+  /* ⭐ Instantly hide the animation on smaller screens! */
+  .animated-brand-container {
+    display: none !important;
+  }
+
+  .pos-main-layout {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    padding-bottom: 90px !important;
+  }
+
+  .pos-sidebar-panel {
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    padding: 10px !important;
+    min-height: min-content;
+  }
+
+  .checkout-basket-panel {
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    position: fixed !important;
+    bottom: -120% !important;
+    left: 0 !important;
+    height: 85vh !important;
+    z-index: 1000 !important;
+    border-radius: 24px 24px 0 0 !important;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.3) !important;
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin: 0 !important;
+  }
+
+  .checkout-basket-panel.mobile-open {
+    bottom: 0 !important;
+  }
+
+  .mobile-basket-fab {
+    display: flex !important;
+    position: fixed;
+    bottom: 20px;
+    left: 5%;
+    width: 90%;
+    background: #0b57d0;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 99px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(11, 87, 208, 0.4);
+    z-index: 999;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  .mobile-close-basket-btn {
+    display: block !important;
+    width: 100%;
+    padding: 16px;
+    text-align: center;
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 14px;
+    border: none;
+    border-bottom: 1px solid #cbd5e1;
+    cursor: pointer;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .main-catalog-panel {
+    width: 100% !important;
+    flex: 0 0 auto !important;
+    min-height: 500px;
+  }
+}
+
+/* Fix for very small phones */
 @media (max-width: 600px) {
   .grid-layout-scroll {
     grid-template-columns: repeat(1, 1fr) !important;
   }
 }
-
-/* ⭐ STREAMING_CHUNK: RESTORED MODAL STYLES */
-.pos-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
-  display: none !important;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.pos-modal-overlay.is-active {
-  display: flex !important;
-  opacity: 1;
-}
-
-.pos-modal-window {
-  background: #ffffff;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 480px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e2e8f0;
-  overflow: hidden;
-  transform: scale(0.95);
-  transition: transform 0.2s ease;
-}
-
-.pos-modal-overlay.is-active .pos-modal-window {
-  transform: scale(1);
-}
-
-.pos-modal-header {
-  padding: 18px 24px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.pos-modal-header.warning-header {
-  border-left: 5px solid #ef4444;
-  color: #991b1b;
-}
-
-.pos-modal-header.success-header {
-  border-left: 5px solid #10b981;
-  color: #065f46;
-}
-
-.pos-modal-body {
-  padding: 24px;
-  font-size: 16px;
-  color: #1e293b;
-  line-height: 1.5;
-}
-
-.pos-modal-input {
-  width: 100%;
-  padding: 12px 16px;
-  font-size: 18px;
-  font-weight: 700;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  margin-top: 14px;
-  box-sizing: border-box;
-  color: #0b57d0;
-  background: #f1f5f9;
-}
-
-.pos-modal-input:focus {
-  border-color: #0b57d0;
-  background: #ffffff;
-  outline: none;
-}
-
-.pos-modal-footer {
-  padding: 16px 24px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.pos-modal-btn {
-  padding: 12px 24px;
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: 8px;
-  cursor: pointer;
-  border: none;
-  transition: background 0.15s ease;
-}
-
-.pos-modal-btn-cancel { background: #e2e8f0; color: #475569; }
-.pos-modal-btn-cancel:hover { background: #cbd5e1; }
-.pos-modal-btn-confirm { background: #0b57d0; color: white; }
-.pos-modal-btn-confirm:hover { background: #084298; }
-.pos-modal-btn-danger { background: #ef4444; color: white; }
-.pos-modal-btn-danger:hover { background: #dc2626; }

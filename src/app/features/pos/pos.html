@@ -82,12 +82,13 @@
         <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
         <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
           
-        <!-- ⭐ NEW: Mobile Back-Office Links -->
-          <div class="mobile-show-flex" style="display: none; flex-direction: column; gap: 8px; margin-bottom: 8px; padding-bottom: 16px; border-bottom: 1px solid #475569;">
-            <a routerLink="/reports" class="app-btn" style="background: #3b82f6; color: white; text-align: left; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">📊 Sales Reports</a>
-            <a routerLink="/inventory" class="app-btn" style="background: #10b981; color: white; text-align: left; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">📦 Manage Inventory</a>
-          </div>
-            
+          <button 
+            (click)="salesService.isRefundMode.set(!salesService.isRefundMode()); salesService.triggerSearchFocus()" 
+            [style.background]="salesService.isRefundMode() ? '#ef4444' : '#1e293b'"
+            style="color: white; border: 1px solid #334155; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.2s;">
+            {{ salesService.isRefundMode() ? '❌ CANCEL REFUND MODE' : '↩️ Start Refund / Return' }}
+          </button>
+
           <button 
             (click)="salesService.clearBasket()" 
             [disabled]="salesService.basket().length === 0"
@@ -114,10 +115,10 @@
         </div>
 
         <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Catalog Filters</div>
-        <div class="sidebar-scroll-box" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
+        <div class="sidebar-scroll-box" style="display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
           
           <button 
-            (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false)" 
+            (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
             [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#334155'"
             [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#f8fafc'"
             style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600;">
@@ -126,7 +127,7 @@
 
           @for (cat of salesService.categories(); track cat.id) {
             <button 
-              (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false)" 
+              (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
               [style.background]="selectedCategoryId() === cat.id ? '#3b82f6' : '#1e293b'"
               [style.color]="selectedCategoryId() === cat.id ? '#ffffff' : '#cbd5e1'"
               style="border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
@@ -135,8 +136,7 @@
           }
         </div>
 
-
-      <div class="panel-title" style="margin-top: 16px; margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Today's Profit Snapshot</div>
+        <div class="panel-title" style="margin-top: 16px; margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Today's Profit Snapshot</div>
         <div style="background: #0f172a; border-radius: 8px; padding: 12px; border: 1px solid #334155; margin-bottom: 8px; flex-shrink: 0;">
           
           @for (bucket of dailyProfitSnapshots().buckets; track bucket.label) {
@@ -154,8 +154,14 @@
               {{ dailyProfitSnapshots().total > 0 ? '+' : '' }}{{ dailyProfitSnapshots().total | currency:'EUR':'symbol':'1.2-2' }}
             </span>
           </div>
+        </div>
+
+        <!-- ⭐ NEW: The animated breathing logo for PC screens! -->
+        <div class="animated-brand-container">
+          <div class="animated-brand-text">MARANTH</div>
+        </div>
+
       </div>
-   </div>
     </aside>
 
     <section class="main-catalog-panel">
@@ -178,10 +184,10 @@
       </div>
 
       <div style="display: flex; gap: 8px; padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap;">
-        <button class="app-btn" [style.background]="showWeightedShelf() ? '#16a34a' : '#e2e8f0'" [style.color]="showWeightedShelf() ? 'white' : '#475569'" (click)="showWeightedShelf.set(!showWeightedShelf())" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border: none; cursor: pointer; border-radius: 6px;">
+        <button class="app-btn" [style.background]="showWeightedShelf() ? '#16a34a' : '#e2e8f0'" [style.color]="showWeightedShelf() ? 'white' : '#475569'" (click)="showWeightedShelf.set(!showWeightedShelf()); salesService.triggerSearchFocus()" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border: none; cursor: pointer; border-radius: 6px;">
           ⚖️ Toggle Scaled Items
         </button>
-        <button class="app-btn" [style.background]="showLooseShelf() ? '#0b57d0' : '#e2e8f0'" [style.color]="showLooseShelf() ? 'white' : '#475569'" (click)="showLooseShelf.set(!showLooseShelf())" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border: none; cursor: pointer; border-radius: 6px;">
+        <button class="app-btn" [style.background]="showLooseShelf() ? '#0b57d0' : '#e2e8f0'" [style.color]="showLooseShelf() ? 'white' : '#475569'" (click)="showLooseShelf.set(!showLooseShelf()); salesService.triggerSearchFocus()" style="font-size: 12px; padding: 6px 12px; font-weight: 600; border: none; cursor: pointer; border-radius: 6px;">
           🏷️ Toggle Loose Items
         </button>
       </div>
@@ -265,7 +271,7 @@
       <app-shopping-basket></app-shopping-basket>
     </section>
 
-  </div> <!-- ⭐ CLOSES pos-main-layout -->
+  </div> 
 
   @if (salesService.basket().length > 0) {
     <div class="mobile-basket-fab" (click)="isMobileBasketOpen.set(true)">
@@ -280,4 +286,4 @@
     </div>
   }
 
-</div> <!-- ⭐ CLOSES pos-container -->
+</div>
