@@ -138,7 +138,7 @@ export class PosComponent implements OnInit, AfterViewInit {
       if (this.searchInput?.nativeElement) {
         this.searchInput.nativeElement.focus();
       }
-    }, 150);
+    }, 100);
   }
 
   public onSearchEnter(query: string): void {
@@ -182,7 +182,7 @@ export class PosComponent implements OnInit, AfterViewInit {
             this.salesService.closeModal();
             setTimeout(() => this.salesService.triggerSearchFocus(), 50);
           }
-        }, 1000);
+        }, 2000);
       }
     }
   }
