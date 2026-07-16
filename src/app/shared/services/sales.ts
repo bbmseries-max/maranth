@@ -20,7 +20,7 @@ export class SalesService {
   private db: any;
 
   // ⭐ Cloud Synced State (Starts empty, fills from Firebase instantly)
-  public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier'}[]>([]);
+  public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier', isApproved?: boolean}[]>([]);
   public transactions = signal<TransactionRecord[]>([]);
   public products = signal<Product[]>([]);
   public categories = signal<Category[]>([]);
@@ -97,12 +97,23 @@ export class SalesService {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
     
+    // ⭐ NEW: Auto-approve the very first user, otherwise require approval!
+    const isApproved = existingUsers.length === 0;
+
     // ⭐ THE FIX: Tell local memory about the new user immediately so the login doesn't fail!
-    this.registeredCashiers.update(users => [...users, { username, pin, role }]);
+    this.registeredCashiers.update(users => [...users, { username, pin, role, isApproved }]);
 
     // 🔥 Write directly to Cloud!
-    setDoc(doc(this.db, 'cashiers', username), { username, pin, role });
+    setDoc(doc(this.db, 'cashiers', username), { username, pin, role, isApproved });
     return true; 
+  }
+
+  public toggleCashierApproval(username: string, isApproved: boolean): void {
+    const users = this.registeredCashiers();
+    const user = users.find(u => u.username === username);
+    if (user) {
+       setDoc(doc(this.db, 'cashiers', username), { ...user, isApproved });
+    }
   }
 
   public loginCashier(name: string): void {

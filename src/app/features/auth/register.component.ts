@@ -22,42 +22,47 @@ export class RegisterComponent {
   // ✨ Renamed to bust the compiler cache!
   public assignedRole: 'admin' | 'cashier' = 'cashier';
 
+  // ⭐ NEW: Check if this is a brand new system
+  public isFirstSetup = computed(() => {
+    return this.salesService.registeredCashiers().length === 0;
+  });
+
   public onRegister(): void {
     const user = this.username().trim();
     const p1 = this.pin().trim();
     const p2 = this.confirmPin().trim();
 
     if (!user || !p1 || !p2) {
-      this.salesService.activeModal.set({
-        type: 'warning', title: '⚠️ Missing Fields', message: 'Please fill out all fields.', value: '', onConfirm: () => this.salesService.activeModal.set(null)
-      });
-      return;
-    }
-
-    if (p1 !== p2) {
-      this.salesService.activeModal.set({
-        type: 'warning', title: '⚠️ PIN Mismatch', message: 'The PINs you entered do not match.', value: '', onConfirm: () => this.salesService.activeModal.set(null)
-      });
-      return;
-    }
-
+<!-- ... existing code ... -->
     if (p1.length < 4) {
       this.salesService.activeModal.set({
-        type: 'warning', title: '⚠️ Weak PIN', message: 'For security, your PIN must be at least 4 characters long.', value: '', onConfirm: () => this.salesService.activeModal.set(null)
+        type: 'warning', title: '⚠️ Weak PIN', message: 'For security, your PIN must be at least 4 characters long.', value: '', onConfirm: () => this.salesService.closeModal()
       });
       return;
     }
 
-    // Try to save the user to the Master Brain WITH the assigned role!
-    const success = this.salesService.registerNewCashier(user, p1, this.assignedRole);
+    // If it's the first setup, FORCE the role to be Admin
+    const finalRole = this.isFirstSetup() ? 'admin' : this.assignedRole;
+
+    const success = this.salesService.registerNewCashier(user, p1, finalRole);
 
     if (success) {
-      this.salesService.loginCashier(user);
-      this.router.navigate(['/pos']);
+      if (this.isFirstSetup()) {
+         this.salesService.loginCashier(user);
+         this.router.navigate(['/pos']);
+      } else {
+         this.salesService.activeModal.set({
+            type: 'success', title: '✅ Registration Sent', message: 'Your account was created! A Store Admin must approve it before you can log in.', value: '', onConfirm: () => {
+               this.salesService.closeModal();
+               this.router.navigate(['/login']);
+            }
+         });
+      }
     } else {
       this.salesService.activeModal.set({
-        type: 'warning', title: '⛔ Username Taken', message: 'This Cashier ID is already in use. Please choose another.', value: '', onConfirm: () => this.salesService.activeModal.set(null)
+        type: 'warning', title: '⛔ Username Taken', message: 'This Cashier ID is already in use. Please choose another.', value: '', onConfirm: () => this.salesService.closeModal()
       });
     }
   }
+}
 }

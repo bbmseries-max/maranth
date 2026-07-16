@@ -43,37 +43,31 @@
         </div>
       </div>
       
-      <div style="display: flex; gap: 16px; margin-top: 16px;">
-        <div class="app-form-group" style="flex: 1;">
-          <label class="app-form-label">Create 4-Digit PIN</label>
-          <div class="input-with-icon">
-            <span class="input-icon">🔒</span>
-            <input 
-              type="password" 
-              class="app-input custom-login-input" 
-              [ngModel]="pin()" 
-              (ngModelChange)="pin.set($event)" 
-              name="pin" 
-              placeholder="••••"
-            >
-          </div>
-        </div>
+   <div style="display: flex; gap: 16px; margin-top: 16px;">
+            <div class="app-form-group" style="flex: 1;">
+              <label class="app-form-label">Create 4-Digit PIN</label>
+              <div class="input-with-icon">
+                <span class="input-icon">🔒</span>
+                <input type="password" class="app-input custom-login-input" [ngModel]="pin()" (ngModelChange)="pin.set($event)" name="pin" placeholder="••••">
+              </div>
+            </div>
 
-        <div class="app-form-group" style="flex: 1;">
-          <label class="app-form-label">Confirm PIN</label>
-          <div class="input-with-icon">
-            <span class="input-icon">🔒</span>
-            <input 
-              type="password" 
-              class="app-input custom-login-input" 
-              [ngModel]="confirmPin()" 
-              (ngModelChange)="confirmPin.set($event)" 
-              name="confirmPin" 
-              placeholder="••••"
-            >
+            <div class="app-form-group" style="flex: 1;">
+              <label class="app-form-label">Confirm PIN</label>
+              <div class="input-with-icon">
+                <span class="input-icon">🔒</span>
+                <input type="password" class="app-input custom-login-input" [ngModel]="confirmPin()" (ngModelChange)="confirmPin.set($event)" name="confirmPin" placeholder="••••">
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+
+          <button type="submit" class="app-btn app-btn-primary login-btn" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 24px;">
+            ✅ Register & Send for Approval
+          </button>
+
+          <div style="margin-top: 20px; text-align: center;">
+            <a routerLink="/login" style="color: #64748b; font-size: 14px; font-weight: 600; text-decoration: none;">
+              
       
       <button type="submit" class="app-btn app-btn-primary login-btn" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
         ✅ Register & Login

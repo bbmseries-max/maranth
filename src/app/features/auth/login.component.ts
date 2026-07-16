@@ -39,6 +39,17 @@ export class LoginComponent {
     );
 
     if (validUser) {
+      if (validUser.isApproved === false) {
+         this.salesService.activeModal.set({
+            type: 'warning',
+            title: '⏳ Approval Pending',
+            message: 'Your account has been registered but is waiting for a Store Admin to approve it.',
+            value: '',
+            onConfirm: () => this.salesService.closeModal()
+         });
+         return;
+      }
+      
       this.salesService.loginCashier(validUser.username);
       this.router.navigate(['/pos']);
     } else {

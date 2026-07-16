@@ -20,7 +20,9 @@ export class InventoryComponent {
   // 🎯 Allows Angular to grab the barcode input field to auto-focus it
   @ViewChild('newBarcodeFocus') barcodeInputRef!: ElementRef<HTMLInputElement>;
 
-  public activeTab = signal<'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS'>('PRODUCTS');
+  public activeTab = signal<'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS' | 'STAFF'>('PRODUCTS');
+
+  public staffMembers = this.salesService.registeredCashiers;
 
   public managedProducts = this.inventoryService.filteredProducts;
   public categories = this.salesService.categories;
@@ -40,7 +42,7 @@ export class InventoryComponent {
   public formCategory: Partial<Category> = {};
   public formSupplier: Partial<Supplier> = {};
 
-  public switchTab(tab: 'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS'): void {
+  public switchTab(tab: 'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS' | 'STAFF'): void {
     this.activeTab.set(tab);
     this.clearAllWorkbenches();
   }
@@ -174,6 +176,14 @@ export class InventoryComponent {
     }
     this.inventoryService.saveSupplierPayload(this.formSupplier as Supplier, this.isCreatingNew());
     this.clearAllWorkbenches();
+  }
+
+  public toggleStaffApproval(username: string, currentStatus: boolean): void {
+     if (username === this.salesService.currentCashier()) {
+        this.salesService.activeModal.set({ type: 'warning', title: '⚠️ Action Denied', message: 'You cannot revoke your own Admin access.', value: '', onConfirm: () => this.salesService.closeModal() });
+        return;
+     }
+     this.salesService.toggleCashierApproval(username, !currentStatus);
   }
 
   public importJsonData(event: any): void {

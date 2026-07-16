@@ -44,6 +44,9 @@
         <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'SUPPLIERS'" [class.app-btn-secondary]="activeTab() !== 'SUPPLIERS'" (click)="switchTab('SUPPLIERS')">
           🚚 Supplier Directory
         </button>
+        <button type="button" class="app-btn" [class.app-btn-primary]="activeTab() === 'STAFF'" [class.app-btn-secondary]="activeTab() !== 'STAFF'" (click)="switchTab('STAFF')">
+          👥 Staff Access
+        </button>
       }
     </div>
 
@@ -165,7 +168,7 @@
           }
 
           @case ('SUPPLIERS') {
-            <table class="app-table">
+           <table class="app-table">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -184,6 +187,40 @@
                       <span class="app-badge" [class.success]="sup.isActive !== false" [class.danger]="sup.isActive === false">
                         {{ sup.isActive !== false ? 'ACTIVE' : 'DISABLED' }}
                       </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('STAFF') {
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Cashier ID</th>
+                  <th>Privilege Role</th>
+                  <th>Access Status</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (staff of staffMembers(); track staff.username) {
+                  <tr>
+                    <td style="font-weight: bold; color: #1e293b;">{{ staff.username }}</td>
+                    <td>
+                      <span class="app-badge" [class.info]="staff.role === 'admin'" style="background: #f1f5f9; color: #475569;">
+                        {{ staff.role | uppercase }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="app-badge" [class.success]="staff.isApproved !== false" [class.danger]="staff.isApproved === false">
+                        {{ staff.isApproved !== false ? '✅ APPROVED' : '⏳ PENDING' }}
+                      </span>
+                    </td>
+                    <td style="text-align: right;">
+                      <button class="app-btn" [style.background]="staff.isApproved !== false ? '#ef4444' : '#10b981'" style="color: white; padding: 4px 12px; font-size: 11px;" (click)="toggleStaffApproval(staff.username, staff.isApproved !== false)">
+                        {{ staff.isApproved !== false ? 'Revoke Access' : 'Approve Login' }}
+                      </button>
                     </td>
                   </tr>
                 }
@@ -418,6 +455,16 @@
           }
         </div>
       }
+
+      <!-- CONTEXT D: STAFF DIRECTORY WORKBENCH -->
+      @if (activeTab() === 'STAFF') {
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 2px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center; height: 100%;">
+          <span style="font-size: 24px; margin-bottom: 8px;">🛡️</span>
+          <p style="margin: 0; font-size: 14px; font-weight: 500;">Access Control Panel</p>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8; max-width: 300px;">Use the table on the left to approve or revoke system access for your staff members. Unapproved staff cannot log into the POS terminal.</p>
+        </div>
+      }
+      
     </div>
   </div>
 </div>
