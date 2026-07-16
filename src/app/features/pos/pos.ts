@@ -1,9 +1,8 @@
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common'; 
+import { Component, OnInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
-
-import { SalesService } from '../../shared/services/sales'; 
+import { Router, RouterLink } from '@angular/router';
+import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
 
@@ -18,20 +17,19 @@ export class PosComponent implements OnInit {
   public salesService = inject(SalesService);
   public router = inject(Router);
 
+  @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
+
   public searchQuery = signal<string>('');
   public selectedCategoryId = signal<string>('ALL');
 
   public showWeightedShelf = signal<boolean>(false);
   public showLooseShelf = signal<boolean>(false);
-  public isSidebarMobileOpen = signal<boolean>(false); // ⭐ Tracks if mobile menu is open
-  public isMobileBasketOpen = signal<boolean>(false); // ⭐ NEW: Tracks if the checkout drawer
+  public isSidebarMobileOpen = signal<boolean>(false); 
+  public isMobileBasketOpen = signal<boolean>(false);
 
-
-  // ⭐ NEW: 3-Hour Profit Snapshot Calculator
+  // ⭐ The 3-Hour Profit Snapshot Calculator
   public dailyProfitSnapshots = computed(() => {
     const today = new Date().toDateString();
-    
-    // Create the 3-hour time buckets
     const buckets = [
       { label: '00:00 - 03:00', profit: 0, active: false },
       { label: '03:00 - 06:00', profit: 0, active: false },
@@ -47,28 +45,20 @@ export class PosComponent implements OnInit {
     const currentHour = new Date().getHours();
     const currentBucketIndex = Math.floor(currentHour / 3);
 
-    // Crunch the numbers for today's transactions
     this.salesService.transactions().forEach(tx => {
       const txDate = new Date(tx.timestamp);
-      
       if (txDate.toDateString() === today) {
         let txProfit = 0;
-        
         tx.items.forEach(item => {
           const retail = item.product.price || 0;
           const cost = item.product.purchasePrice || 0;
-          const tax = item.product.taxRate || 1.24; // Default to 24% VAT if missing
-          
+          const tax = item.product.taxRate || 1.24; 
           const grossWholesale = cost * tax;
           const itemProfit = (retail - grossWholesale) * item.quantity;
-          
-          // Deduct profit if it was a refund!
           txProfit += item.isRefund ? -itemProfit : itemProfit;
         });
-        
         const hour = txDate.getHours();
         const bucketIndex = Math.floor(hour / 3);
-        
         if (bucketIndex >= 0 && bucketIndex < 8) {
            buckets[bucketIndex].profit += txProfit;
            buckets[bucketIndex].active = true;
@@ -77,7 +67,6 @@ export class PosComponent implements OnInit {
       }
     });
 
-    // Always show the current time bucket, even if it's empty
     if (currentBucketIndex >= 0 && currentBucketIndex < 8) {
         buckets[currentBucketIndex].active = true;
     }
@@ -88,12 +77,48 @@ export class PosComponent implements OnInit {
     };
   });
 
-constructor() {
-    // ⭐ Auto-focus the search bar whenever the "Brain" sends a pulse!
+  public weightedProducts = computed(() => {
+    return this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true'));
+  });
+
+  public looseProducts = computed(() => {
+    return this.salesService.products().filter(p => p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true');
+  });
+
+  public filteredCatalogProducts = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    const categoryId = this.selectedCategoryId();
+    let products = this.salesService.products().filter(p => p.isActive !== false);
+
+    if (categoryId !== 'ALL') {
+      products = products.filter(p => p.categoryId === categoryId);
+    }
+
+    if (query) {
+      products = products.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        (p.barcode && p.barcode.toLowerCase().includes(query)) ||
+        (p.id && p.id.toString().toLowerCase().includes(query))
+      );
+    }
+
+    let currentCat = '';
+    return products.map(p => {
+      const mapped = { ...p, isFirstOfCategory: false, displayCategoryName: '' };
+      const pCat = p.categoryId || 'Unassigned';
+      if (pCat !== currentCat) {
+        mapped.isFirstOfCategory = true;
+        mapped.displayCategoryName = this.salesService.getCategoryName(pCat);
+        currentCat = pCat;
+      }
+      return mapped;
+    });
+  });
+
+  constructor() {
+    // ⭐ Auto-Focus Engine
     effect(() => {
       const trigger = this.salesService.focusSearchTrigger();
-      
-      // Do NOT steal focus if a modal popup is open (like the Weight Scale!)
       if (trigger > 0 && !this.salesService.activeModal() && this.searchInput?.nativeElement) {
         setTimeout(() => {
           this.searchInput.nativeElement.focus();
@@ -108,7 +133,9 @@ constructor() {
     }, { allowSignalWrites: true });
   }
 
-  // ⭐ If they hit ENTER, only clear the bar if it was an exact Barcode scan!
+  ngOnInit() {}
+
+  // ⭐ Search Bar Enter Logic
   public onSearchEnter(query: string): void {
     const wasBarcode = this.salesService.scanBarcodeExact(query);
     if (wasBarcode) {
@@ -119,70 +146,29 @@ constructor() {
     }
   }
 
-  ngOnInit() {}
-
-
-
-  public weightedProducts = computed(() => {
-    return this.salesService.products().filter(p => (p.isWeighted === true || String(p.isWeighted).toLowerCase() === 'true') && p.isActive !== false);
-  });
-
-  public looseProducts = computed(() => {
-    return this.salesService.products().filter(p => !p.barcode && p.isActive !== false);
-  });
-
-  public filteredCatalogProducts = computed(() => {
-    let items = this.salesService.products().filter(p => p.isActive !== false);
-    
-    if (this.selectedCategoryId() !== 'ALL') {
-      items = items.filter(p => p.categoryId === this.selectedCategoryId());
-    }
-
-    const query = this.searchQuery().toLowerCase().trim();
-    if (query) {
-      items = items.filter(p => 
-        (p.name && p.name.toLowerCase().includes(query)) || 
-        (p.barcode && p.barcode.toLowerCase().includes(query)) ||
-        (p.id && p.id.toString().toLowerCase().includes(query))
-      );
-    }
-
-    return items.map((p, index) => {
-       const displayCategoryName = this.salesService.getCategoryName(p.categoryId);
-       const isFirstOfCategory = index === 0 || items[index - 1].categoryId !== p.categoryId;
-       return { ...p, displayCategoryName, isFirstOfCategory };
-    });
-  });
-
-  public onSearchSubmit(query: string) {
-    this.salesService.lookupAndScanBarcode(query);
+  public onLogout(): void {
+    this.salesService.logoutCashier();
+    this.router.navigate(['/login']);
   }
 
-  // ⭐ BULLETPROOF WEIGHT CHECK: Catches Firebase String or Boolean!
-  public handleProductClick(product: Product) {
-    const isScaled = product.isWeighted === true || String(product.isWeighted).toLowerCase() === 'true';
-
+  // ⭐ Click-to-add Logic
+  public handleProductClick(prod: Product): void {
+    const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {
       this.salesService.activeModal.set({
         type: 'prompt',
         title: '⚖️ Scale Weight (kg)',
-        message: `Please enter the exact weight for ${product.name}:`,
+        message: `Enter the measured weight for ${prod.name}:`,
         value: '1.000',
         onConfirm: (val) => {
           const weight = parseFloat(val);
-          if (!isNaN(weight) && weight > 0) {
-            this.salesService.addToBasket(product, undefined, weight);
-          }
+          if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
           this.salesService.closeModal();
+          setTimeout(() => this.salesService.triggerSearchFocus(), 100);
         }
       });
     } else {
-      this.salesService.addToBasket(product);
+      this.salesService.addToBasket(prod);
     }
-  }
-
-  public onLogout() {
-    this.salesService.logoutCashier();
-    this.router.navigate(['/login']);
   }
 }
