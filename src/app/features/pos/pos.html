@@ -134,7 +134,28 @@
             </button>
           }
         </div>
+
+
+      <div class="panel-title" style="margin-top: 16px; margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Today's Profit Snapshot</div>
+        <div style="background: #0f172a; border-radius: 8px; padding: 12px; border: 1px solid #334155; margin-bottom: 8px; flex-shrink: 0;">
+          
+          @for (bucket of dailyProfitSnapshots().buckets; track bucket.label) {
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #cbd5e1; margin-bottom: 8px;">
+              <span>🕒 {{ bucket.label }}</span>
+              <span [style.color]="bucket.profit >= 0 ? '#10b981' : '#ef4444'" style="font-weight: bold;">
+                {{ bucket.profit > 0 ? '+' : '' }}{{ bucket.profit | currency:'EUR':'symbol':'1.2-2' }}
+              </span>
+            </div>
+          }
+          
+          <div style="border-top: 1px dashed #475569; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
+            <span style="color: #94a3b8;">Total Profit</span>
+            <span [style.color]="dailyProfitSnapshots().total >= 0 ? '#10b981' : '#ef4444'">
+              {{ dailyProfitSnapshots().total > 0 ? '+' : '' }}{{ dailyProfitSnapshots().total | currency:'EUR':'symbol':'1.2-2' }}
+            </span>
+          </div>
       </div>
+   </div>
     </aside>
 
     <section class="main-catalog-panel">

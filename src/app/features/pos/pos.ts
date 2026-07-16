@@ -23,8 +23,70 @@ export class PosComponent implements OnInit {
 
   public showWeightedShelf = signal<boolean>(false);
   public showLooseShelf = signal<boolean>(false);
-   public isSidebarMobileOpen = signal<boolean>(false); // ⭐ Tracks if mobile menu is open
+  public isSidebarMobileOpen = signal<boolean>(false); // ⭐ Tracks if mobile menu is open
   public isMobileBasketOpen = signal<boolean>(false); // ⭐ NEW: Tracks if the checkout drawer
+
+
+  // ⭐ NEW: 3-Hour Profit Snapshot Calculator
+  public dailyProfitSnapshots = computed(() => {
+    const today = new Date().toDateString();
+    
+    // Create the 3-hour time buckets
+    const buckets = [
+      { label: '00:00 - 03:00', profit: 0, active: false },
+      { label: '03:00 - 06:00', profit: 0, active: false },
+      { label: '06:00 - 09:00', profit: 0, active: false },
+      { label: '09:00 - 12:00', profit: 0, active: false },
+      { label: '12:00 - 15:00', profit: 0, active: false },
+      { label: '15:00 - 18:00', profit: 0, active: false },
+      { label: '18:00 - 21:00', profit: 0, active: false },
+      { label: '21:00 - 00:00', profit: 0, active: false }
+    ];
+
+    let totalDayProfit = 0;
+    const currentHour = new Date().getHours();
+    const currentBucketIndex = Math.floor(currentHour / 3);
+
+    // Crunch the numbers for today's transactions
+    this.salesService.transactions().forEach(tx => {
+      const txDate = new Date(tx.timestamp);
+      
+      if (txDate.toDateString() === today) {
+        let txProfit = 0;
+        
+        tx.items.forEach(item => {
+          const retail = item.product.price || 0;
+          const cost = item.product.purchasePrice || 0;
+          const tax = item.product.taxRate || 1.24; // Default to 24% VAT if missing
+          
+          const grossWholesale = cost * tax;
+          const itemProfit = (retail - grossWholesale) * item.quantity;
+          
+          // Deduct profit if it was a refund!
+          txProfit += item.isRefund ? -itemProfit : itemProfit;
+        });
+        
+        const hour = txDate.getHours();
+        const bucketIndex = Math.floor(hour / 3);
+        
+        if (bucketIndex >= 0 && bucketIndex < 8) {
+           buckets[bucketIndex].profit += txProfit;
+           buckets[bucketIndex].active = true;
+        }
+        totalDayProfit += txProfit;
+      }
+    });
+
+    // Always show the current time bucket, even if it's empty
+    if (currentBucketIndex >= 0 && currentBucketIndex < 8) {
+        buckets[currentBucketIndex].active = true;
+    }
+
+    return {
+      buckets: buckets.filter(b => b.active),
+      total: totalDayProfit
+    };
+  });
 
 constructor() {
     // ⭐ NEW: Auto-close the mobile basket drawer if it empties (e.g. after successful payment!)
@@ -36,6 +98,8 @@ constructor() {
   }
 
   ngOnInit() {}
+
+
 
   public weightedProducts = computed(() => {
     return this.salesService.products().filter(p => (p.isWeighted === true || String(p.isWeighted).toLowerCase() === 'true') && p.isActive !== false);
