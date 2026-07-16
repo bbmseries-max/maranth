@@ -3,9 +3,11 @@
   <div class="login-card" style="max-width: 480px;">
     
     <div class="brand-section">
-      <div class="logo-circle" style="background: #e0f2fe; color: #0284c7;">➕</div>
-      <h1 class="brand-title">New Cashier</h1>
-      <p class="brand-subtitle">Register Terminal Access</p>
+      <div class="logo-circle" [style.background]="isFirstSetup() ? '#fef08a' : '#e0f2fe'" [style.color]="isFirstSetup() ? '#ca8a04' : '#0284c7'">
+        {{ isFirstSetup() ? '👑' : '➕' }}
+      </div>
+      <h1 class="brand-title">{{ isFirstSetup() ? 'Initial Setup' : 'New Cashier' }}</h1>
+      <p class="brand-subtitle">{{ isFirstSetup() ? 'Create Master Admin' : 'Register Terminal Access' }}</p>
     </div>
     
     <form class="login-form" (ngSubmit)="onRegister()">
@@ -27,49 +29,63 @@
         </div>
       </div>
 
-      <!-- ⭐ Renamed the ngModel to bust the compiler cache -->
-      <div class="app-form-group" style="margin-top: 16px;">
-        <label class="app-form-label">Assign Privilege Role</label>
-        <div class="input-with-icon">
-          <span class="input-icon">🛡️</span>
-          <select 
-            class="app-input custom-login-input" 
-            [(ngModel)]="assignedRole" 
-            name="role"
-          >
-            <option value="cashier">Standard Cashier (Register & Stock Only)</option>
-            <option value="admin">Store Admin (Full Access)</option>
-          </select>
+      <!-- Force the first user to be an Admin visually -->
+      @if (isFirstSetup()) {
+        <div class="app-form-group" style="margin-top: 16px;">
+          <label class="app-form-label">Assigned Privilege Role</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🛡️</span>
+            <input type="text" class="app-input custom-login-input" disabled value="Master Store Admin (Required)" style="background: #f8fafc; color: #64748b; font-weight: bold;" />
+          </div>
+        </div>
+      } @else {
+        <div class="app-form-group" style="margin-top: 16px;">
+          <label class="app-form-label">Assign Privilege Role</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🛡️</span>
+            <select 
+              class="app-input custom-login-input" 
+              [(ngModel)]="assignedRole" 
+              name="role"
+            >
+              <option value="cashier">Standard Cashier (Register & Stock Only)</option>
+              <option value="admin">Store Admin (Full Access)</option>
+            </select>
+          </div>
+        </div>
+      }
+      
+      <div style="display: flex; gap: 16px; margin-top: 16px;">
+        <div class="app-form-group" style="flex: 1;">
+          <label class="app-form-label">Create 4-Digit PIN</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🔒</span>
+            <input type="password" class="app-input custom-login-input" [ngModel]="pin()" (ngModelChange)="pin.set($event)" name="pin" placeholder="••••">
+          </div>
+        </div>
+
+        <div class="app-form-group" style="flex: 1;">
+          <label class="app-form-label">Confirm PIN</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🔒</span>
+            <input type="password" class="app-input custom-login-input" [ngModel]="confirmPin()" (ngModelChange)="confirmPin.set($event)" name="confirmPin" placeholder="••••">
+          </div>
         </div>
       </div>
-      
-   <div style="display: flex; gap: 16px; margin-top: 16px;">
-            <div class="app-form-group" style="flex: 1;">
-              <label class="app-form-label">Create 4-Digit PIN</label>
-              <div class="input-with-icon">
-                <span class="input-icon">🔒</span>
-                <input type="password" class="app-input custom-login-input" [ngModel]="pin()" (ngModelChange)="pin.set($event)" name="pin" placeholder="••••">
-              </div>
-            </div>
 
-            <div class="app-form-group" style="flex: 1;">
-              <label class="app-form-label">Confirm PIN</label>
-              <div class="input-with-icon">
-                <span class="input-icon">🔒</span>
-                <input type="password" class="app-input custom-login-input" [ngModel]="confirmPin()" (ngModelChange)="confirmPin.set($event)" name="confirmPin" placeholder="••••">
-              </div>
-            </div>
+      <!-- The Security Lock (Only shows if users already exist) -->
+      @if (!isFirstSetup()) {
+        <div class="app-form-group" style="margin-top: 20px; padding-top: 16px; border-top: 1px dashed #cbd5e1;">
+          <label class="app-form-label" style="color: #991b1b; font-weight: 800;">⚠️ Manager Authorization</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🗝️</span>
+            <input type="password" class="app-input custom-login-input" [ngModel]="managerPin()" (ngModelChange)="managerPin.set($event)" name="managerPin" placeholder="Enter existing Admin PIN..." style="border-color: #fca5a5; background: #fef2f2;">
           </div>
-
-          <button type="submit" class="app-btn app-btn-primary login-btn" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 24px;">
-            ✅ Register & Send for Approval
-          </button>
-
-          <div style="margin-top: 20px; text-align: center;">
-            <a routerLink="/login" style="color: #64748b; font-size: 14px; font-weight: 600; text-decoration: none;">
-              
+          <p style="margin: 4px 0 0 0; font-size: 11px; color: #94a3b8;">An admin must type their PIN to authorize this account.</p>
+        </div>
+      }
       
-      <button type="submit" class="app-btn app-btn-primary login-btn" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+      <button type="submit" class="app-btn app-btn-primary login-btn" style="background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 24px;">
         ✅ Register & Login
       </button>
 
@@ -80,10 +96,8 @@
       </div>
 
     </form>
-
   </div>
 
-  <!-- Global Modal Layer for Error popups -->
   @if (salesService.activeModal(); as modal) {
     <div class="pos-modal-overlay is-active" style="z-index: 99999;">
       <div class="pos-modal-window">
@@ -94,9 +108,7 @@
           <p style="margin: 0;">{{ modal.message }}</p>
         </div>
         <div class="pos-modal-footer">
-          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">
-            Dismiss
-          </button>
+          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">Dismiss</button>
         </div>
       </div>
     </div>

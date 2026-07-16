@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -18,8 +18,8 @@ export class RegisterComponent {
   public username = signal<string>('');
   public pin = signal<string>('');
   public confirmPin = signal<string>('');
+  public managerPin = signal<string>('');
   
-  // ✨ Renamed to bust the compiler cache!
   public assignedRole: 'admin' | 'cashier' = 'cashier';
 
   // ⭐ NEW: Check if this is a brand new system
@@ -33,7 +33,19 @@ export class RegisterComponent {
     const p2 = this.confirmPin().trim();
 
     if (!user || !p1 || !p2) {
-<!-- ... existing code ... -->
+      this.salesService.activeModal.set({
+        type: 'warning', title: '⚠️ Missing Fields', message: 'Please fill out all basic fields.', value: '', onConfirm: () => this.salesService.closeModal()
+      });
+      return;
+    }
+
+    if (p1 !== p2) {
+      this.salesService.activeModal.set({
+        type: 'warning', title: '⚠️ PIN Mismatch', message: 'The PINs you entered do not match.', value: '', onConfirm: () => this.salesService.closeModal()
+      });
+      return;
+    }
+
     if (p1.length < 4) {
       this.salesService.activeModal.set({
         type: 'warning', title: '⚠️ Weak PIN', message: 'For security, your PIN must be at least 4 characters long.', value: '', onConfirm: () => this.salesService.closeModal()
@@ -41,28 +53,49 @@ export class RegisterComponent {
       return;
     }
 
+    // ⭐ RESTORED: Manager Approval Check!
+    let isApproved = false;
+    
+    if (!this.isFirstSetup()) {
+      const mPin = this.managerPin().trim();
+      
+      if (!mPin) {
+        this.salesService.activeModal.set({
+          type: 'warning', title: '⛔ Approval Required', message: 'An existing Admin PIN is required to authorize new accounts.', value: '', onConfirm: () => this.salesService.closeModal()
+        });
+        return;
+      }
+
+      // Check if the typed manager PIN belongs to an actual Admin
+      const admins = this.salesService.registeredCashiers().filter(u => u.role === 'admin');
+      const validAdmin = admins.find(a => a.pin === mPin);
+
+      if (!validAdmin) {
+        this.salesService.activeModal.set({
+          type: 'warning', title: '⛔ Access Denied', message: 'Invalid Admin PIN. Registration blocked.', value: '', onConfirm: () => this.salesService.closeModal()
+        });
+        return;
+      }
+      
+      // If the admin typed their PIN, the account is instantly approved!
+      isApproved = true;
+    } else {
+      isApproved = true; // First setup is always approved automatically
+    }
+
     // If it's the first setup, FORCE the role to be Admin
     const finalRole = this.isFirstSetup() ? 'admin' : this.assignedRole;
 
-    const success = this.salesService.registerNewCashier(user, p1, finalRole);
+    const success = this.salesService.registerNewCashier(user, p1, finalRole, isApproved);
 
     if (success) {
-      if (this.isFirstSetup()) {
-         this.salesService.loginCashier(user);
-         this.router.navigate(['/pos']);
-      } else {
-         this.salesService.activeModal.set({
-            type: 'success', title: '✅ Registration Sent', message: 'Your account was created! A Store Admin must approve it before you can log in.', value: '', onConfirm: () => {
-               this.salesService.closeModal();
-               this.router.navigate(['/login']);
-            }
-         });
-      }
+      // ⭐ Since it's approved by the manager standing there, log them right in!
+      this.salesService.loginCashier(user);
+      this.router.navigate(['/pos']);
     } else {
       this.salesService.activeModal.set({
         type: 'warning', title: '⛔ Username Taken', message: 'This Cashier ID is already in use. Please choose another.', value: '', onConfirm: () => this.salesService.closeModal()
       });
     }
   }
-}
 }

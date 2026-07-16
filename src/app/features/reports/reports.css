@@ -1,4 +1,4 @@
-/* STREAMING_CHUNK: Setting up scrollable host viewport */
+/* STREAMING_CHUNK: Base Reports Styles */
 :host {
 display: block;
 height: 100vh;
@@ -7,58 +7,76 @@ overflow-y: auto;
 background-color: #f4f7f9;
 }
 
-/* STREAMING_CHUNK: Overriding global locks */
 .app-viewport {
 height: auto !important;
 min-height: 100vh;
 overflow: visible !important;
 }
 
-/* STREAMING_CHUNK: Configuring Print Styles for Z-Report */
-@media print {
-.app-btn, .app-select, .app-form-label {
-display: none !important;
+/* STREAMING_CHUNK: Mobile Responsive Layout */
+@media (max-width: 1024px) {
+.reports-split-layout {
+flex-direction: column !important;
+height: auto !important;
+}
+.reports-ledger-layout {
+flex-direction: column-reverse !important;
+}
+.reports-ledger-layout > .app-card {
+width: 100% !important;
+flex: none !important;
+position: static !important;
+max-height: 60vh;
+}
+.app-table {
+display: block;
+width: 100%;
+overflow-x: auto;
+white-space: nowrap;
+}
 }
 
-.app-viewport {
-padding: 0 !important;
-background: white !important;
+/* STREAMING_CHUNK: Z-Report Printing Rules (Fix for Blank Pages) */
+@media print {
+@page {
+size: auto;
+margin: 10mm;
+}
+
+html, body, :host, .app-viewport {
 height: auto !important;
+min-height: auto !important;
+width: 100% !important;
 overflow: visible !important;
- }
+position: static !important;
+display: block !important;
+background: white !important;
+color: black !important;
+}
+
+.app-btn, .app-select, .app-form-label, a, select {
+display: none !important;
+}
 
 .app-card {
 box-shadow: none !important;
 border: 1px solid #cbd5e1 !important;
-break-inside: avoid;
+break-inside: avoid !important;
+page-break-inside: avoid !important;
 margin-bottom: 20px !important;
- }
-
-.app-card > div {
-max-height: none !important;
-overflow: visible !important;
- }
+background: white !important;
 }
 
-/* ⭐ NEW: Mobile Responsive Rules for Reports */
-@media (max-width: 1024px) {
-  .reports-split-layout {
-    flex-direction: column !important;
-    height: auto !important;
-  }
-  .reports-ledger-layout {
-    flex-direction: column-reverse !important;
-  }
-  .reports-ledger-layout > .app-card {
-    width: 100% !important;
-    flex: none !important;
-    position: static !important;
-    max-height: 60vh;
-  }
-  .app-table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+/* Force scrollable areas to open up fully so the printer sees everything */
+.reports-split-layout, .reports-ledger-layout, .app-card > div, .app-table {
+overflow: visible !important;
+max-height: none !important;
+height: auto !important;
+display: block !important;
+}
+
+/* Ensure text colors stay dark on print */
+h1, h3, span, td, th, div {
+color: #000000 !important;
+}
 }

@@ -1,9 +1,10 @@
+/* STREAMING_CHUNK: Base Host Styles */
 :host {
 display: block;
 height: 100%;
 }
 
-/* Modals for Inventory Alerts & Success Messages */
+/* STREAMING_CHUNK: Modal Overlays */
 .pos-modal-overlay {
 position: fixed;
 top: 0;
@@ -95,6 +96,7 @@ justify-content: flex-end;
 gap: 12px;
 }
 
+/* STREAMING_CHUNK: Buttons */
 .pos-modal-btn {
 padding: 12px 24px;
 font-size: 15px;
@@ -112,31 +114,31 @@ transition: background 0.15s ease;
 .pos-modal-btn-danger { background: #ef4444; color: white; }
 .pos-modal-btn-danger:hover { background: #dc2626; }
 
-/* ⭐ NEW: Mobile Responsive Rules for Inventory */
+/* STREAMING_CHUNK: Mobile Responsiveness */
 @media (max-width: 1024px) {
-  .inventory-main-layout {
-    flex-direction: column !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-  .inventory-left-col {
-    flex: none !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 400px;
-    max-height: 60vh;
-    overflow-y: auto !important;
-  }
-  .inventory-right-col {
-    flex: none !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-  .app-table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+.inventory-main-layout {
+flex-direction: column !important;
+height: auto !important;
+overflow: visible !important;
+}
+.inventory-left-col {
+flex: none !important;
+width: 100% !important;
+height: auto !important;
+min-height: 400px;
+max-height: 60vh;
+overflow-y: auto !important;
+}
+.inventory-right-col {
+flex: none !important;
+width: 100% !important;
+height: auto !important;
+overflow: visible !important;
+}
+.app-table {
+display: block;
+width: 100%;
+overflow-x: auto;
+white-space: nowrap;
+}
 }

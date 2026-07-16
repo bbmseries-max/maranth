@@ -25,7 +25,7 @@
 
 <div class="app-viewport">
 
-  <!-- Tab Bar Header Strip (NOW WITH FIXED BUTTON) -->
+  <!-- Tab Bar Header Strip -->
   <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; align-items: center; justify-content: space-between;">
     
     <div style="display: flex; gap: 8px; align-items: center;">
@@ -50,7 +50,7 @@
       }
     </div>
 
-    <!-- ⭐ THE UNMISSABLE IMPORT BUTTON -->
+    <!-- THE UNMISSABLE IMPORT BUTTON -->
     @if (salesService.currentRole() === 'admin') {
       <div>
         <input type="file" #fileInput style="display: none" accept=".json, .txt, .csv, .john, */*" (change)="importJsonData($event)" />
@@ -63,15 +63,12 @@
   </div>
 
   <!-- Main Unified Layout Frame Container -->
-  <div style="display: flex; gap: 24px; height: calc(100vh - 110px); box-sizing: border-box; overflow: hidden; position: relative;">
-    <div class="inventory-main-layout" style="display: flex; gap: 24px; height: calc(100vh - 110px); box-sizing: border-box; overflow: hidden; position: relative;">
-
-    </div>
+  <div class="inventory-main-layout" style="display: flex; gap: 24px; height: calc(100vh - 110px); box-sizing: border-box; overflow: hidden; position: relative;">
+    
     <!-- LEFT COLUMN -->
-    <div class="app-card" style="flex: 1.6; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; padding-right: 0;">
-      <div class="app-card inventory-left-col" style="flex: 1.6; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; padding-right: 0;">
-
-        <!-- Dynamic Top Tool Action Bar -->
+    <div class="app-card inventory-left-col" style="flex: 1.6; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; padding-right: 0;">
+      
+      <!-- Dynamic Top Tool Action Bar -->
       <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; padding-right: 20px; flex-wrap: wrap;">
         
         @if (activeTab() === 'PRODUCTS') {
@@ -168,7 +165,7 @@
           }
 
           @case ('SUPPLIERS') {
-           <table class="app-table">
+            <table class="app-table">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -193,6 +190,7 @@
               </tbody>
             </table>
           }
+
           @case ('STAFF') {
             <table class="app-table">
               <thead>
@@ -232,7 +230,7 @@
     </div>
 
     <!-- RIGHT COLUMN: PRODUCT DETAIL WORKBENCH -->
-    <div class="app-card" style="flex: 1; height: 100%; box-sizing: border-box; overflow-y: auto;">
+    <div class="app-card inventory-right-col" style="flex: 1; height: 100%; box-sizing: border-box; overflow-y: auto;">
         
       <!-- CONTEXT A: STOCKS & PRODUCTS MATRIX WORKBENCH -->
       @if (activeTab() === 'PRODUCTS') {
@@ -244,7 +242,7 @@
               </h3>
             </div>
 
-            <!-- 🌟 FORM WRAPPER WITH COLORED PANELS -->
+            <!-- FORM WRAPPER WITH COLORED PANELS -->
             <div style="display: flex; flex-direction: column; gap: 20px; padding-top: 4px;">
 
               <!-- SECTION 1: IDENTIFICATION (Light Blue Tint) -->
@@ -464,7 +462,6 @@
           <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8; max-width: 300px;">Use the table on the left to approve or revoke system access for your staff members. Unapproved staff cannot log into the POS terminal.</p>
         </div>
       }
-      
     </div>
   </div>
 </div>

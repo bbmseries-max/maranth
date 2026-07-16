@@ -19,7 +19,7 @@ const firebaseConfig = {
 export class SalesService {
   private db: any;
 
-  // ⭐ Cloud Synced State (Starts empty, fills from Firebase instantly)
+  // ⭐ Cloud Synced State
   public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier', isApproved?: boolean}[]>([]);
   public transactions = signal<TransactionRecord[]>([]);
   public products = signal<Product[]>([]);
@@ -37,18 +37,15 @@ export class SalesService {
   public activeModal = signal<POSModal | null>(null);
 
   constructor() {
-    // 1. Initialize Firebase App
     const app = initializeApp(firebaseConfig);
     this.db = getFirestore(app);
 
-    // 2. Establish Real-Time Sync Connections (Fallbacks removed!)
     this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
     this.setupCloudSync('products', this.products, 'maranth_products');
     this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
     this.setupCloudSync('categories', this.categories, 'maranth_categories');
     this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
 
-    // 3. Save Active Basket to local memory only
     effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
     effect(() => localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket())));
   }
@@ -60,25 +57,19 @@ export class SalesService {
 
   private setupCloudSync(collectionName: string, targetSignal: any, storageKey: string, fallbackData: any[] = []) {
     onSnapshot(collection(this.db, collectionName), (snapshot) => {
-      
       if (snapshot.empty) {
-        // 🚀 SCENARIO A: Firebase is empty! Let's check LocalStorage and MIGRATE the data up!
         const localData = localStorage.getItem(storageKey);
         if (localData) {
           const parsed = JSON.parse(localData);
           if (parsed && parsed.length > 0) {
-            console.log(`⬆️ Migrating ${collectionName} from LocalStorage to Firebase Cloud...`);
             parsed.forEach((item: any) => {
               const docId = (item.id || item.username).toString();
               setDoc(doc(this.db, collectionName, docId), item);
             });
-            return; // Exit early. The database will catch the changes and fire this snapshot again.
+            return;
           }
         }
-
-        // 🌱 SCENARIO B: Brand new system. Plant the seeds!
         if (fallbackData.length > 0) {
-          console.log(`🌱 Seeding default ${collectionName}...`);
           fallbackData.forEach((item: any) => {
             const docId = (item.id || item.username).toString();
             setDoc(doc(this.db, collectionName, docId), item);
@@ -86,32 +77,29 @@ export class SalesService {
           return;
         }
       }
-
-      // 🔄 SCENARIO C: Normal Operation. Read live cloud data into the Angular Signal.
       const data = snapshot.docs.map(doc => doc.data());
       targetSignal.set(data);
     });
   }
 
-  public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier'): boolean {
+  // ⭐ FIX 1: Accepts 4 arguments now (forceApproval)
+  public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier', forceApproval: boolean = false): boolean {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
     
-    // ⭐ NEW: Auto-approve the very first user, otherwise require approval!
-    const isApproved = existingUsers.length === 0;
+    const isApproved = forceApproval || existingUsers.length === 0;
 
-    // ⭐ THE FIX: Tell local memory about the new user immediately so the login doesn't fail!
     this.registeredCashiers.update(users => [...users, { username, pin, role, isApproved }]);
-
-    // 🔥 Write directly to Cloud!
     setDoc(doc(this.db, 'cashiers', username), { username, pin, role, isApproved });
     return true; 
   }
 
+  // ⭐ FIX 2: Correctly updates the local memory and Cloud simultaneously!
   public toggleCashierApproval(username: string, isApproved: boolean): void {
     const users = this.registeredCashiers();
     const user = users.find(u => u.username === username);
     if (user) {
+       this.registeredCashiers.update(all => all.map(u => u.username === username ? { ...u, isApproved } : u));
        setDoc(doc(this.db, 'cashiers', username), { ...user, isApproved });
     }
   }
@@ -141,7 +129,6 @@ export class SalesService {
     return match && match.name ? match.name : `Category ${cleanId}`;
   }
 
-  // ⭐ THE FIX: The shelf price is the GROSS price (includes VAT)
   public grandTotal = computed(() => {
     return this.basket().reduce((acc, item) => {
       const lineGross = item.product.price * item.quantity;
@@ -149,10 +136,9 @@ export class SalesService {
     }, 0);
   });
 
-  // ⭐ THE FIX: Calculate Net by extracting the VAT from each item's gross price
   public netSubtotal = computed(() => {
     return this.basket().reduce((acc, item) => {
-      const taxRate = item.product.taxRate || 1.24; // Default to 24% if missing
+      const taxRate = item.product.taxRate || 1.24;
       const lineGross = item.product.price * item.quantity;
       const lineNet = lineGross / taxRate;
       return acc + (item.isRefund ? -lineNet : lineNet);
@@ -160,22 +146,18 @@ export class SalesService {
   });
   public subtotal = this.netSubtotal;
 
-  // ⭐ THE FIX: VAT is just the difference between Gross and Net
   public taxAmount = computed(() => this.grandTotal() - this.netSubtotal());
   public vatAmount = this.taxAmount;
 
   public totalItems = computed(() => this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0));
 
-  // ⭐ ADDED customQty?: number here so it expects the exact weight from the modal
   public addToBasket(product: Product, forceRefundState?: boolean, customQty?: number): void {
     this.highlightedItemId.set(product.id);
     setTimeout(() => this.highlightedItemId.set(null), 500);
 
     const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
 
-    // 🛡️ THE FIX: Strict Inventory Stock Guardrail
     if (!isRef) {
-      // Find the absolute latest stock level from the cloud
       const liveProduct = this.products().find(p => p.id === product.id) || product;
       const currentQtyInBasket = this.basket().find(item => item.product.id === product.id && !item.isRefund)?.quantity || 0;
       
@@ -189,7 +171,6 @@ export class SalesService {
 
       const availableStock = parseFloat(liveProduct.stockQuantity as any) || 0;
 
-      // If we have 0 stock, or if adding this pushes us over the limit!
       if (availableStock <= 0 || intendedQty > availableStock) {
         this.activeModal.set({
           type: 'warning',
@@ -198,14 +179,13 @@ export class SalesService {
           value: '',
           onConfirm: () => this.closeModal()
         });
-        return; // 🛑 Abort the addition entirely!
+        return; 
       }
     }
 
     this.basket.update((currentBasket) => {
       const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRef);
       
-      // ⭐ Use the exact custom weight if provided, otherwise default to adding 0.100kg or 1 unit
       const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
 
       if (existingIndex > -1) {
@@ -214,7 +194,6 @@ export class SalesService {
         updatedBasket[existingIndex] = { ...existingItem, quantity: parseFloat((existingItem.quantity + incrementStep).toFixed(3)) };
         return updatedBasket;
       } else {
-        // ⭐ If it's the first time adding, default to 0.500kg if no exact weight was typed
         const initialQuantity = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
         return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
       }
@@ -258,19 +237,15 @@ export class SalesService {
       paymentMethod: method
     };
 
-    // 🔥 1. Sync Live Inventory Levels to Cloud
     currentBasket.forEach(item => {
       const product = this.products().find(p => p.id === item.product.id);
       if (product) {
         const change = item.isRefund ? item.quantity : -item.quantity;
         const newQuantity = parseFloat((product.stockQuantity + change).toFixed(3));
-        
-        // Push the update to Firebase
         setDoc(doc(this.db, 'products', product.id.toString()), { ...product, stockQuantity: newQuantity });
       }
     });
 
-    // 🔥 2. Push Receipt to Cloud Ledger
     setDoc(doc(this.db, 'transactions', receipt.id), receipt);
 
     this.clearBasket();
@@ -309,18 +284,15 @@ export class SalesService {
   public lookupAndScanBarcode(query: string): void {
     const queryLower = query.toLowerCase().trim();
     
-    // 1. Try exact Barcode or ID
     let found = this.products().find(p => 
       (p.barcode && p.barcode.toLowerCase() === queryLower) || 
       (p.id && p.id.toString().toLowerCase() === queryLower)
     );
 
-    // 2. Try Exact Name
     if (!found) {
       found = this.products().find(p => p.name && p.name.toLowerCase() === queryLower);
     }
 
-    // 3. Try Partial Name (e.g. typing "feta" finds "Feta Cheese")
     if (!found) {
       found = this.products().find(p => p.name && p.name.toLowerCase().includes(queryLower));
     }
@@ -385,7 +357,6 @@ export class SalesService {
     });
   }
 
-  // 🔥 Firebase Database Modifiers
   public updateProductExpiry(productId: string, newDate: string): void {
     const product = this.products().find(p => p.id?.toString() === productId.toString());
     if (product) {
@@ -406,10 +377,10 @@ export class SalesService {
   }
 
   public clearLedger(): void {
-    // 🔥 Deletes the entire ledger from the Cloud!
     this.transactions().forEach(tx => deleteDoc(doc(this.db, 'transactions', tx.id)));
   }
 
+  // ⭐ FIX 3: Clean, correct modal closer inside the service!
   public closeModal(): void {
     this.activeModal.set(null);
     setTimeout(() => this.activeModal.set(null), 10);
