@@ -27,7 +27,6 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   public isSidebarMobileOpen = signal<boolean>(false); 
   public isMobileBasketOpen = signal<boolean>(false);
 
-  // ⭐ NEW: Live Clock Signal
   public liveTime = signal<Date>(new Date());
   private clockInterval: any;
 
@@ -136,7 +135,6 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
-    // ⭐ Start the ticking clock
     this.clockInterval = setInterval(() => {
       this.liveTime.set(new Date());
     }, 1000);
@@ -151,8 +149,22 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // ⭐ Stop the clock if we leave the page
     if (this.clockInterval) clearInterval(this.clockInterval);
+  }
+
+  // ⭐ NEW: Expiration Status Calculator for Red/Green/Yellow Badges
+  public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
+    if (!expire) return 'none';
+    const expDate = new Date(expire + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 0) return 'danger'; // Expired or expiring today
+    if (diffDays <= 14) return 'warning'; // Expiring in 2 weeks
+    return 'safe'; // Safe
   }
 
   public onSearchEnter(query: string): void {

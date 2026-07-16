@@ -73,14 +73,11 @@
     
     <!-- LEFT PANEL: Sidebar -->
     <aside class="pos-sidebar-panel" [class.expanded]="isSidebarMobileOpen()" style="color: #fff;">
-      
-      <!-- 1. The Toggle Button -->
       <div class="sidebar-mobile-toggle" (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
         <span style="font-weight: 700; font-size: 14px;">📁 Menu & Categories</span>
         <span style="font-size: 12px;">{{ isSidebarMobileOpen() ? '🔼' : '🔽' }}</span>
       </div>
 
-      <!-- 2. The Collapsible Menu (Controls & Filters) -->
       <div class="sidebar-collapsible-content">
         <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
         <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
@@ -139,7 +136,7 @@
         </div>
       </div>
 
-      <!-- ⭐ 3. The Pinned Bottom Section (Always Visible!) -->
+      <!-- Pinned Bottom Section -->
       <div style="margin-top: auto; display: flex; flex-direction: column; flex-shrink: 0; padding-top: 16px;">
         
         <div class="panel-title mobile-hide" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Today's Profit Snapshot</div>
@@ -152,7 +149,6 @@
               </span>
             </div>
           }
-          
           <div style="border-top: 1px dashed #475569; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
             <span style="color: #94a3b8;">Total Profit</span>
             <span [style.color]="dailyProfitSnapshots().total >= 0 ? '#10b981' : '#ef4444'">
@@ -173,6 +169,7 @@
 
     </aside>
 
+    <!-- RIGHT PANEL: Main Catalog -->
     <section class="main-catalog-panel">
       <div class="search-action-bar" style="background: #ffffff; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; flex: 0 0 auto;">
         <div class="search-input-wrapper">
@@ -238,6 +235,7 @@
       <div class="catalog-scroll-viewport">
         <div class="grid-layout-scroll">
           @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
+            
             @if (prod.isFirstOfCategory) {
               <div class="category-divider-row" style="grid-column: 1 / -1; display: flex; align-items: center; margin-top: 12px; margin-bottom: 4px;">
                 <span style="font-weight: 700; font-size: 13px; color: #64748b; text-transform: uppercase; background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">
@@ -246,22 +244,43 @@
               </div>
             }
 
+            <!-- =======================================================
+                 ⭐ THE NEW 3-LINE PREMIUM PRODUCT CARD
+                 ======================================================= -->
             <div class="product-item-card" (click)="handleProductClick(prod)">
-              <div class="prod-details">
-                <span class="prod-name">
-                  {{ prod.name }}
-                  @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { <span style="font-size: 10px; background: #dcfce7; color: #166534; padding: 2px 4px; border-radius: 4px; margin-left: 4px; vertical-align: top;">⚖️</span> }
-                </span>
-                <span class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+              
+              <!-- Line 1: Name -->
+              <div class="prod-name-row">
+                <span class="prod-name">{{ prod.name }}</span>
+                @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { 
+                  <span class="weight-icon" title="Scaled Item">⚖️</span> 
+                }
               </div>
 
-              @let liveProduct = salesService.products().find(p => p.id === prod.id);
-              @let liveStock = liveProduct ? liveProduct.stockQuantity : prod.stockQuantity;
-
-              <div class="prod-stock-badge" [class.low-stock]="liveStock <= 5">
-                Stock: {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
+              <!-- Line 2: Expiration Date -->
+              @let liveProduct = salesService.products().find(p => p.id === prod.id) || prod;
+              @let expStatus = getExpireStatus(liveProduct.expire);
+              
+              <div class="prod-expire-row" [class]="'exp-' + expStatus">
+                @if (liveProduct.expire) {
+                  📅 Exp: {{ liveProduct.expire | date:'dd/MM/yyyy' }}
+                } @else {
+                  <span style="opacity: 0.6;">📅 No Exp Date</span>
+                }
               </div>
+
+              <!-- Line 3: Stock (Left) & Price (Right) -->
+              @let liveStock = liveProduct.stockQuantity;
+              
+              <div class="prod-bottom-row">
+                <div class="prod-stock-badge" [class.low-stock]="liveStock <= 5">
+                  📦 {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
+                </div>
+                <div class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</div>
+              </div>
+
             </div>
+            <!-- ======================================================= -->
 
           } @empty {
             <div class="empty-msg" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #64748b;">
