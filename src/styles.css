@@ -274,6 +274,15 @@ background: #ffffff; border-radius: 16px; width: 90%; max-width: 480px;
 box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15); border: 1px solid #e2e8f0;
 transform: scale(0.92); transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+@media print {
+  html, body, app-root {
+    display: block !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
 .pos-modal-overlay.is-active .pos-modal-window { transform: scale(1); }
 .pos-modal-header { padding: 18px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 20px; font-weight: 700; color: #1e293b; }
 .pos-modal-header.warning-header { border-left: 5px solid #ef4444; color: #991b1b; }

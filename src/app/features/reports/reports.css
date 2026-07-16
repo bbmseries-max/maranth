@@ -1,4 +1,3 @@
-/* STREAMING_CHUNK: Base Reports Styles */
 :host {
   display: block;
   height: 100vh;
@@ -36,39 +35,34 @@
   }
 }
 
-/* STREAMING_CHUNK: Z-Report Printing Rules (Nuclear Fix for Blank Pages) */
+/* STREAMING_CHUNK: Z-Report Printing Rules */
 @media print {
   @page {
     size: A4 portrait;
     margin: 1cm;
   }
 
-  /* 1. AGGRESSIVELY NUKE ALL FIXED HEIGHTS AND SCROLLBARS */
-  *, *:before, *:after {
-    overflow: visible !important;
-    max-height: none !important;
+  :host, .app-viewport {
+    display: block !important;
     height: auto !important;
+    overflow: visible !important;
     position: static !important;
   }
 
-  /* 2. FORCE STANDARD DOCUMENT FLOW (Break out of Flexbox) */
-  html, body, :host, .app-viewport, div {
+  /* ⭐ Target specifically the inline-scrollable areas to unlock them! */
+  .reports-split-layout, 
+  .reports-ledger-layout, 
+  .reports-stats-grid,
+  .app-card,
+  div[style*="overflow"] {
     display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    position: static !important;
   }
 
-  /* 3. PROTECT TABLES FROM COLLAPSING */
-  table { display: table !important; width: 100% !important; }
-  thead { display: table-header-group !important; }
-  tbody { display: table-row-group !important; }
-  tr { display: table-row !important; page-break-inside: avoid !important; }
-  td, th { display: table-cell !important; }
-
-  /* 4. HIDE UI ELEMENTS WE DON'T WANT PRINTED */
-  .app-btn, .app-select, .app-form-label, a, select, input, button {
-    display: none !important;
-  }
-
-  /* 5. CLEAN UP THE CARDS FOR PAPER */
   .app-card {
     box-shadow: none !important;
     border: 1px solid #cbd5e1 !important;
@@ -77,8 +71,20 @@
     page-break-inside: avoid !important;
   }
 
-  /* 6. FORCE HIGH-CONTRAST INK SAVING */
-  * {
-    color: #000000 !important;
+  .app-table {
+    display: table !important;
+    width: 100% !important;
+  }
+
+  tr { 
+    page-break-inside: avoid !important; 
+  }
+
+  .app-btn, .app-select, .app-form-label, select {
+    display: none !important;
+  }
+
+  * { 
+    color: #000000 !important; 
   }
 }
