@@ -1,4 +1,3 @@
-/* STREAMING_CHUNK: Setting base variables */
 :host {
   display: block;
   height: 100%;
@@ -319,10 +318,11 @@
   cursor: pointer;
 }
 
+/* ⭐ THE FIX: flex: 1 allows the categories to scroll independently! */
 .sidebar-collapsible-content {
   display: none !important; 
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   margin-top: 12px;
   overflow-y: auto; 
   min-height: 0;
@@ -332,71 +332,8 @@
   display: flex !important;
 }
 
-/* =====================================================================
-   ⭐ NEW: BEAUTIFUL PC-ONLY BRAND ANIMATION 
-   ===================================================================== */
-.animated-brand-container {
-  margin-top: auto; /* Pushes it perfectly to the bottom of the sidebar */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 30px 0 10px 0;
-  pointer-events: none; /* So it doesn't interrupt clicks */
-}
-
-.animated-brand-text {
-  font-size: 2.2rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  
-  /* The moving flowing color gradient */
-  background: linear-gradient(
-    270deg, 
-    #0ea5e9, /* Light Blue */
-    #8b5cf6, /* Purple */
-    #f59e0b, /* Orange */
-    #10b981  /* Emerald Green */
-  );
-  background-size: 300% 300%;
-  
-  /* Clips the background into the shape of the text */
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  
-  /* Beautiful glowing drop shadow */
-  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
-  
-  /* Fire the dual animations */
-  animation: 
-    brandColorFlow 8s ease infinite,
-    brandFloat 4s ease-in-out infinite;
-  
-  opacity: 0.85;
-}
-
-@keyframes brandColorFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes brandFloat {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-8px) scale(1.05); }
-}
-/* ===================================================================== */
-
-
 /* STREAMING_CHUNK: Responsive Media Queries (Mobile & Tablet) */
 @media (max-width: 1024px) {
-  
-  /* ⭐ Instantly hide the animation on smaller screens! */
-  .animated-brand-container {
-    display: none !important;
-  }
-
   .pos-main-layout {
     flex-direction: column !important;
     overflow-y: auto !important;
