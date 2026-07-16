@@ -133,7 +133,6 @@ export class PosComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {}
 
-  // ⭐ Automatically grab focus when returning to the POS page!
   ngAfterViewInit() {
     setTimeout(() => {
       if (this.searchInput?.nativeElement) {
@@ -142,13 +141,55 @@ export class PosComponent implements OnInit, AfterViewInit {
     }, 100);
   }
 
+  // ====================================================================
+  // ⭐ THE FIX: SMART SEARCH INTERCEPTOR
+  // ====================================================================
   public onSearchEnter(query: string): void {
-    const wasBarcode = this.salesService.scanBarcodeExact(query);
+    const cleanQuery = query.trim();
+    if (!cleanQuery) return;
+
+    // 1. Check if it is a valid barcode in the system
+    const wasBarcode = this.salesService.scanBarcodeExact(cleanQuery);
+    
     if (wasBarcode) {
+      // Success! Clear the box for the next scan.
       this.searchQuery.set('');
       if (this.searchInput?.nativeElement) {
         this.searchInput.nativeElement.value = '';
       }
+    } else {
+      // 2. It failed to find an item. Let's analyze what the scanner/user inputted!
+      const isNumericBarcode = /^\d{7,14}$/.test(cleanQuery); // Standard 7-14 digit retail barcode
+      const isUrl = cleanQuery.toLowerCase().startsWith('http') || cleanQuery.toLowerCase().startsWith('www');
+      const isLongQrHash = cleanQuery.length > 15 && !cleanQuery.includes(' '); // QR codes usually have no spaces
+
+      if (isNumericBarcode || isUrl || isLongQrHash) {
+        // This was definitely a Scanner input, NOT a manually typed word search.
+        // We MUST clear the box so it doesn't ruin the grid filtering!
+        this.searchQuery.set('');
+        if (this.searchInput?.nativeElement) {
+          this.searchInput.nativeElement.value = '';
+        }
+        
+        let msg = `The barcode [ ${cleanQuery} ] is not in your inventory.`;
+        if (isUrl || isLongQrHash) {
+          msg = "⚠️ QR CODE DETECTED ⚠️\n\nYou accidentally scanned a QR code instead of the product barcode! Please aim the scanner at the striped retail barcode.";
+        }
+
+        this.salesService.activeModal.set({
+           type: 'warning',
+           title: '⚠️ Scan Failed',
+           message: msg,
+           value: '',
+           onConfirm: () => {
+             this.salesService.closeModal();
+             setTimeout(() => this.salesService.triggerSearchFocus(), 50);
+           }
+        });
+      }
+      
+      // 3. If it wasn't a barcode or a QR code (e.g. they typed "Feta" or "Juice"),
+      // we do absolutely NOTHING. The text stays in the box to continue filtering the screen!
     }
   }
 
