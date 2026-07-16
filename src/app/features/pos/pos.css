@@ -419,6 +419,14 @@ display: flex !important;
 }
 }
 
+.sidebar-mobile-toggle {
+display: flex !important;
+}
+
+.mobile-show-flex {
+display: flex !important;
+}
+
 /* STREAMING_CHUNK: Applying small mobile queries */
 @media (max-width: 600px) {
 .grid-layout-scroll {

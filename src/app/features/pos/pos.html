@@ -82,6 +82,12 @@
         <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
         <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
           
+        <!-- ⭐ NEW: Mobile Back-Office Links -->
+          <div class="mobile-show-flex" style="display: none; flex-direction: column; gap: 8px; margin-bottom: 8px; padding-bottom: 16px; border-bottom: 1px solid #475569;">
+            <a routerLink="/reports" class="app-btn" style="background: #3b82f6; color: white; text-align: left; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">📊 Sales Reports</a>
+            <a routerLink="/inventory" class="app-btn" style="background: #10b981; color: white; text-align: left; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">📦 Manage Inventory</a>
+          </div>
+            
           <button 
             (click)="salesService.clearBasket()" 
             [disabled]="salesService.basket().length === 0"
