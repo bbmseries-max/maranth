@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,20 +13,20 @@ import { Product, Category, Supplier } from '../../shared/services/pos-data.mode
   templateUrl: './inventory.html',
   styleUrls: ['./inventory.css']
 })
-export class InventoryComponent {
+export class InventoryComponent implements AfterViewInit {
   public salesService = inject(SalesService);
   public inventoryService = inject(InventoryService);
 
-  // 🎯 Allows Angular to grab the barcode input field to auto-focus it
-  @ViewChild('newBarcodeFocus') barcodeInputRef!: ElementRef<HTMLInputElement>;
+  // We have TWO inputs here. The new product barcode box, and the main search bar!
+  @ViewChild('newBarcodeFocus') newProductBarcodeRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('barcodeInput') mainSearchInputRef!: ElementRef<HTMLInputElement>;
 
   public activeTab = signal<'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS' | 'STAFF'>('PRODUCTS');
-
-  public staffMembers = this.salesService.registeredCashiers;
 
   public managedProducts = this.inventoryService.filteredProducts;
   public categories = this.salesService.categories;
   public suppliers = this.salesService.suppliers;
+  public staffMembers = this.salesService.registeredCashiers;
 
   public searchQuery = this.inventoryService.searchQuery;
   public selectedCategory = this.inventoryService.selectedCategory;
@@ -41,6 +41,21 @@ export class InventoryComponent {
   public formProduct: Partial<Product> = {};
   public formCategory: Partial<Category> = {};
   public formSupplier: Partial<Supplier> = {};
+
+  // ⭐ Focus the main search bar when opening the Inventory!
+  ngAfterViewInit() {
+    this.focusMainSearchBar();
+  }
+
+  // ⭐ A safe, smart method to jump back to the search bar
+  public focusMainSearchBar(): void {
+    setTimeout(() => {
+      // Only steal focus if we are on the Products tab and NOT currently editing a product!
+      if (this.activeTab() === 'PRODUCTS' && !this.isCreatingNew() && !this.selectedProduct() && this.mainSearchInputRef?.nativeElement) {
+        this.mainSearchInputRef.nativeElement.focus();
+      }
+    }, 100);
+  }
 
   public switchTab(tab: 'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS' | 'STAFF'): void {
     this.activeTab.set(tab);
@@ -57,6 +72,9 @@ export class InventoryComponent {
     this.formProduct = {};
     this.formCategory = {};
     this.formSupplier = {};
+
+    // ⭐ If the user clicks "Cancel" on an edit, this drops them safely back into the search bar!
+    this.focusMainSearchBar();
   }
 
   public getFormProfitMargin(): number {
@@ -76,7 +94,10 @@ export class InventoryComponent {
 
   public prepareNewProduct(): void {
     this.clearAllWorkbenches();
+    
+    // We instantly override the clearAllWorkbenches focus logic by setting this to true!
     this.isCreatingNew.set(true);
+    
     this.formProduct = {
       id: Math.floor(Math.random() * 90000) + 10000 + '',
       categoryId: 'ALL',
@@ -84,19 +105,17 @@ export class InventoryComponent {
       stockQuantity: 0,
       price: 0,
       purchasePrice: 0,
-      taxRate: 1.24, // Default to 24% VAT
+      taxRate: 1.24, 
       isWeighted: false
     };
 
-    // 🎯 Wait a tiny fraction of a second for the UI to render, then grab focus!
     setTimeout(() => {
-      if (this.barcodeInputRef?.nativeElement) {
-        this.barcodeInputRef.nativeElement.focus();
+      if (this.newProductBarcodeRef?.nativeElement) {
+        this.newProductBarcodeRef.nativeElement.focus();
       }
     }, 50);
   }
 
-  // 🎯 Helper to instantly jump the cursor to the next box when you press Enter
   public focusNext(nextElement: any): void {
     if (nextElement && nextElement.focus) {
       nextElement.focus();
@@ -105,7 +124,7 @@ export class InventoryComponent {
 
   public selectProductToEdit(product: Product): void {
     this.clearAllWorkbenches();
-    this.selectedProduct.set(product);
+    this.selectedProduct.set(product); // Prevents the search bar from stealing focus!
     this.formProduct = { ...product };
   }
 
@@ -117,6 +136,8 @@ export class InventoryComponent {
     
     const payload: Product = this.formProduct as Product;
     this.inventoryService.saveProductPayload(payload.id, payload);
+    
+    // ⭐ Closes the editor and returns focus to the search bar!
     this.clearAllWorkbenches();
   }
 
@@ -199,19 +220,16 @@ export class InventoryComponent {
       try {
         const jsonText = e.target?.result as string;
 
-        // 🧹 THE FIX: The "Data Car Wash" for Microsoft Access files!
         let cleanText = jsonText
-           .replace(/^[\uFEFF\u200B]/, '') // 1. Strip invisible Byte-Order-Markers
-           .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '') // 2. Strip raw binary control bytes
-           .replace(/\\(?!["\\/bfnrtu])/g, '\\\\') // 🚨 3. THE NEW FIX: Escapes stray backslashes! (e.g., "Size 1\2" -> "Size 1\\2")
-           .replace(/,\s*([\]}])/g, '$1'); // 4. Fix dangling trailing commas
+           .replace(/^[\uFEFF\u200B]/, '') 
+           .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '') 
+           .replace(/\\(?!["\\/bfnrtu])/g, '\\\\') 
+           .replace(/,\s*([\]}])/g, '$1'); 
 
         const rawData = JSON.parse(cleanText);
         
-        // 🧠 BULLETPROOF Extractor: Digs through wrappers like {"Category": {...}}
         let extracted = rawData;
         if (!Array.isArray(rawData)) {
-          // ⭐ Find the first key that matches any known pattern, IGNORING capitalization
           const foundKey = Object.keys(rawData).find(k => 
             ['records', 'data', 'items', 'categories', 'category', 'suppliers', 'supplier', 'products', 'product'].includes(k.toLowerCase())
           );
@@ -219,7 +237,6 @@ export class InventoryComponent {
           if (foundKey && Array.isArray(rawData[foundKey])) {
             extracted = rawData[foundKey];
           } else {
-            // ⭐ Ultimate Fallback: Just grab the first array it can find inside the object!
             extracted = Object.values(rawData).find(val => Array.isArray(val)) || rawData;
           }
         }
@@ -236,19 +253,15 @@ export class InventoryComponent {
         let importCount = 0;
         const sample = dataArray[0] || {};
 
-        // 🕵️ AUTO-DETECT FILE TYPE (Ignores what tab you are on!)
-        let targetType = 'CATEGORIES'; // Default
+        let targetType = 'CATEGORIES'; 
         
-        // Check for Product signatures
         if (sample.Price !== undefined || sample.price !== undefined || sample.Barcode !== undefined || sample.barcode !== undefined || sample.ProductID !== undefined || sample.Blerje !== undefined) {
           targetType = 'PRODUCTS';
         } 
-        // Check for Supplier signatures
         else if (sample.Phone !== undefined || sample.phone !== undefined || sample.Contact !== undefined || sample.contact !== undefined || sample.SupplierID !== undefined || sample.CompanyName !== undefined) {
           targetType = 'SUPPLIERS';
         }
 
-        // 🟢 SCENARIO A: PRODUCTS
         if (targetType === 'PRODUCTS') {
           const normalizeDate = (rawDate: any): string => {
             if (!rawDate) return '';
@@ -271,6 +284,8 @@ export class InventoryComponent {
             const rawId = item.ProductID || item.id || item.Barcode || item.barcode;
             if (rawId) {
               const itemId = rawId.toString();
+              const existingProduct = this.salesService.products().find(p => p.id === itemId);
+              
               const parsedItem: Product = {
                 id: itemId,
                 barcode: (item.Barcode || item.barcode || '').toString(),
@@ -286,7 +301,9 @@ export class InventoryComponent {
                 notes: item.Shenime || item.notes || '',
                 status: item.Status || item.status || 'Active',
                 isActive: (item.Status || item.status) !== 'Inactive',
-                isWeighted: item.isWeighted === true || item.isWeighted === 'true'
+                isWeighted: existingProduct && existingProduct.isWeighted !== undefined 
+                              ? existingProduct.isWeighted 
+                              : (item.isWeighted === true || item.isWeighted === 'true')
               };
               this.inventoryService.saveProductPayload(itemId, parsedItem);
               importCount++;
@@ -298,10 +315,8 @@ export class InventoryComponent {
           });
 
         } 
-        // 🔵 SCENARIO B: CATEGORIES
         else if (targetType === 'CATEGORIES') {
           dataArray.forEach(item => {
-            // ⭐ BULLETPROOF: If ID is missing, auto-generate one so it doesn't fail!
             const rawId = item.CategoryID || item.categoryId || item.id || item.ID || item.Category_ID || ('CAT-' + Math.floor(Math.random() * 90000));
             if (rawId) {
               const catId = rawId.toString();
@@ -319,7 +334,6 @@ export class InventoryComponent {
             type: 'success', title: '✅ Matrix Sync Complete', message: `Successfully loaded ${importCount} categories into the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal()
           });
         }
-        // 🟠 SCENARIO C: SUPPLIERS
         else if (targetType === 'SUPPLIERS') {
           dataArray.forEach(item => {
             const rawId = item.SupplierID || item.supplierId || item.id || item.ID;
@@ -344,7 +358,6 @@ export class InventoryComponent {
         }
         
       } catch (error: any) {
-        // ⭐ THE FIX: Show the EXACT error on the screen so we can solve the mystery!
         const exactError = error.message || String(error);
         this.salesService.activeModal.set({
           type: 'warning', 

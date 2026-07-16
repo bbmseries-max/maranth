@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -13,7 +13,7 @@ import { ShoppingBasketComponent } from './components/shopping-basket/shopping-b
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
-export class PosComponent implements OnInit {
+export class PosComponent implements OnInit, AfterViewInit {
   public salesService = inject(SalesService);
   public router = inject(Router);
 
@@ -27,7 +27,6 @@ export class PosComponent implements OnInit {
   public isSidebarMobileOpen = signal<boolean>(false); 
   public isMobileBasketOpen = signal<boolean>(false);
 
-  // ⭐ The 3-Hour Profit Snapshot Calculator
   public dailyProfitSnapshots = computed(() => {
     const today = new Date().toDateString();
     const buckets = [
@@ -116,7 +115,6 @@ export class PosComponent implements OnInit {
   });
 
   constructor() {
-    // ⭐ Auto-Focus Engine
     effect(() => {
       const trigger = this.salesService.focusSearchTrigger();
       if (trigger > 0 && !this.salesService.activeModal() && this.searchInput?.nativeElement) {
@@ -135,7 +133,15 @@ export class PosComponent implements OnInit {
 
   ngOnInit() {}
 
-  // ⭐ Search Bar Enter Logic
+  // ⭐ Automatically grab focus when returning to the POS page!
+  ngAfterViewInit() {
+    setTimeout(() => {
+      if (this.searchInput?.nativeElement) {
+        this.searchInput.nativeElement.focus();
+      }
+    }, 100);
+  }
+
   public onSearchEnter(query: string): void {
     const wasBarcode = this.salesService.scanBarcodeExact(query);
     if (wasBarcode) {
@@ -151,7 +157,6 @@ export class PosComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  // ⭐ Click-to-add Logic
   public handleProductClick(prod: Product): void {
     const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {

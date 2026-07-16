@@ -34,7 +34,6 @@ export class SalesService {
   public highlightedItemId = signal<string | null>(null);
   public activeModal = signal<POSModal | null>(null);
 
-  // ⭐ NEW: Search Auto-Focus Trigger
   public focusSearchTrigger = signal<number>(0);
 
   constructor() {
@@ -63,7 +62,6 @@ export class SalesService {
     });
   }
 
-  // ⭐ NEW: Call this to force the search bar to grab focus!
   public triggerSearchFocus(): void {
     this.focusSearchTrigger.set(Date.now());
   }
@@ -71,7 +69,9 @@ export class SalesService {
   public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier', forceApproval: boolean = false): boolean {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
+    
     const isApproved = forceApproval || existingUsers.length === 0;
+
     this.registeredCashiers.update(users => [...users, { username, pin, role, isApproved }]);
     setDoc(doc(this.db, 'cashiers', username), { username, pin, role, isApproved });
     return true; 
@@ -146,7 +146,7 @@ export class SalesService {
         const today = new Date();
         today.setHours(0, 0, 0, 0); 
         
-        const expDate = new Date(liveProduct.expire);
+        const expDate = new Date(liveProduct.expire + 'T00:00:00');
         expDate.setHours(0, 0, 0, 0); 
 
         if (expDate < today) {
@@ -200,7 +200,6 @@ export class SalesService {
       }
     });
 
-    // ⭐ Grab focus after adding an item!
     this.triggerSearchFocus();
   }
 
@@ -222,7 +221,6 @@ export class SalesService {
       }
     });
 
-    // ⭐ Grab focus after removing an item!
     this.triggerSearchFocus();
   }
 
@@ -264,12 +262,17 @@ export class SalesService {
       title: '✅ Transaction Processed', 
       message: `Ticket ${receipt.id} processed €${receipt.grandTotal.toFixed(2)} via ${method}.`, 
       value: '', 
-      onConfirm: () => this.closeModal()
+      onConfirm: () => {
+        this.closeModal();
+        setTimeout(() => this.triggerSearchFocus(), 50);
+      }
     });
 
     setTimeout(() => {
       if (this.activeModal()?.title === '✅ Transaction Processed') {
         this.closeModal();
+        // ⭐ THE FIX: Give the DOM 50ms to wipe the modal, then trigger auto-focus!
+        setTimeout(() => this.triggerSearchFocus(), 50);
       }
     }, 2000);
   }
@@ -290,12 +293,10 @@ export class SalesService {
     }
   }
 
-  // ⭐ THE FIX: Only Auto-Add if it's an exact barcode!
   public scanBarcodeExact(query: string): boolean {
     const queryLower = query.toLowerCase().trim();
     if (!queryLower) return false;
     
-    // 1. ONLY try exact Barcode or ID (No name matching here!)
     const found = this.products().find(p => 
       (p.barcode && p.barcode.toLowerCase() === queryLower) || 
       (p.id && p.id.toString().toLowerCase() === queryLower)
@@ -319,10 +320,10 @@ export class SalesService {
       } else {
         this.addToBasket(found);
       }
-      return true; // Successfully matched a barcode!
+      return true; 
     }
 
-    return false; // Not a barcode. Return false so the UI leaves the text for filtering!
+    return false; 
   }
 
   public topSellingProducts = computed(() => {
