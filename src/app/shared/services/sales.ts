@@ -40,11 +40,11 @@ export class SalesService {
     const app = initializeApp(firebaseConfig);
     this.db = getFirestore(app);
 
-    this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
-    this.setupCloudSync('products', this.products, 'maranth_products');
-    this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
-    this.setupCloudSync('categories', this.categories, 'maranth_categories');
-    this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
+    this.setupCloudSync('cashiers', this.registeredCashiers);
+    this.setupCloudSync('products', this.products);
+    this.setupCloudSync('transactions', this.transactions);
+    this.setupCloudSync('categories', this.categories);
+    this.setupCloudSync('suppliers', this.suppliers);
 
     effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
     effect(() => localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket())));
@@ -55,34 +55,13 @@ export class SalesService {
     return saved ? JSON.parse(saved) : fallback;
   }
 
-  private setupCloudSync(collectionName: string, targetSignal: any, storageKey: string, fallbackData: any[] = []) {
+  private setupCloudSync(collectionName: string, targetSignal: any) {
     onSnapshot(collection(this.db, collectionName), (snapshot) => {
-      if (snapshot.empty) {
-        const localData = localStorage.getItem(storageKey);
-        if (localData) {
-          const parsed = JSON.parse(localData);
-          if (parsed && parsed.length > 0) {
-            parsed.forEach((item: any) => {
-              const docId = (item.id || item.username).toString();
-              setDoc(doc(this.db, collectionName, docId), item);
-            });
-            return;
-          }
-        }
-        if (fallbackData.length > 0) {
-          fallbackData.forEach((item: any) => {
-            const docId = (item.id || item.username).toString();
-            setDoc(doc(this.db, collectionName, docId), item);
-          });
-          return;
-        }
-      }
       const data = snapshot.docs.map(doc => doc.data());
       targetSignal.set(data);
     });
   }
 
-  // ⭐ FIX 1: Accepts 4 arguments now (forceApproval)
   public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier', forceApproval: boolean = false): boolean {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
@@ -94,7 +73,6 @@ export class SalesService {
     return true; 
   }
 
-  // ⭐ FIX 2: Correctly updates the local memory and Cloud simultaneously!
   public toggleCashierApproval(username: string, isApproved: boolean): void {
     const users = this.registeredCashiers();
     const user = users.find(u => u.username === username);
@@ -159,9 +137,35 @@ export class SalesService {
 
     if (!isRef) {
       const liveProduct = this.products().find(p => p.id === product.id) || product;
-      const currentQtyInBasket = this.basket().find(item => item.product.id === product.id && !item.isRefund)?.quantity || 0;
       
+      // =========================================================
+      // ⭐ THE FIX: STRICT EXPIRATION GUARDRAIL
+      // =========================================================
+      if (liveProduct.expire) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset today's time to midnight
+        
+        const expDate = new Date(liveProduct.expire);
+        expDate.setHours(0, 0, 0, 0); // Reset expiration time to midnight
+
+        if (expDate < today) {
+          this.activeModal.set({
+            type: 'warning',
+            title: '☠️ PRODUCT EXPIRED',
+            message: `DO NOT SELL THIS ITEM!\n\n${liveProduct.name} expired on ${liveProduct.expire}.\n\nPlease remove this item from the customer's basket immediately and pull it from the shelf.`,
+            value: '',
+            onConfirm: () => this.closeModal()
+          });
+          return; // 🛑 Completely abort the scan!
+        }
+      }
+
+      // =========================================================
+      // 🛡️ THE EXISTING: STRICT STOCK GUARDRAIL
+      // =========================================================
+      const currentQtyInBasket = this.basket().find(item => item.product.id === product.id && !item.isRefund)?.quantity || 0;
       let intendedQty = 0;
+      
       if (currentQtyInBasket > 0) {
         const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
         intendedQty = parseFloat((currentQtyInBasket + incrementStep).toFixed(3));
@@ -183,6 +187,7 @@ export class SalesService {
       }
     }
 
+    // If it passed both guardrails, add it!
     this.basket.update((currentBasket) => {
       const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRef);
       
@@ -380,7 +385,6 @@ export class SalesService {
     this.transactions().forEach(tx => deleteDoc(doc(this.db, 'transactions', tx.id)));
   }
 
-  // ⭐ FIX 3: Clean, correct modal closer inside the service!
   public closeModal(): void {
     this.activeModal.set(null);
     setTimeout(() => this.activeModal.set(null), 10);
