@@ -17,13 +17,31 @@ export class InventoryComponent implements AfterViewInit {
   public salesService = inject(SalesService);
   public inventoryService = inject(InventoryService);
 
-  // We have TWO inputs here. The new product barcode box, and the main search bar!
   @ViewChild('newBarcodeFocus') newProductBarcodeRef!: ElementRef<HTMLInputElement>;
   @ViewChild('barcodeInput') mainSearchInputRef!: ElementRef<HTMLInputElement>;
 
   public activeTab = signal<'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS' | 'STAFF'>('PRODUCTS');
 
+  // ⭐ NEW: Quick Filters State
+  public stockFilter = signal<'ALL' | 'EXPIRED' | 'EXPIRING_SOON' | 'LOW_STOCK'>('ALL');
+
   public managedProducts = this.inventoryService.filteredProducts;
+  
+  // ⭐ NEW: Applies the Quick Filters on top of the search bar results!
+  public displayProducts = computed(() => {
+    const baseList = this.managedProducts();
+    const filter = this.stockFilter();
+    
+    if (filter === 'ALL') return baseList;
+    
+    return baseList.filter(p => {
+      if (filter === 'LOW_STOCK') return this.isLowStock(p);
+      if (filter === 'EXPIRED') return this.getExpireStatus(p.expire) === 'danger';
+      if (filter === 'EXPIRING_SOON') return this.getExpireStatus(p.expire) === 'warning';
+      return true;
+    });
+  });
+
   public categories = this.salesService.categories;
   public suppliers = this.salesService.suppliers;
   public staffMembers = this.salesService.registeredCashiers;
@@ -42,15 +60,12 @@ export class InventoryComponent implements AfterViewInit {
   public formCategory: Partial<Category> = {};
   public formSupplier: Partial<Supplier> = {};
 
-  // ⭐ Focus the main search bar when opening the Inventory!
   ngAfterViewInit() {
     this.focusMainSearchBar();
   }
 
-  // ⭐ A safe, smart method to jump back to the search bar
   public focusMainSearchBar(): void {
     setTimeout(() => {
-      // Only steal focus if we are on the Products tab and NOT currently editing a product!
       if (this.activeTab() === 'PRODUCTS' && !this.isCreatingNew() && !this.selectedProduct() && this.mainSearchInputRef?.nativeElement) {
         this.mainSearchInputRef.nativeElement.focus();
       }
@@ -73,7 +88,6 @@ export class InventoryComponent implements AfterViewInit {
     this.formCategory = {};
     this.formSupplier = {};
 
-    // ⭐ If the user clicks "Cancel" on an edit, this drops them safely back into the search bar!
     this.focusMainSearchBar();
   }
 
@@ -92,10 +106,23 @@ export class InventoryComponent implements AfterViewInit {
     return product.stockQuantity <= (product.minStockWarning || 5);
   }
 
+  // ⭐ NEW: Calculates expiration status just like the POS screen!
+  public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
+    if (!expire) return 'none';
+    const expDate = new Date(expire + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 0) return 'danger';
+    if (diffDays <= 14) return 'warning';
+    return 'safe';
+  }
+
   public prepareNewProduct(): void {
     this.clearAllWorkbenches();
-    
-    // We instantly override the clearAllWorkbenches focus logic by setting this to true!
     this.isCreatingNew.set(true);
     
     this.formProduct = {
@@ -124,7 +151,7 @@ export class InventoryComponent implements AfterViewInit {
 
   public selectProductToEdit(product: Product): void {
     this.clearAllWorkbenches();
-    this.selectedProduct.set(product); // Prevents the search bar from stealing focus!
+    this.selectedProduct.set(product); 
     this.formProduct = { ...product };
   }
 
@@ -136,8 +163,6 @@ export class InventoryComponent implements AfterViewInit {
     
     const payload: Product = this.formProduct as Product;
     this.inventoryService.saveProductPayload(payload.id, payload);
-    
-    // ⭐ Closes the editor and returns focus to the search bar!
     this.clearAllWorkbenches();
   }
 
