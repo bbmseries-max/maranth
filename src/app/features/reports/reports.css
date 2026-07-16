@@ -1,82 +1,84 @@
 /* STREAMING_CHUNK: Base Reports Styles */
 :host {
-display: block;
-height: 100vh;
-width: 100vw;
-overflow-y: auto;
-background-color: #f4f7f9;
+  display: block;
+  height: 100vh;
+  width: 100vw;
+  overflow-y: auto;
+  background-color: #f4f7f9;
 }
 
 .app-viewport {
-height: auto !important;
-min-height: 100vh;
-overflow: visible !important;
+  height: auto !important;
+  min-height: 100vh;
+  overflow: visible !important;
 }
 
 /* STREAMING_CHUNK: Mobile Responsive Layout */
 @media (max-width: 1024px) {
-.reports-split-layout {
-flex-direction: column !important;
-height: auto !important;
-}
-.reports-ledger-layout {
-flex-direction: column-reverse !important;
-}
-.reports-ledger-layout > .app-card {
-width: 100% !important;
-flex: none !important;
-position: static !important;
-max-height: 60vh;
-}
-.app-table {
-display: block;
-width: 100%;
-overflow-x: auto;
-white-space: nowrap;
-}
+  .reports-split-layout {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+  .reports-ledger-layout {
+    flex-direction: column-reverse !important;
+  }
+  .reports-ledger-layout > .app-card {
+    width: 100% !important;
+    flex: none !important;
+    position: static !important;
+    max-height: 60vh;
+  }
+  .app-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
 }
 
-/* STREAMING_CHUNK: Z-Report Printing Rules (Fix for Blank Pages) */
+/* STREAMING_CHUNK: Z-Report Printing Rules (Nuclear Fix for Blank Pages) */
 @media print {
-@page {
-size: auto;
-margin: 10mm;
-}
+  @page {
+    size: A4 portrait;
+    margin: 1cm;
+  }
 
-html, body, :host, .app-viewport {
-height: auto !important;
-min-height: auto !important;
-width: 100% !important;
-overflow: visible !important;
-position: static !important;
-display: block !important;
-background: white !important;
-color: black !important;
-}
+  /* 1. AGGRESSIVELY NUKE ALL FIXED HEIGHTS AND SCROLLBARS */
+  *, *:before, *:after {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    position: static !important;
+  }
 
-.app-btn, .app-select, .app-form-label, a, select {
-display: none !important;
-}
+  /* 2. FORCE STANDARD DOCUMENT FLOW (Break out of Flexbox) */
+  html, body, :host, .app-viewport, div {
+    display: block !important;
+  }
 
-.app-card {
-box-shadow: none !important;
-border: 1px solid #cbd5e1 !important;
-break-inside: avoid !important;
-page-break-inside: avoid !important;
-margin-bottom: 20px !important;
-background: white !important;
-}
+  /* 3. PROTECT TABLES FROM COLLAPSING */
+  table { display: table !important; width: 100% !important; }
+  thead { display: table-header-group !important; }
+  tbody { display: table-row-group !important; }
+  tr { display: table-row !important; page-break-inside: avoid !important; }
+  td, th { display: table-cell !important; }
 
-/* Force scrollable areas to open up fully so the printer sees everything */
-.reports-split-layout, .reports-ledger-layout, .app-card > div, .app-table {
-overflow: visible !important;
-max-height: none !important;
-height: auto !important;
-display: block !important;
-}
+  /* 4. HIDE UI ELEMENTS WE DON'T WANT PRINTED */
+  .app-btn, .app-select, .app-form-label, a, select, input, button {
+    display: none !important;
+  }
 
-/* Ensure text colors stay dark on print */
-h1, h3, span, td, th, div {
-color: #000000 !important;
-}
+  /* 5. CLEAN UP THE CARDS FOR PAPER */
+  .app-card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    margin-bottom: 24px !important;
+    background: transparent !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* 6. FORCE HIGH-CONTRAST INK SAVING */
+  * {
+    color: #000000 !important;
+  }
 }
