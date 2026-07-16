@@ -156,9 +156,14 @@
           </div>
         </div>
 
-        <!-- ⭐ NEW: The animated breathing logo for PC screens! -->
-        <div class="animated-brand-container">
-          <div class="animated-brand-text">MARANTH</div>
+        <!-- ⭐ NEW: The Live Ticking Clock (Only shows on PC to save space on mobile) -->
+        <div class="live-clock-widget mobile-hide" style="margin-top: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 0 10px 0; border-top: 1px solid #334155; margin-top: 24px;">
+          <div style="font-size: 32px; font-weight: 800; color: #f8fafc; font-variant-numeric: tabular-nums; letter-spacing: 2px;">
+            {{ liveTime() | date:'HH:mm:ss' }}
+          </div>
+          <div style="font-size: 13px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">
+            {{ liveTime() | date:'EEEE, d MMM yyyy' }}
+          </div>
         </div>
 
       </div>

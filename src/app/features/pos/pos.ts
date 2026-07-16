@@ -1,5 +1,5 @@
-import { Component, OnInit, AfterViewInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
@@ -9,11 +9,11 @@ import { ShoppingBasketComponent } from './components/shopping-basket/shopping-b
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, ShoppingBasketComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, ShoppingBasketComponent],
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
-export class PosComponent implements OnInit, AfterViewInit {
+export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   public salesService = inject(SalesService);
   public router = inject(Router);
 
@@ -26,6 +26,10 @@ export class PosComponent implements OnInit, AfterViewInit {
   public showLooseShelf = signal<boolean>(false);
   public isSidebarMobileOpen = signal<boolean>(false); 
   public isMobileBasketOpen = signal<boolean>(false);
+
+  // ⭐ NEW: Live Clock Signal
+  public liveTime = signal<Date>(new Date());
+  private clockInterval: any;
 
   public dailyProfitSnapshots = computed(() => {
     const today = new Date().toDateString();
@@ -131,7 +135,12 @@ export class PosComponent implements OnInit, AfterViewInit {
     }, { allowSignalWrites: true });
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // ⭐ Start the ticking clock
+    this.clockInterval = setInterval(() => {
+      this.liveTime.set(new Date());
+    }, 1000);
+  }
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -139,6 +148,11 @@ export class PosComponent implements OnInit, AfterViewInit {
         this.searchInput.nativeElement.focus();
       }
     }, 100);
+  }
+
+  ngOnDestroy() {
+    // ⭐ Stop the clock if we leave the page
+    if (this.clockInterval) clearInterval(this.clockInterval);
   }
 
   public onSearchEnter(query: string): void {
@@ -176,7 +190,6 @@ export class PosComponent implements OnInit, AfterViewInit {
            onConfirm: () => {} 
         });
 
-        // ⭐ THE FIX: Changed to 2 full seconds (2000ms)
         setTimeout(() => {
           if (this.salesService.activeModal()?.title === '⚠️ Scan Failed') {
             this.salesService.closeModal();
