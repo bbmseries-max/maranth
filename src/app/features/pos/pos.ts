@@ -4,9 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
-
-// ⭐ IMPORTANT: If your basket file is named "shopping-basket.component.ts", 
-// change this path to: './components/shopping-basket/shopping-basket.component'
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
 
 @Component({
@@ -33,11 +30,19 @@ export class PosComponent implements OnInit, AfterViewInit {
   public editingProduct = signal<Product | null>(null);
   public editForm: Partial<Product> = {};
 
+  // ⭐ THE FIX: A bulletproof parser that guarantees we NEVER return NaN!
+  private safeParseLocal(key: string): number {
+    const val = localStorage.getItem(key);
+    if (!val) return 0;
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
   // ========================================================
   // ⭐ LIVE CASH TRACKER LOGIC
   // ========================================================
-  public startingFloat = signal<number>(Number(localStorage.getItem('maranth_float') || 0));
-  public supplierPayouts = signal<number>(Number(localStorage.getItem('maranth_payouts') || 0));
+  public startingFloat = signal<number>(this.safeParseLocal('maranth_float'));
+  public supplierPayouts = signal<number>(this.safeParseLocal('maranth_payouts'));
   
   public liveCashInDrawer = computed(() => {
     const today = new Date().toDateString();
@@ -46,11 +51,13 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.transactions().forEach(tx => {
       const txDate = new Date(tx.timestamp);
       if (txDate.toDateString() === today && tx.paymentMethod === 'Cash') {
-        todaysCashSales += tx.grandTotal;
+        todaysCashSales += (tx.grandTotal || 0);
       }
     });
 
-    return this.startingFloat() + todaysCashSales - this.supplierPayouts();
+    const currentFloat = this.startingFloat() || 0;
+    const currentPayouts = this.supplierPayouts() || 0;
+    return currentFloat + todaysCashSales - currentPayouts;
   });
 
   public addManualCash(): void {
@@ -58,7 +65,7 @@ export class PosComponent implements OnInit, AfterViewInit {
       type: 'prompt', title: '💵 Add Cash to Drawer', message: 'Enter the amount of cash added (Starting float or top-up):', value: '',
       onConfirm: (val) => {
         const amount = parseFloat(val) || 0;
-        const newTotal = this.startingFloat() + amount;
+        const newTotal = (this.startingFloat() || 0) + amount;
         this.startingFloat.set(newTotal);
         localStorage.setItem('maranth_float', newTotal.toString());
         this.salesService.closeModal();
@@ -71,7 +78,7 @@ export class PosComponent implements OnInit, AfterViewInit {
       type: 'prompt', title: '📤 Remove Cash from Drawer', message: 'Enter the amount removed (Supplier payment or safe drop):', value: '',
       onConfirm: (val) => {
         const amount = parseFloat(val) || 0;
-        const newTotal = this.supplierPayouts() + amount;
+        const newTotal = (this.supplierPayouts() || 0) + amount;
         this.supplierPayouts.set(newTotal);
         localStorage.setItem('maranth_payouts', newTotal.toString());
         this.salesService.closeModal();
@@ -126,14 +133,19 @@ export class PosComponent implements OnInit, AfterViewInit {
     const today = new Date().toDateString();
     const todayRev = this.salesService.transactions()
       .filter(tx => new Date(tx.timestamp).toDateString() === today)
-      .reduce((sum, tx) => sum + tx.grandTotal, 0);
-    return { rev: todayRev, percent: Math.min(100, (todayRev / this.salesTarget) * 100) };
+      .reduce((sum, tx) => sum + (tx.grandTotal || 0), 0);
+    
+    const safeRev = todayRev || 0;
+    const percent = Math.min(100, (safeRev / this.salesTarget) * 100) || 0;
+    
+    return { rev: safeRev, percent: percent };
   });
 
   public systemAlerts = computed(() => {
     const alerts: { type: string, msg: string }[] = [];
     this.salesService.products().forEach(p => {
-      if (p.stockQuantity <= (p.minStockWarning || 5)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${p.stockQuantity} left)` });
+      const stock = p.stockQuantity || 0;
+      if (stock <= (p.minStockWarning || 5)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
       if (this.getExpireStatus(p.expire) === 'danger') alerts.push({ type: 'danger', msg: `🔴 EXPIRED: ${p.name}!` });
     });
     return alerts;
