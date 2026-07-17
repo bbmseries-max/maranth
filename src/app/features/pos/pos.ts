@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
+
+// ⭐ IMPORTANT: If your basket file is named "shopping-basket.component.ts", 
+// change this path to: './components/shopping-basket/shopping-basket.component'
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
 
 @Component({
@@ -30,6 +33,9 @@ export class PosComponent implements OnInit, AfterViewInit {
   public editingProduct = signal<Product | null>(null);
   public editForm: Partial<Product> = {};
 
+  // ========================================================
+  // ⭐ LIVE CASH TRACKER LOGIC
+  // ========================================================
   public startingFloat = signal<number>(Number(localStorage.getItem('maranth_float') || 0));
   public supplierPayouts = signal<number>(Number(localStorage.getItem('maranth_payouts') || 0));
   
@@ -47,21 +53,22 @@ export class PosComponent implements OnInit, AfterViewInit {
     return this.startingFloat() + todaysCashSales - this.supplierPayouts();
   });
 
-  public setFloatAmount(): void {
+  public addManualCash(): void {
     this.salesService.activeModal.set({
-      type: 'prompt', title: '💵 Declare Starting Cash', message: 'Enter the morning cash float amount:', value: this.startingFloat().toString(),
+      type: 'prompt', title: '💵 Add Cash to Drawer', message: 'Enter the amount of cash added (Starting float or top-up):', value: '',
       onConfirm: (val) => {
         const amount = parseFloat(val) || 0;
-        this.startingFloat.set(amount);
-        localStorage.setItem('maranth_float', amount.toString());
+        const newTotal = this.startingFloat() + amount;
+        this.startingFloat.set(newTotal);
+        localStorage.setItem('maranth_float', newTotal.toString());
         this.salesService.closeModal();
       }
     });
   }
 
-  public paySupplier(): void {
+  public removeManualCash(): void {
     this.salesService.activeModal.set({
-      type: 'prompt', title: '🚚 Pay Supplier (Cash)', message: 'Enter the cash amount removed from drawer to pay a supplier:', value: '',
+      type: 'prompt', title: '📤 Remove Cash from Drawer', message: 'Enter the amount removed (Supplier payment or safe drop):', value: '',
       onConfirm: (val) => {
         const amount = parseFloat(val) || 0;
         const newTotal = this.supplierPayouts() + amount;
@@ -74,7 +81,7 @@ export class PosComponent implements OnInit, AfterViewInit {
 
   public resetDrawer(): void {
     this.salesService.activeModal.set({
-      type: 'warning', title: '⚠️ Close Shift / Reset Drawer', message: 'Are you sure you want to reset the Cash Float and Supplier Payouts back to zero?', value: '',
+      type: 'warning', title: '⚠️ Close Shift / Reset Drawer', message: 'Are you sure you want to reset the Cash Tracker back to zero?', value: '',
       onConfirm: () => {
         this.startingFloat.set(0);
         this.supplierPayouts.set(0);
@@ -85,6 +92,9 @@ export class PosComponent implements OnInit, AfterViewInit {
     });
   }
 
+  // ========================================================
+  // ⭐ QUICK MISC CHARGE LOGIC
+  // ========================================================
   public miscAmount = signal<string>('');
 
   public addMiscCharge(): void {
@@ -107,6 +117,9 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.triggerSearchFocus();
   }
 
+  // ========================================================
+  // ⭐ SALES TARGET & SYSTEM ALERTS
+  // ========================================================
   public salesTarget = 1000; 
   
   public targetProgress = computed(() => {
@@ -172,8 +185,6 @@ export class PosComponent implements OnInit, AfterViewInit {
     effect(() => {
       if (this.salesService.basket().length === 0) {
         this.isMobileBasketOpen.set(false);
-        
-        // ⭐ THE FIX: Auto-Clear the scanner box any time the basket is cleared or payment succeeds!
         setTimeout(() => {
           this.searchQuery.set('');
           if (this.searchInput?.nativeElement) {
@@ -196,10 +207,8 @@ export class PosComponent implements OnInit, AfterViewInit {
     const expDate = new Date(expire + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
     const diffTime = expDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
     if (diffDays <= 0) return 'danger'; 
     if (diffDays <= 14) return 'warning'; 
     return 'safe'; 
@@ -270,10 +279,7 @@ export class PosComponent implements OnInit, AfterViewInit {
     const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {
       this.salesService.activeModal.set({
-        type: 'prompt',
-        title: '⚖️ Scale Weight (kg)',
-        message: `Enter the measured weight for ${prod.name}:`,
-        value: '1.000',
+        type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${prod.name}:`, value: '1.000',
         onConfirm: (val) => {
           const weight = parseFloat(val);
           if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);

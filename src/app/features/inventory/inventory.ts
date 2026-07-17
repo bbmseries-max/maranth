@@ -61,7 +61,6 @@ export class InventoryComponent implements AfterViewInit {
     this.focusMainSearchBar();
   }
 
-  // ⭐ THE FIX: Totally clear all services and inputs!
   public focusMainSearchBar(): void {
     setTimeout(() => {
       if (this.activeTab() === 'PRODUCTS' && !this.isCreatingNew() && !this.selectedProduct() && this.mainSearchInputRef?.nativeElement) {
@@ -112,10 +111,8 @@ export class InventoryComponent implements AfterViewInit {
     const expDate = new Date(expire + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
     const diffTime = expDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
     if (diffDays <= 0) return 'danger';
     if (diffDays <= 14) return 'warning';
     return 'safe';
@@ -224,9 +221,7 @@ export class InventoryComponent implements AfterViewInit {
     const file = event.target.files[0];
     if (!file) return;
 
-    this.salesService.activeModal.set({
-      type: 'success', title: '⏳ Processing Upload...', message: 'Reading file data. Please wait.', value: '', onConfirm: () => {}
-    });
+    this.salesService.activeModal.set({ type: 'success', title: '⏳ Processing Upload...', message: 'Reading file data. Please wait.', value: '', onConfirm: () => {} });
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -294,19 +289,14 @@ export class InventoryComponent implements AfterViewInit {
                 notes: item.Shenime || item.notes || '',
                 status: item.Status || item.status || 'Active',
                 isActive: (item.Status || item.status) !== 'Inactive',
-                isWeighted: existingProduct && existingProduct.isWeighted !== undefined 
-                              ? existingProduct.isWeighted 
-                              : (item.isWeighted === true || item.isWeighted === 'true')
+                isWeighted: existingProduct && existingProduct.isWeighted !== undefined ? existingProduct.isWeighted : (item.isWeighted === true || item.isWeighted === 'true')
               };
               this.inventoryService.saveProductPayload(itemId, parsedItem);
               importCount++;
             }
           });
 
-          this.salesService.activeModal.set({
-            type: 'success', title: '✅ Live Sync Complete', message: `Successfully blasted ${importCount} products straight to Firebase!`, value: '', onConfirm: () => this.salesService.closeModal()
-          });
-
+          this.salesService.activeModal.set({ type: 'success', title: '✅ Live Sync Complete', message: `Successfully blasted ${importCount} products straight to Firebase!`, value: '', onConfirm: () => this.salesService.closeModal() });
         } else if (targetType === 'CATEGORIES') {
           dataArray.forEach(item => {
             const rawId = item.CategoryID || item.categoryId || item.id || item.ID || item.Category_ID || ('CAT-' + Math.floor(Math.random() * 90000));
@@ -321,10 +311,7 @@ export class InventoryComponent implements AfterViewInit {
               importCount++;
             }
           });
-
-          this.salesService.activeModal.set({
-            type: 'success', title: '✅ Matrix Sync Complete', message: `Successfully loaded ${importCount} categories into the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal()
-          });
+          this.salesService.activeModal.set({ type: 'success', title: '✅ Matrix Sync Complete', message: `Successfully loaded ${importCount} categories into the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal() });
         }
         else if (targetType === 'SUPPLIERS') {
           dataArray.forEach(item => {
@@ -343,26 +330,14 @@ export class InventoryComponent implements AfterViewInit {
               importCount++;
             }
           });
-
-          this.salesService.activeModal.set({
-            type: 'success', title: '✅ Ledger Sync Complete', message: `Successfully loaded ${importCount} suppliers into the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal()
-          });
+          this.salesService.activeModal.set({ type: 'success', title: '✅ Ledger Sync Complete', message: `Successfully loaded ${importCount} suppliers into the Firebase Cloud!`, value: '', onConfirm: () => this.salesService.closeModal() });
         }
-        
       } catch (error: any) {
         const exactError = error.message || String(error);
-        this.salesService.activeModal.set({
-          type: 'warning', 
-          title: '⚠️ Import Failed', 
-          message: `The file broke at this exact spot:\n\n${exactError}\n\nPlease copy this error and send it to me!`, 
-          value: '', 
-          onConfirm: () => this.salesService.closeModal()
-        });
+        this.salesService.activeModal.set({ type: 'warning', title: '⚠️ Import Failed', message: `The file broke at this exact spot:\n\n${exactError}\n\nPlease copy this error and send it to me!`, value: '', onConfirm: () => this.salesService.closeModal() });
       }
-      
       event.target.value = '';
     };
-    
     reader.readAsText(file);
   }
 }
