@@ -18,11 +18,11 @@ export class RegisterComponent {
   public username = signal<string>('');
   public pin = signal<string>('');
   public confirmPin = signal<string>('');
+  
   public managerPin = signal<string>('');
   
   public assignedRole: 'admin' | 'cashier' = 'cashier';
 
-  // ⭐ NEW: Check if this is a brand new system
   public isFirstSetup = computed(() => {
     return this.salesService.registeredCashiers().length === 0;
   });
@@ -53,9 +53,6 @@ export class RegisterComponent {
       return;
     }
 
-    // ⭐ RESTORED: Manager Approval Check!
-    let isApproved = false;
-    
     if (!this.isFirstSetup()) {
       const mPin = this.managerPin().trim();
       
@@ -66,7 +63,6 @@ export class RegisterComponent {
         return;
       }
 
-      // Check if the typed manager PIN belongs to an actual Admin
       const admins = this.salesService.registeredCashiers().filter(u => u.role === 'admin');
       const validAdmin = admins.find(a => a.pin === mPin);
 
@@ -76,20 +72,14 @@ export class RegisterComponent {
         });
         return;
       }
-      
-      // If the admin typed their PIN, the account is instantly approved!
-      isApproved = true;
-    } else {
-      isApproved = true; // First setup is always approved automatically
     }
 
-    // If it's the first setup, FORCE the role to be Admin
     const finalRole = this.isFirstSetup() ? 'admin' : this.assignedRole;
 
-    const success = this.salesService.registerNewCashier(user, p1, finalRole, isApproved);
+    // ⭐ THE FIX: Exactly 3 arguments! (Removed isApproved)
+    const success = this.salesService.registerNewCashier(user, p1, finalRole);
 
     if (success) {
-      // ⭐ Since it's approved by the manager standing there, log them right in!
       this.salesService.loginCashier(user);
       this.router.navigate(['/pos']);
     } else {
