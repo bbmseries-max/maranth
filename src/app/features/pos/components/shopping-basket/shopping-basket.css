@@ -15,6 +15,7 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
+  min-height: 0; /* ⭐ THE FIX: Prevents it from expanding out of the screen */
 }
 
 /* STREAMING_CHUNK: Header setup... */
@@ -24,6 +25,7 @@
   align-items: center;
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .header-left {
@@ -53,11 +55,11 @@
 
 /* STREAMING_CHUNK: Items viewport and scrolling... */
 .basket-items-viewport {
-  flex: 1 !important;          
+  flex: 1 1 0 !important; /* ⭐ THE FIX: Forces it to shrink and scroll */     
   overflow-y: auto !important;  
   padding: 12px;
   box-sizing: border-box;
-  /* ⭐ THE FIX: max-height was removed from here so it fills the screen perfectly! */
+  min-height: 0; /* ⭐ THE FIX */
 }
 
 .basket-items-viewport::-webkit-scrollbar {
@@ -67,11 +69,11 @@
   background: transparent;
 }
 .basket-items-viewport::-webkit-scrollbar-thumb {
-  background: #c4c7c5;
+  background: #cbd5e1;
   border-radius: 3px;
 }
 .basket-items-viewport::-webkit-scrollbar-thumb:hover {
-  background: #747775;
+  background: #94a3b8;
 }
 
 /* STREAMING_CHUNK: Empty state layout... */
@@ -231,6 +233,7 @@
   padding: 16px;
   margin-top: auto;            
   box-sizing: border-box;
+  flex-shrink: 0; /* ⭐ THE FIX: Prevents the payment buttons from being squished away */
 }
 
 .summary-matrix {
