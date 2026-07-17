@@ -27,6 +27,10 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   public isSidebarMobileOpen = signal<boolean>(false); 
   public isMobileBasketOpen = signal<boolean>(false);
 
+  // ⭐ NEW: Quick Edit State
+  public editingProduct = signal<Product | null>(null);
+  public editForm: Partial<Product> = {};
+
   public liveTime = signal<Date>(new Date());
   private clockInterval: any;
 
@@ -120,7 +124,7 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const trigger = this.salesService.focusSearchTrigger();
-      if (trigger > 0 && !this.salesService.activeModal() && this.searchInput?.nativeElement) {
+      if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {
         setTimeout(() => {
           this.searchInput.nativeElement.focus();
         }, 50);
@@ -152,7 +156,6 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.clockInterval) clearInterval(this.clockInterval);
   }
 
-  // ⭐ NEW: Expiration Status Calculator for Red/Green/Yellow Badges
   public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
     if (!expire) return 'none';
     const expDate = new Date(expire + 'T00:00:00');
@@ -162,10 +165,45 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
     const diffTime = expDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays <= 0) return 'danger'; // Expired or expiring today
-    if (diffDays <= 14) return 'warning'; // Expiring in 2 weeks
-    return 'safe'; // Safe
+    if (diffDays <= 0) return 'danger'; 
+    if (diffDays <= 14) return 'warning'; 
+    return 'safe'; 
   }
+
+  // =========================================================
+  // ⭐ NEW: QUICK EDIT LOGIC
+  // =========================================================
+  public openQuickEdit(prod: Product, event: Event): void {
+    // Prevent the card click from also adding the item to the basket!
+    event.stopPropagation();
+    
+    // Require admin access to change prices on the fly
+    if (this.salesService.currentRole() !== 'admin') {
+      this.salesService.activeModal.set({
+        type: 'warning', title: '⛔ Access Denied', message: 'Only Store Admins can edit product details from the register.', value: '', onConfirm: () => this.salesService.closeModal()
+      });
+      return;
+    }
+
+    this.editingProduct.set(prod);
+    this.editForm = { ...prod };
+  }
+
+  public closeQuickEdit(): void {
+    this.editingProduct.set(null);
+    this.salesService.triggerSearchFocus();
+  }
+
+  public saveQuickEdit(): void {
+    if (!this.editForm.name || !this.editForm.price || !this.editForm.id) return;
+    
+    // Save directly to Firebase
+    this.salesService.saveProduct(this.editForm.id, this.editForm as Product);
+    
+    // Close the popup and go right back to scanning!
+    this.closeQuickEdit();
+  }
+  // =========================================================
 
   public onSearchEnter(query: string): void {
     const cleanQuery = query.trim();
