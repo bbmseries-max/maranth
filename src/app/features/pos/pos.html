@@ -131,7 +131,6 @@
             <button class="app-btn" style="flex: 1; background: #991b1b; color: white; font-size: 11px; padding: 6px; border-radius: 4px;" (click)="removeManualCash()">- Cash</button>
           </div>
 
-          <!-- ⭐ THE FIX: Wrapped all piped numbers in (X || 0) just in case! -->
           <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
             <span>Starting Float / Added:</span>
             <span style="color: #cbd5e1;">{{ (startingFloat() || 0) | currency:'EUR' }}</span>

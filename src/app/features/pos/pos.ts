@@ -33,7 +33,7 @@ export class PosComponent implements OnInit, AfterViewInit {
   // ⭐ THE FIX: A bulletproof parser that guarantees we NEVER return NaN!
   private safeParseLocal(key: string): number {
     const val = localStorage.getItem(key);
-    if (!val) return 0;
+    if (!val || val === 'undefined' || val === 'NaN') return 0;
     const parsed = parseFloat(val);
     return isNaN(parsed) ? 0 : parsed;
   }
