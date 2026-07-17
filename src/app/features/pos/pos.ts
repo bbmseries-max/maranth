@@ -30,19 +30,20 @@ export class PosComponent implements OnInit, AfterViewInit {
   public editingProduct = signal<Product | null>(null);
   public editForm: Partial<Product> = {};
 
-  // ⭐ THE FIX: A bulletproof parser that guarantees we NEVER return NaN!
-  private safeParseLocal(key: string): number {
-    const val = localStorage.getItem(key);
-    if (!val || val === 'undefined' || val === 'NaN') return 0;
-    const parsed = parseFloat(val);
+  // ========================================================
+  // ⭐ BULLETPROOF NUMBER PARSER
+  // ========================================================
+  private parseSafe(value: any): number {
+    if (value === null || value === undefined || value === '') return 0;
+    const parsed = Number(value);
     return isNaN(parsed) ? 0 : parsed;
   }
 
   // ========================================================
   // ⭐ LIVE CASH TRACKER LOGIC
   // ========================================================
-  public startingFloat = signal<number>(this.safeParseLocal('maranth_float'));
-  public supplierPayouts = signal<number>(this.safeParseLocal('maranth_payouts'));
+  public startingFloat = signal<number>(this.parseSafe(localStorage.getItem('maranth_float')));
+  public supplierPayouts = signal<number>(this.parseSafe(localStorage.getItem('maranth_payouts')));
   
   public liveCashInDrawer = computed(() => {
     const today = new Date().toDateString();
@@ -51,12 +52,12 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.transactions().forEach(tx => {
       const txDate = new Date(tx.timestamp);
       if (txDate.toDateString() === today && tx.paymentMethod === 'Cash') {
-        todaysCashSales += (tx.grandTotal || 0);
+        todaysCashSales += this.parseSafe(tx.grandTotal);
       }
     });
 
-    const currentFloat = this.startingFloat() || 0;
-    const currentPayouts = this.supplierPayouts() || 0;
+    const currentFloat = this.parseSafe(this.startingFloat());
+    const currentPayouts = this.parseSafe(this.supplierPayouts());
     return currentFloat + todaysCashSales - currentPayouts;
   });
 
@@ -64,8 +65,8 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.activeModal.set({
       type: 'prompt', title: '💵 Add Cash to Drawer', message: 'Enter the amount of cash added (Starting float or top-up):', value: '',
       onConfirm: (val) => {
-        const amount = parseFloat(val) || 0;
-        const newTotal = (this.startingFloat() || 0) + amount;
+        const amount = this.parseSafe(val);
+        const newTotal = this.parseSafe(this.startingFloat()) + amount;
         this.startingFloat.set(newTotal);
         localStorage.setItem('maranth_float', newTotal.toString());
         this.salesService.closeModal();
@@ -77,8 +78,8 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.activeModal.set({
       type: 'prompt', title: '📤 Remove Cash from Drawer', message: 'Enter the amount removed (Supplier payment or safe drop):', value: '',
       onConfirm: (val) => {
-        const amount = parseFloat(val) || 0;
-        const newTotal = (this.supplierPayouts() || 0) + amount;
+        const amount = this.parseSafe(val);
+        const newTotal = this.parseSafe(this.supplierPayouts()) + amount;
         this.supplierPayouts.set(newTotal);
         localStorage.setItem('maranth_payouts', newTotal.toString());
         this.salesService.closeModal();
@@ -105,8 +106,8 @@ export class PosComponent implements OnInit, AfterViewInit {
   public miscAmount = signal<string>('');
 
   public addMiscCharge(): void {
-    const val = parseFloat(this.miscAmount());
-    if (isNaN(val) || val <= 0) return;
+    const val = this.parseSafe(this.miscAmount());
+    if (val <= 0) return;
 
     const miscProduct: Product = {
       id: 'MISC-' + Date.now(),
@@ -133,19 +134,19 @@ export class PosComponent implements OnInit, AfterViewInit {
     const today = new Date().toDateString();
     const todayRev = this.salesService.transactions()
       .filter(tx => new Date(tx.timestamp).toDateString() === today)
-      .reduce((sum, tx) => sum + (tx.grandTotal || 0), 0);
+      .reduce((sum, tx) => sum + this.parseSafe(tx.grandTotal), 0);
     
-    const safeRev = todayRev || 0;
-    const percent = Math.min(100, (safeRev / this.salesTarget) * 100) || 0;
+    const safeRev = this.parseSafe(todayRev);
+    const percent = Math.min(100, (safeRev / this.salesTarget) * 100);
     
-    return { rev: safeRev, percent: percent };
+    return { rev: safeRev, percent: this.parseSafe(percent) };
   });
 
   public systemAlerts = computed(() => {
     const alerts: { type: string, msg: string }[] = [];
     this.salesService.products().forEach(p => {
-      const stock = p.stockQuantity || 0;
-      if (stock <= (p.minStockWarning || 5)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
+      const stock = this.parseSafe(p.stockQuantity);
+      if (stock <= this.parseSafe(p.minStockWarning || 5)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
       if (this.getExpireStatus(p.expire) === 'danger') alerts.push({ type: 'danger', msg: `🔴 EXPIRED: ${p.name}!` });
     });
     return alerts;
@@ -293,8 +294,8 @@ export class PosComponent implements OnInit, AfterViewInit {
       this.salesService.activeModal.set({
         type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${prod.name}:`, value: '1.000',
         onConfirm: (val) => {
-          const weight = parseFloat(val);
-          if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
+          const weight = this.parseSafe(val);
+          if (weight > 0) this.salesService.addToBasket(prod, undefined, weight);
           this.salesService.closeModal();
           setTimeout(() => this.salesService.triggerSearchFocus(), 100);
         }
