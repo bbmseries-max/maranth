@@ -4,6 +4,7 @@
   height: 100% !important;
   width: 100% !important;
   overflow: hidden !important;
+  min-height: 0 !important; /* ⭐ CRITICAL FIX */
   font-family: 'Inter', system-ui, sans-serif;
   background-color: #ffffff;
 }
@@ -14,7 +15,7 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
-  min-height: 0; /* ⭐ THE FIX: Prevents it from expanding out of the screen */
+  min-height: 0 !important; /* ⭐ CRITICAL FIX */
 }
 
 /* STREAMING_CHUNK: Header setup... */
@@ -54,11 +55,11 @@
 
 /* STREAMING_CHUNK: Items viewport and scrolling... */
 .basket-items-viewport {
-  flex: 1 1 0 !important; /* ⭐ THE FIX: Forces it to shrink and scroll */     
+  flex: 1 1 0 !important;          
   overflow-y: auto !important;  
   padding: 12px;
   box-sizing: border-box;
-  min-height: 0; /* ⭐ THE FIX */
+  min-height: 0 !important; /* ⭐ CRITICAL FIX */
 }
 
 .basket-items-viewport::-webkit-scrollbar {
@@ -232,7 +233,7 @@
   padding: 16px;
   margin-top: auto;            
   box-sizing: border-box;
-  flex-shrink: 0; /* ⭐ THE FIX: Prevents the payment buttons from being squished away */
+  flex-shrink: 0 !important; /* ⭐ CRITICAL FIX: The arcade buttons will NEVER be crushed again! */
 }
 
 .summary-matrix {
@@ -328,5 +329,5 @@
   cursor: not-allowed;
   transform: translateY(6px);
   box-shadow: 0 0 0 #cbd5e1;
-  background: #f1f5f9;
+  background: #a0c4e7;
 }

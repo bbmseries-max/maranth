@@ -30,14 +30,10 @@ export class PosComponent implements OnInit, AfterViewInit {
   public editingProduct = signal<Product | null>(null);
   public editForm: Partial<Product> = {};
 
-  // ========================================================
-  // ⭐ NEW 1: LIVE CASH TRACKER LOGIC
-  // ========================================================
   public startingFloat = signal<number>(Number(localStorage.getItem('maranth_float') || 0));
   public supplierPayouts = signal<number>(Number(localStorage.getItem('maranth_payouts') || 0));
   
   public liveCashInDrawer = computed(() => {
-    // Expected Cash = Starting Float + Today's Cash Sales - Payouts
     const today = new Date().toDateString();
     let todaysCashSales = 0;
     
@@ -89,9 +85,6 @@ export class PosComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ========================================================
-  // ⭐ NEW 2: QUICK MISC CHARGE LOGIC
-  // ========================================================
   public miscAmount = signal<string>('');
 
   public addMiscCharge(): void {
@@ -114,10 +107,7 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.triggerSearchFocus();
   }
 
-  // ========================================================
-  // ⭐ NEW 3 & 4: SALES TARGET & SYSTEM ALERTS
-  // ========================================================
-  public salesTarget = 1000; // Example daily goal: €1000
+  public salesTarget = 1000; 
   
   public targetProgress = computed(() => {
     const today = new Date().toDateString();
@@ -135,7 +125,6 @@ export class PosComponent implements OnInit, AfterViewInit {
     });
     return alerts;
   });
-  // ========================================================
 
   public weightedProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true')));
   public looseProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true'));
@@ -181,7 +170,18 @@ export class PosComponent implements OnInit, AfterViewInit {
     });
 
     effect(() => {
-      if (this.salesService.basket().length === 0) this.isMobileBasketOpen.set(false);
+      if (this.salesService.basket().length === 0) {
+        this.isMobileBasketOpen.set(false);
+        
+        // ⭐ THE FIX: Auto-Clear the scanner box any time the basket is cleared or payment succeeds!
+        setTimeout(() => {
+          this.searchQuery.set('');
+          if (this.searchInput?.nativeElement) {
+            this.searchInput.nativeElement.value = '';
+            this.searchInput.nativeElement.focus();
+          }
+        }, 50);
+      }
     }, { allowSignalWrites: true });
   }
 

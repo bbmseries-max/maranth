@@ -61,11 +61,12 @@ export class InventoryComponent implements AfterViewInit {
     this.focusMainSearchBar();
   }
 
-  // ⭐ THE FIX: Clears the search text instantly when focused!
+  // ⭐ THE FIX: Totally clear all services and inputs!
   public focusMainSearchBar(): void {
     setTimeout(() => {
       if (this.activeTab() === 'PRODUCTS' && !this.isCreatingNew() && !this.selectedProduct() && this.mainSearchInputRef?.nativeElement) {
         this.searchQuery.set('');
+        this.inventoryService.searchQuery.set(''); 
         this.mainSearchInputRef.nativeElement.value = '';
         this.mainSearchInputRef.nativeElement.focus();
       }
