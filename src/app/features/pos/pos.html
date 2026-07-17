@@ -1,35 +1,20 @@
 @if (salesService.activeModal(); as modal) {
   <div class="pos-modal-overlay is-active" style="z-index: 99999;">
     <div class="pos-modal-window">
-      <div class="pos-modal-header" 
-           [class.warning-header]="modal.type === 'warning'" 
-           [class.success-header]="modal.type === 'success'">
+      <div class="pos-modal-header" [class.warning-header]="modal.type === 'warning'" [class.success-header]="modal.type === 'success'">
         {{ modal.title }}
       </div>
-      
       <div class="pos-modal-body" style="white-space: pre-line;">
         <p style="margin-top: 0;">{{ modal.message }}</p>
-        
         @if (modal.type === 'prompt') {
-          <input 
-            #weightInput
-            [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" 
-            class="pos-modal-input" 
-            [value]="modal.value" 
-            (input)="modal.value = weightInput.value"
-            (keyup.enter)="modal.onConfirm(modal.value)"
-            [attr.step]="modal.title?.includes('Date') ? null : '0.001'"
-            autofocus
-          />
+          <input #weightInput [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" class="pos-modal-input" [value]="modal.value" (input)="modal.value = weightInput.value" (keyup.enter)="modal.onConfirm(modal.value)" [attr.step]="modal.title?.includes('Date') ? null : '0.001'" autofocus />
         }
       </div>
-      
       <div class="pos-modal-footer">
         @if (modal.type === 'prompt') {
           <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.closeModal()">Cancel</button>
           <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">Confirm</button>
         }
-
         @if (modal.type === 'warning' || modal.type === 'success') {
           <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">Dismiss</button>
         }
@@ -41,9 +26,7 @@
 @if (editingProduct(); as prod) {
   <div class="pos-modal-overlay is-active" style="z-index: 99998;">
     <div class="pos-modal-window" style="max-width: 500px;">
-      <div class="pos-modal-header" style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; color: #166534;">
-        ✏️ Quick Edit: {{ prod.name }}
-      </div>
+      <div class="pos-modal-header" style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; color: #166534;">✏️ Quick Edit: {{ prod.name }}</div>
       <div class="pos-modal-body" style="background: #ffffff;">
         <div class="pos-quick-edit-grid">
           <div><label class="pos-label">Retail Price (€)</label><input type="number" step="0.01" class="pos-input" [(ngModel)]="editForm.price" style="border-color: #16a34a; background: #f0fdf4;" /></div>
@@ -68,32 +51,28 @@
       <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px; margin-left: 8px;">🍊 MARANTH</span>
       <span class="system-tag mobile-hide" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">POS System v2.0</span>
     </div>
-    
     <div class="header-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
       <div style="background: #0f172a; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; color: white; font-size: 13px; display: flex; align-items: center; gap: 8px;">
         <span style="font-weight: 600;">👤 {{ salesService.currentCashier() || 'Unknown' }}</span>
         <span style="background: #0ea5e9; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase;">{{ salesService.currentRole() || 'CASHIER' }}</span>
       </div>
-
       <a routerLink="/reports" class="header-btn btn-reports mobile-hide">📊 Reports</a>
       <a routerLink="/inventory" class="header-btn btn-inventory mobile-hide">📦 Inventory</a>
-      
       <button (click)="onLogout()" class="header-btn" style="background: #ef4444; border: none;">🚪 Logout</button>
     </div>
   </header>
 
   <div class="pos-main-layout">
     
-    <!-- LEFT PANEL: Sidebar -->
-    <aside class="pos-sidebar-panel" [class.expanded]="isSidebarMobileOpen()" style="color: #fff;">
+    <!-- LEFT PANEL: The New Operations Hub -->
+    <aside class="pos-sidebar-panel" [class.expanded]="isSidebarMobileOpen()" style="color: #fff; overflow-y: auto;">
+      
       <div class="sidebar-mobile-toggle" (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
         <span style="font-weight: 700; font-size: 14px;">📁 Menu & Categories</span>
         <span style="font-size: 12px;">{{ isSidebarMobileOpen() ? '🔼' : '🔽' }}</span>
       </div>
 
       <div class="sidebar-collapsible-content">
-        
-        <!-- ⭐ THE FIX: Mobile-Only Navigation Links -->
         <div class="mobile-nav-links" style="display: none; flex-direction: column; gap: 8px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px dashed #475569;">
           <div class="panel-title" style="margin-bottom: 8px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase;">Navigation</div>
           <a routerLink="/reports" class="app-btn" style="background: #3b82f6; color: white; text-align: left; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">📊 View Reports</a>
@@ -102,34 +81,18 @@
 
         <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Register Controls</div>
         <div class="sidebar-action-group" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
-          
-          <button 
-            (click)="salesService.isRefundMode.set(!salesService.isRefundMode()); salesService.triggerSearchFocus()" 
-            [style.background]="salesService.isRefundMode() ? '#ef4444' : '#1e293b'"
-            style="color: white; border: 1px solid #334155; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.2s;">
+          <button (click)="salesService.isRefundMode.set(!salesService.isRefundMode()); salesService.triggerSearchFocus()" [style.background]="salesService.isRefundMode() ? '#ef4444' : '#1e293b'" style="color: white; border: 1px solid #334155; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.2s;">
             {{ salesService.isRefundMode() ? '❌ CANCEL REFUND MODE' : '↩️ Start Refund / Return' }}
           </button>
-
-          <button 
-            (click)="salesService.clearBasket()" 
-            [disabled]="salesService.basket().length === 0"
-            style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
-            [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
+          <button (click)="salesService.clearBasket()" [disabled]="salesService.basket().length === 0" style="background: #dc2626; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;" [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
             🗑️ Clear Current Sale
           </button>
-
           @if (!salesService.suspendedBasket()) {
-            <button 
-              (click)="salesService.suspendOrder()" 
-              [disabled]="salesService.basket().length === 0"
-              style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;"
-              [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
+            <button (click)="salesService.suspendOrder()" [disabled]="salesService.basket().length === 0" style="background: #475569; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left;" [style.opacity]="salesService.basket().length === 0 ? '0.5' : '1'">
               ⏸️ Suspend Order
             </button>
           } @else {
-            <button 
-              (click)="salesService.recallOrder()" 
-              style="background: #eab308; color: #0f172a; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; text-align: left;">
+            <button (click)="salesService.recallOrder()" style="background: #eab308; color: #0f172a; border: none; padding: 12px; border-radius: 6px; font-weight: 700; cursor: pointer; text-align: left;">
               🔄 Recall Held Order (1)
             </button>
           }
@@ -137,70 +100,78 @@
 
         <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Catalog Filters</div>
         <div style="display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
-          <button 
-            (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
-            [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#334155'"
-            [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#f8fafc'"
-            style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600;">
+          <button (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#334155'" [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#f8fafc'" style="border: 1px solid #475569; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; font-weight: 600;">
             🌐 Show All Items
           </button>
-
           @for (cat of salesService.categories(); track cat.id) {
-            <button 
-              (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
-              [style.background]="selectedCategoryId() === cat.id ? '#3b82f6' : '#1e293b'"
-              [style.color]="selectedCategoryId() === cat.id ? '#ffffff' : '#cbd5e1'"
-              style="border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
+            <button (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" [style.background]="selectedCategoryId() === cat.id ? '#3b82f6' : '#1e293b'" [style.color]="selectedCategoryId() === cat.id ? '#ffffff' : '#cbd5e1'" style="border: 1px solid #334155; padding: 10px; border-radius: 6px; text-align: left; cursor: pointer; transition: all 0.2s; font-size: 13px;">
               📁 {{ cat.name }}
             </button>
           }
         </div>
       </div>
 
-      <!-- Pinned Bottom Section -->
-      <div style="margin-top: auto; display: flex; flex-direction: column; flex-shrink: 0; padding-top: 16px;">
+      <!-- ⭐ THE 4 NEW MANAGER WIDGETS -->
+      <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 16px; flex-shrink: 0; padding-bottom: 16px;">
         
-        <div class="panel-title mobile-hide" style="margin-bottom: 8px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Today's Profit Snapshot</div>
-        <div class="mobile-hide" style="background: #0f172a; border-radius: 8px; padding: 12px; border: 1px solid #334155; margin-bottom: 8px;">
-          @for (bucket of dailyProfitSnapshots().buckets; track bucket.label) {
-            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #cbd5e1; margin-bottom: 8px;">
-              <span>🕒 {{ bucket.label }}</span>
-              <span [style.color]="bucket.profit >= 0 ? '#10b981' : '#ef4444'" style="font-weight: bold;">
-                {{ bucket.profit > 0 ? '+' : '' }}{{ bucket.profit | currency:'EUR':'symbol':'1.2-2' }}
-              </span>
-            </div>
-          }
-          <div style="border-top: 1px dashed #475569; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
-            <span style="color: #94a3b8;">Total Profit</span>
-            <span [style.color]="dailyProfitSnapshots().total >= 0 ? '#10b981' : '#ef4444'">
-              {{ dailyProfitSnapshots().total > 0 ? '+' : '' }}{{ dailyProfitSnapshots().total | currency:'EUR':'symbol':'1.2-2' }}
-            </span>
+        <!-- WIDGET 1: Quick Misc Charge -->
+        <div class="mobile-hide" style="background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
+          <div class="panel-title" style="margin-bottom: 8px; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase;">⚡ Quick Misc Charge</div>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" class="pos-input" style="flex: 1; padding: 8px; font-size: 14px;" placeholder="€0.00" [value]="miscAmount()" (input)="miscAmount.set($any($event.target).value)" (keyup.enter)="addMiscCharge()">
+            <button class="app-btn" style="background: #3b82f6; color: white; padding: 8px 12px; font-weight: bold; border-radius: 6px;" (click)="addMiscCharge()">Add</button>
           </div>
         </div>
 
-        <!-- ⭐ NEW: Top 15 Scrollable Leaderboard -->
-        @if (dailyTopProducts().length > 0) {
-          <div class="panel-title mobile-hide" style="margin-bottom: 8px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">🏆 Top 15 Items Today</div>
-          <div class="mobile-hide" style="background: #0f172a; border-radius: 8px; border: 1px solid #334155; max-height: 155px; overflow-y: auto; margin-bottom: 8px;">
-            @for (top of dailyTopProducts(); track top.name) {
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #cbd5e1; padding: 8px 12px; border-bottom: 1px solid #1e293b;">
-                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%;">{{ top.name }}</span>
-                <span style="color: #3b82f6; font-weight: bold;">{{ top.qty }} <span style="font-size: 10px; color: #64748b; font-weight: normal;">sold</span></span>
-              </div>
-            }
+        <!-- WIDGET 2: Shift Cash Tracker -->
+        <div class="mobile-hide" style="background: #0f172a; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="panel-title" style="margin: 0; color: #10b981; font-size: 12px; font-weight: 800; text-transform: uppercase;">💵 Live Cash Drawer</div>
+            <button class="app-btn" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 2px 6px; font-size: 10px; border-radius: 4px;" (click)="resetDrawer()">Reset</button>
+          </div>
+          
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
+            <span style="cursor: pointer; text-decoration: underline;" (click)="setFloatAmount()">Starting Float:</span>
+            <span>{{ startingFloat() | currency:'EUR' }}</span>
+          </div>
+          
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
+            <span style="cursor: pointer; text-decoration: underline;" (click)="paySupplier()">Supplier Payouts:</span>
+            <span style="color: #ef4444;">-{{ supplierPayouts() | currency:'EUR' }}</span>
+          </div>
+
+          <div style="border-top: 1px dashed #334155; margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="color: #cbd5e1; font-size: 12px; font-weight: bold;">Expected Cash:</span>
+            <span style="color: #10b981; font-size: 20px; font-weight: 900;">{{ liveCashInDrawer() | currency:'EUR' }}</span>
+          </div>
+        </div>
+
+        <!-- WIDGET 3: Daily Target -->
+        <div class="mobile-hide" style="background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <div class="panel-title" style="margin: 0; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase;">🎯 Daily Target</div>
+            <span style="color: #3b82f6; font-size: 11px; font-weight: bold;">{{ targetProgress().rev | currency:'EUR':'symbol':'1.0-0' }} / €{{ salesTarget }}</span>
+          </div>
+          <div class="progress-bar-bg" style="width: 100%; height: 8px; background: #0f172a; border-radius: 4px; overflow: hidden;">
+            <div class="progress-bar-fill" [style.width.%]="targetProgress().percent" [style.background]="targetProgress().percent >= 100 ? '#10b981' : '#3b82f6'" style="height: 100%; transition: width 0.5s ease;"></div>
+          </div>
+        </div>
+
+        <!-- WIDGET 4: System Alerts -->
+        @if (systemAlerts().length > 0) {
+          <div class="mobile-hide" style="background: #1e293b; border-radius: 8px; border: 1px solid #ef4444; max-height: 120px; overflow-y: auto;">
+            <div style="position: sticky; top: 0; background: #7f1d1d; color: white; padding: 6px 12px; font-size: 11px; font-weight: 800; text-transform: uppercase;">⚠️ System Alerts ({{ systemAlerts().length }})</div>
+            <div style="padding: 8px;">
+              @for (alert of systemAlerts(); track alert.msg) {
+                <div style="font-size: 11px; font-weight: 600; padding: 4px 0; border-bottom: 1px solid #334155;" [style.color]="alert.type === 'danger' ? '#fca5a5' : '#fde047'">
+                  {{ alert.msg }}
+                </div>
+              }
+            </div>
           </div>
         }
 
-        <div class="live-clock-widget mobile-hide" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 0 8px 0; border-top: 1px solid #334155;">
-          <div style="font-size: 32px; font-weight: 800; color: #f8fafc; font-variant-numeric: tabular-nums; letter-spacing: 2px;">
-            {{ liveTime() | date:'HH:mm:ss' }}
-          </div>
-          <div style="font-size: 13px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">
-            {{ liveTime() | date:'EEEE, d MMM yyyy' }}
-          </div>
-        </div>
       </div>
-
     </aside>
 
     <section class="main-catalog-panel">
@@ -268,7 +239,6 @@
       <div class="catalog-scroll-viewport">
         <div class="grid-layout-scroll">
           @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
-            
             @if (prod.isFirstOfCategory) {
               <div class="category-divider-row" style="grid-column: 1 / -1; display: flex; align-items: center; margin-top: 12px; margin-bottom: 4px;">
                 <span style="font-weight: 700; font-size: 13px; color: #64748b; text-transform: uppercase; background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">
@@ -278,7 +248,6 @@
             }
 
             <div class="product-item-card" (click)="handleProductClick(prod)">
-              
               <div class="prod-name-row">
                 <span class="prod-name">{{ prod.name }}</span>
                 <div style="display: flex; gap: 4px; align-items: center;">
@@ -308,23 +277,16 @@
                 </div>
                 <div class="prod-price">{{ prod.price | currency:'EUR':'symbol':'1.2-2' }}</div>
               </div>
-
             </div>
-
           } @empty {
-            <div class="empty-msg" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #64748b;">
-              ⚠️ No items match your search.
-            </div>
+            <div class="empty-msg" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #64748b;">⚠️ No items match your search.</div>
           }
         </div>
       </div>
     </section>
 
     <section class="checkout-basket-panel" [class.mobile-open]="isMobileBasketOpen()">
-      <button class="mobile-close-basket-btn" (click)="isMobileBasketOpen.set(false)">
-        ⬇️ Swipe down to hide checkout ⬇️
-      </button>
-
+      <button class="mobile-close-basket-btn" (click)="isMobileBasketOpen.set(false)">⬇️ Swipe down to hide checkout ⬇️</button>
       <app-shopping-basket></app-shopping-basket>
     </section>
 

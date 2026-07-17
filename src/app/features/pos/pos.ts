@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -13,7 +13,7 @@ import { ShoppingBasketComponent } from './components/shopping-basket/shopping-b
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
-export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
+export class PosComponent implements OnInit, AfterViewInit {
   public salesService = inject(SalesService);
   public router = inject(Router);
 
@@ -30,82 +30,112 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   public editingProduct = signal<Product | null>(null);
   public editForm: Partial<Product> = {};
 
-  public liveTime = signal<Date>(new Date());
-  private clockInterval: any;
-
-  // ⭐ NEW: Top 15 Products of the Day Calculator
-  public dailyTopProducts = computed(() => {
+  // ========================================================
+  // ⭐ NEW 1: LIVE CASH TRACKER LOGIC
+  // ========================================================
+  public startingFloat = signal<number>(Number(localStorage.getItem('maranth_float') || 0));
+  public supplierPayouts = signal<number>(Number(localStorage.getItem('maranth_payouts') || 0));
+  
+  public liveCashInDrawer = computed(() => {
+    // Expected Cash = Starting Float + Today's Cash Sales - Payouts
     const today = new Date().toDateString();
-    const itemsMap = new Map<string, { name: string, qty: number, rev: number }>();
-
+    let todaysCashSales = 0;
+    
     this.salesService.transactions().forEach(tx => {
       const txDate = new Date(tx.timestamp);
-      if (txDate.toDateString() === today) {
-        tx.items.forEach(item => {
-          const effectiveQty = item.isRefund ? -item.quantity : item.quantity;
-          const effectiveRev = item.isRefund ? -(item.product.price * item.quantity) : (item.product.price * item.quantity);
-          
-          if (!itemsMap.has(item.product.id)) {
-            itemsMap.set(item.product.id, { name: item.product.name, qty: 0, rev: 0 });
-          }
-          const stat = itemsMap.get(item.product.id)!;
-          stat.qty += effectiveQty;
-          stat.rev += effectiveRev;
-        });
+      if (txDate.toDateString() === today && tx.paymentMethod === 'Cash') {
+        todaysCashSales += tx.grandTotal;
       }
     });
 
-    return Array.from(itemsMap.values())
-      .filter(p => p.qty > 0)
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 15); // Takes only the Top 15
+    return this.startingFloat() + todaysCashSales - this.supplierPayouts();
   });
 
-  public dailyProfitSnapshots = computed(() => {
-    const today = new Date().toDateString();
-    const buckets = [
-      { label: '00:00 - 03:00', profit: 0, active: false },
-      { label: '03:00 - 06:00', profit: 0, active: false },
-      { label: '06:00 - 09:00', profit: 0, active: false },
-      { label: '09:00 - 12:00', profit: 0, active: false },
-      { label: '12:00 - 15:00', profit: 0, active: false },
-      { label: '15:00 - 18:00', profit: 0, active: false },
-      { label: '18:00 - 21:00', profit: 0, active: false },
-      { label: '21:00 - 00:00', profit: 0, active: false }
-    ];
-
-    let totalDayProfit = 0;
-    const currentHour = new Date().getHours();
-    const currentBucketIndex = Math.floor(currentHour / 3);
-
-    this.salesService.transactions().forEach(tx => {
-      const txDate = new Date(tx.timestamp);
-      if (txDate.toDateString() === today) {
-        let txProfit = 0;
-        tx.items.forEach(item => {
-          const retail = item.product.price || 0;
-          const cost = item.product.purchasePrice || 0;
-          const tax = item.product.taxRate || 1.24; 
-          const grossWholesale = cost * tax;
-          const itemProfit = (retail - grossWholesale) * item.quantity;
-          txProfit += item.isRefund ? -itemProfit : itemProfit;
-        });
-        const hour = txDate.getHours();
-        const bucketIndex = Math.floor(hour / 3);
-        if (bucketIndex >= 0 && bucketIndex < 8) {
-           buckets[bucketIndex].profit += txProfit;
-           buckets[bucketIndex].active = true;
-        }
-        totalDayProfit += txProfit;
+  public setFloatAmount(): void {
+    this.salesService.activeModal.set({
+      type: 'prompt', title: '💵 Declare Starting Cash', message: 'Enter the morning cash float amount:', value: this.startingFloat().toString(),
+      onConfirm: (val) => {
+        const amount = parseFloat(val) || 0;
+        this.startingFloat.set(amount);
+        localStorage.setItem('maranth_float', amount.toString());
+        this.salesService.closeModal();
       }
     });
+  }
 
-    if (currentBucketIndex >= 0 && currentBucketIndex < 8) {
-        buckets[currentBucketIndex].active = true;
-    }
+  public paySupplier(): void {
+    this.salesService.activeModal.set({
+      type: 'prompt', title: '🚚 Pay Supplier (Cash)', message: 'Enter the cash amount removed from drawer to pay a supplier:', value: '',
+      onConfirm: (val) => {
+        const amount = parseFloat(val) || 0;
+        const newTotal = this.supplierPayouts() + amount;
+        this.supplierPayouts.set(newTotal);
+        localStorage.setItem('maranth_payouts', newTotal.toString());
+        this.salesService.closeModal();
+      }
+    });
+  }
 
-    return { buckets: buckets.filter(b => b.active), total: totalDayProfit };
+  public resetDrawer(): void {
+    this.salesService.activeModal.set({
+      type: 'warning', title: '⚠️ Close Shift / Reset Drawer', message: 'Are you sure you want to reset the Cash Float and Supplier Payouts back to zero?', value: '',
+      onConfirm: () => {
+        this.startingFloat.set(0);
+        this.supplierPayouts.set(0);
+        localStorage.setItem('maranth_float', '0');
+        localStorage.setItem('maranth_payouts', '0');
+        this.salesService.closeModal();
+      }
+    });
+  }
+
+  // ========================================================
+  // ⭐ NEW 2: QUICK MISC CHARGE LOGIC
+  // ========================================================
+  public miscAmount = signal<string>('');
+
+  public addMiscCharge(): void {
+    const val = parseFloat(this.miscAmount());
+    if (isNaN(val) || val <= 0) return;
+
+    const miscProduct: Product = {
+      id: 'MISC-' + Date.now(),
+      name: '🏷️ Misc. Open Charge',
+      price: val,
+      stockQuantity: 999,
+      categoryId: 'ALL',
+      isActive: true,
+      taxRate: 1.24,
+      isWeighted: false
+    };
+
+    this.salesService.addToBasket(miscProduct);
+    this.miscAmount.set('');
+    this.salesService.triggerSearchFocus();
+  }
+
+  // ========================================================
+  // ⭐ NEW 3 & 4: SALES TARGET & SYSTEM ALERTS
+  // ========================================================
+  public salesTarget = 1000; // Example daily goal: €1000
+  
+  public targetProgress = computed(() => {
+    const today = new Date().toDateString();
+    const todayRev = this.salesService.transactions()
+      .filter(tx => new Date(tx.timestamp).toDateString() === today)
+      .reduce((sum, tx) => sum + tx.grandTotal, 0);
+    return { rev: todayRev, percent: Math.min(100, (todayRev / this.salesTarget) * 100) };
   });
+
+  public systemAlerts = computed(() => {
+    const alerts: { type: string, msg: string }[] = [];
+    this.salesService.products().forEach(p => {
+      if (p.stockQuantity <= (p.minStockWarning || 5)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${p.stockQuantity} left)` });
+      if (this.getExpireStatus(p.expire) === 'danger') alerts.push({ type: 'danger', msg: `🔴 EXPIRED: ${p.name}!` });
+    });
+    return alerts;
+  });
+  // ========================================================
 
   public weightedProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true')));
   public looseProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true'));
@@ -139,7 +169,6 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   });
 
   constructor() {
-    // ⭐ THE FIX: Auto-Clear the input box whenever focus is triggered!
     effect(() => {
       const trigger = this.salesService.focusSearchTrigger();
       if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {
@@ -156,16 +185,10 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
     }, { allowSignalWrites: true });
   }
 
-  ngOnInit() {
-    this.clockInterval = setInterval(() => { this.liveTime.set(new Date()); }, 1000);
-  }
+  ngOnInit() {}
 
   ngAfterViewInit() {
     setTimeout(() => { if (this.searchInput?.nativeElement) this.searchInput.nativeElement.focus(); }, 100);
-  }
-
-  ngOnDestroy() {
-    if (this.clockInterval) clearInterval(this.clockInterval);
   }
 
   public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
@@ -185,9 +208,7 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   public openQuickEdit(prod: Product, event: Event): void {
     event.stopPropagation();
     if (this.salesService.currentRole() !== 'admin') {
-      this.salesService.activeModal.set({
-        type: 'warning', title: '⛔ Access Denied', message: 'Only Store Admins can edit product details from the register.', value: '', onConfirm: () => this.salesService.closeModal()
-      });
+      this.salesService.activeModal.set({ type: 'warning', title: '⛔ Access Denied', message: 'Only Store Admins can edit product details from the register.', value: '', onConfirm: () => this.salesService.closeModal() });
       return;
     }
     this.editingProduct.set(prod);
@@ -243,7 +264,6 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public handleProductClick(prod: Product): void {
-    // ⭐ THE FIX: Clear the search box instantly when a product is clicked manually
     this.searchQuery.set('');
     if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
 
