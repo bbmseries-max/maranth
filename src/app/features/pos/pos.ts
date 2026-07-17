@@ -49,16 +49,24 @@ export class PosComponent implements OnInit, AfterViewInit {
     const today = new Date().toDateString();
     let todaysCashSales = 0;
     
-    this.salesService.transactions().forEach(tx => {
-      const txDate = new Date(tx.timestamp);
-      if (txDate.toDateString() === today && tx.paymentMethod === 'Cash') {
-        todaysCashSales += this.parseSafe(tx.grandTotal);
+    // Safety check for empty transactions
+    const txs = this.salesService.transactions() || [];
+    
+    txs.forEach(tx => {
+      if (tx && tx.timestamp) {
+        const txDate = new Date(tx.timestamp);
+        if (txDate.toDateString() === today && tx.paymentMethod === 'Cash') {
+          todaysCashSales += this.parseSafe(tx.grandTotal);
+        }
       }
     });
 
     const currentFloat = this.parseSafe(this.startingFloat());
     const currentPayouts = this.parseSafe(this.supplierPayouts());
-    return currentFloat + todaysCashSales - currentPayouts;
+    const finalTotal = currentFloat + todaysCashSales - currentPayouts;
+    
+    // Final NaN guard before sending to HTML
+    return isNaN(finalTotal) ? 0 : finalTotal;
   });
 
   public addManualCash(): void {
@@ -132,19 +140,34 @@ export class PosComponent implements OnInit, AfterViewInit {
   
   public targetProgress = computed(() => {
     const today = new Date().toDateString();
-    const todayRev = this.salesService.transactions()
-      .filter(tx => new Date(tx.timestamp).toDateString() === today)
-      .reduce((sum, tx) => sum + this.parseSafe(tx.grandTotal), 0);
+    const txs = this.salesService.transactions() || [];
     
-    const safeRev = this.parseSafe(todayRev);
-    const percent = Math.min(100, (safeRev / this.salesTarget) * 100);
+    let todayRev = 0;
+    txs.forEach(tx => {
+      if (tx && tx.timestamp) {
+        if (new Date(tx.timestamp).toDateString() === today) {
+          todayRev += this.parseSafe(tx.grandTotal);
+        }
+      }
+    });
     
-    return { rev: safeRev, percent: this.parseSafe(percent) };
+    const safeRev = isNaN(todayRev) ? 0 : todayRev;
+    let rawPercent = (safeRev / this.salesTarget) * 100;
+    
+    // Absolute NaN guard for division by zero or bad data
+    if (isNaN(rawPercent) || !isFinite(rawPercent)) rawPercent = 0;
+    
+    const safePercent = Math.min(100, rawPercent);
+    
+    return { rev: safeRev, percent: safePercent };
   });
 
   public systemAlerts = computed(() => {
     const alerts: { type: string, msg: string }[] = [];
-    this.salesService.products().forEach(p => {
+    const prods = this.salesService.products() || [];
+    
+    prods.forEach(p => {
+      if (!p) return;
       const stock = this.parseSafe(p.stockQuantity);
       if (stock <= this.parseSafe(p.minStockWarning || 5)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
       if (this.getExpireStatus(p.expire) === 'danger') alerts.push({ type: 'danger', msg: `🔴 EXPIRED: ${p.name}!` });
@@ -152,19 +175,27 @@ export class PosComponent implements OnInit, AfterViewInit {
     return alerts;
   });
 
-  public weightedProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true')));
-  public looseProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true'));
+  public weightedProducts = computed(() => {
+    const prods = this.salesService.products() || [];
+    return prods.filter(p => p && p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true'));
+  });
+  
+  public looseProducts = computed(() => {
+    const prods = this.salesService.products() || [];
+    return prods.filter(p => p && p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true');
+  });
 
   public filteredCatalogProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const categoryId = this.selectedCategoryId();
-    let products = this.salesService.products().filter(p => p.isActive !== false);
+    const allProds = this.salesService.products() || [];
+    let products = allProds.filter(p => p && p.isActive !== false);
 
     if (categoryId !== 'ALL') products = products.filter(p => p.categoryId === categoryId);
 
     if (query) {
       products = products.filter(p => 
-        p.name.toLowerCase().includes(query) || 
+        (p.name && p.name.toLowerCase().includes(query)) || 
         (p.barcode && p.barcode.toLowerCase().includes(query)) ||
         (p.id && p.id.toString().toLowerCase().includes(query))
       );
@@ -196,7 +227,8 @@ export class PosComponent implements OnInit, AfterViewInit {
     });
 
     effect(() => {
-      if (this.salesService.basket().length === 0) {
+      const bsk = this.salesService.basket() || [];
+      if (bsk.length === 0) {
         this.isMobileBasketOpen.set(false);
         setTimeout(() => {
           this.searchQuery.set('');
@@ -218,10 +250,13 @@ export class PosComponent implements OnInit, AfterViewInit {
   public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
     if (!expire) return 'none';
     const expDate = new Date(expire + 'T00:00:00');
+    if (isNaN(expDate.getTime())) return 'none'; // Invalid date guard
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const diffTime = expDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
     if (diffDays <= 0) return 'danger'; 
     if (diffDays <= 14) return 'warning'; 
     return 'safe'; 

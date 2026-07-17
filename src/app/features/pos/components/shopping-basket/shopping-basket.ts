@@ -6,8 +6,6 @@ import { SalesService } from '../../../../shared/services/sales';
   selector: 'app-shopping-basket',
   standalone: true,
   imports: [CommonModule, CurrencyPipe, DecimalPipe],
-  // ⭐ IMPORTANT: If your files have ".component" in the name, add it here! 
-  // Example: templateUrl: './shopping-basket.component.html'
   templateUrl: './shopping-basket.html',
   styleUrls: ['./shopping-basket.css']
 })
@@ -16,9 +14,16 @@ export class ShoppingBasketComponent {
 
   @ViewChild('scrollViewport') private scrollViewport!: ElementRef<HTMLDivElement>;
 
+  // Safe wrapper for the HTML pipes
+  public getSafeGrandTotal(): number {
+    const val = this.salesService.grandTotal();
+    return isNaN(val) ? 0 : val;
+  }
+
   constructor() {
     effect(() => {
-      const currentBasket = this.salesService.basket();
+      // Safely access basket to trigger effect
+      const currentBasket = this.salesService.basket() || [];
       setTimeout(() => {
         if (this.scrollViewport?.nativeElement) {
           const el = this.scrollViewport.nativeElement;
