@@ -31,9 +31,8 @@ export class PosComponent implements OnInit, AfterViewInit {
   public editForm: Partial<Product> = {};
 
   // ========================================================
-  // ⭐ THE ULTIMATE FIX: CUSTOM MONEY FORMATTER
+  // ⭐ BULLETPROOF NUMBER & SERVER PARSER
   // ========================================================
-  // We completely bypass Angular's CurrencyPipe to prevent NG02100 crashes
   public formatMoney(amount: any): string {
     if (amount === null || amount === undefined || amount === '') return '€0.00';
     let parsed = Number(amount);
@@ -41,17 +40,19 @@ export class PosComponent implements OnInit, AfterViewInit {
     return '€' + parsed.toFixed(2);
   }
 
-  private parseSafe(value: any): number {
-    if (value === null || value === undefined || value === '') return 0;
-    const parsed = Number(value);
+  private safeParseLocal(key: string): number {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 0;
+    const val = localStorage.getItem(key);
+    if (val === null || val === undefined || val === '' || val === 'undefined' || val === 'NaN') return 0;
+    const parsed = Number(val);
     return isNaN(parsed) ? 0 : parsed;
   }
 
   // ========================================================
   // ⭐ LIVE CASH TRACKER LOGIC
   // ========================================================
-  public startingFloat = signal<number>(this.parseSafe(typeof window !== 'undefined' ? localStorage.getItem('maranth_float') : 0));
-  public supplierPayouts = signal<number>(this.parseSafe(typeof window !== 'undefined' ? localStorage.getItem('maranth_payouts') : 0));
+  public startingFloat = signal<number>(this.safeParseLocal('maranth_float'));
+  public supplierPayouts = signal<number>(this.safeParseLocal('maranth_payouts'));
   
   public liveCashInDrawer = computed(() => {
     const today = new Date().toDateString();
@@ -63,13 +64,13 @@ export class PosComponent implements OnInit, AfterViewInit {
       if (tx && tx.timestamp) {
         const txDate = new Date(tx.timestamp);
         if (txDate.toDateString() === today && tx.paymentMethod === 'Cash') {
-          todaysCashSales += this.parseSafe(tx.grandTotal);
+          todaysCashSales += this.safeParseLocal(tx.grandTotal as any);
         }
       }
     });
 
-    const currentFloat = this.parseSafe(this.startingFloat());
-    const currentPayouts = this.parseSafe(this.supplierPayouts());
+    const currentFloat = this.safeParseLocal(this.startingFloat() as any);
+    const currentPayouts = this.safeParseLocal(this.supplierPayouts() as any);
     const finalTotal = currentFloat + todaysCashSales - currentPayouts;
     
     return isNaN(finalTotal) ? 0 : finalTotal;
@@ -79,8 +80,8 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.activeModal.set({
       type: 'prompt', title: '💵 Add Cash to Drawer', message: 'Enter the amount of cash added (Starting float or top-up):', value: '',
       onConfirm: (val) => {
-        const amount = this.parseSafe(val);
-        const newTotal = this.parseSafe(this.startingFloat()) + amount;
+        const amount = this.safeParseLocal(val as any);
+        const newTotal = this.safeParseLocal(this.startingFloat() as any) + amount;
         this.startingFloat.set(newTotal);
         if (typeof window !== 'undefined') localStorage.setItem('maranth_float', newTotal.toString());
         this.salesService.closeModal();
@@ -92,8 +93,8 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.activeModal.set({
       type: 'prompt', title: '📤 Remove Cash from Drawer', message: 'Enter the amount removed (Supplier payment or safe drop):', value: '',
       onConfirm: (val) => {
-        const amount = this.parseSafe(val);
-        const newTotal = this.parseSafe(this.supplierPayouts()) + amount;
+        const amount = this.safeParseLocal(val as any);
+        const newTotal = this.safeParseLocal(this.supplierPayouts() as any) + amount;
         this.supplierPayouts.set(newTotal);
         if (typeof window !== 'undefined') localStorage.setItem('maranth_payouts', newTotal.toString());
         this.salesService.closeModal();
@@ -122,7 +123,7 @@ export class PosComponent implements OnInit, AfterViewInit {
   public miscAmount = signal<string>('');
 
   public addMiscCharge(): void {
-    const val = this.parseSafe(this.miscAmount());
+    const val = this.safeParseLocal(this.miscAmount() as any);
     if (val <= 0) return;
 
     const miscProduct: Product = {
@@ -154,7 +155,7 @@ export class PosComponent implements OnInit, AfterViewInit {
     txs.forEach(tx => {
       if (tx && tx.timestamp) {
         if (new Date(tx.timestamp).toDateString() === today) {
-          todayRev += this.parseSafe(tx.grandTotal);
+          todayRev += this.safeParseLocal(tx.grandTotal as any);
         }
       }
     });
@@ -175,8 +176,8 @@ export class PosComponent implements OnInit, AfterViewInit {
     
     prods.forEach(p => {
       if (!p) return;
-      const stock = this.parseSafe(p.stockQuantity);
-      if (stock <= this.parseSafe(p.minStockWarning || 5)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
+      const stock = this.safeParseLocal(p.stockQuantity as any);
+      if (stock <= this.safeParseLocal(p.minStockWarning || 5 as any)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
       if (this.getExpireStatus(p.expire) === 'danger') alerts.push({ type: 'danger', msg: `🔴 EXPIRED: ${p.name}!` });
     });
     return alerts;
@@ -226,8 +227,7 @@ export class PosComponent implements OnInit, AfterViewInit {
       const trigger = this.salesService.focusSearchTrigger();
       if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {
         setTimeout(() => {
-          this.searchQuery.set('');
-          this.searchInput.nativeElement.value = '';
+          this.searchQuery.set(''); // Only reset the signal!
           this.searchInput.nativeElement.focus();
         }, 50);
       }
@@ -238,9 +238,8 @@ export class PosComponent implements OnInit, AfterViewInit {
       if (bsk.length === 0) {
         this.isMobileBasketOpen.set(false);
         setTimeout(() => {
-          this.searchQuery.set('');
+          this.searchQuery.set(''); // Only reset the signal!
           if (this.searchInput?.nativeElement) {
-            this.searchInput.nativeElement.value = '';
             this.searchInput.nativeElement.focus();
           }
         }, 50);
@@ -290,35 +289,47 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.closeQuickEdit();
   }
 
-  public onSearchEnter(query: string): void {
-    const cleanQuery = query.trim();
+  // ========================================================
+  // ⭐ THE FIXED SEARCH SCANNER LOGIC
+  // ========================================================
+  public onSearchEnter(): void {
+    const cleanQuery = this.searchQuery().trim();
     if (!cleanQuery) return;
 
+    // Check if it's an exact barcode match
     const wasBarcode = this.salesService.scanBarcodeExact(cleanQuery);
     
     if (wasBarcode) {
+      // It matched! Add it to cart and wipe the search bar clean instantly
       this.searchQuery.set('');
-      if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
     } else {
-      const isNumericBarcode = /^\d{7,14}$/.test(cleanQuery);
-      const isUrl = cleanQuery.toLowerCase().startsWith('http') || cleanQuery.toLowerCase().startsWith('www');
-      const isLongQrHash = cleanQuery.length > 15 && !cleanQuery.includes(' ');
+      // It did NOT match exactly. 
+      // If it looks like pure numbers, the cashier definitely scanned a barcode that isn't in the system.
+      // Warn them, and clear the bar so they aren't stuck!
+      const isNumericBarcode = /^\d{4,20}$/.test(cleanQuery);
 
-      if (isNumericBarcode || isUrl || isLongQrHash) {
+      if (isNumericBarcode) {
         this.searchQuery.set('');
-        if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
         
-        let msg = `The barcode [ ${cleanQuery} ] is not in your inventory.`;
-        if (isUrl || isLongQrHash) msg = "⚠️ QR CODE DETECTED ⚠️\n\nYou accidentally scanned a QR code instead of the product barcode! Please aim the scanner at the striped retail barcode.";
-
-        this.salesService.activeModal.set({ type: 'warning', title: '⚠️ Scan Failed', message: msg, value: '', onConfirm: () => {} });
+        this.salesService.activeModal.set({ 
+          type: 'warning', 
+          title: '⚠️ Not Found', 
+          message: `The barcode [ ${cleanQuery} ] is not registered in your inventory.`, 
+          value: '', 
+          onConfirm: () => this.salesService.closeModal() 
+        });
+        
+        // Auto-close warning after 2 seconds
         setTimeout(() => {
-          if (this.salesService.activeModal()?.title === '⚠️ Scan Failed') {
+          if (this.salesService.activeModal()?.title === '⚠️ Not Found') {
             this.salesService.closeModal();
             setTimeout(() => this.salesService.triggerSearchFocus(), 50);
           }
         }, 2000);
       }
+      
+      // If it is NOT purely numbers (e.g. they typed "Cola"), we leave the text there
+      // so they can read it and click the item from the filtered grid!
     }
   }
 
@@ -328,15 +339,14 @@ export class PosComponent implements OnInit, AfterViewInit {
   }
 
   public handleProductClick(prod: Product): void {
-    this.searchQuery.set('');
-    if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
+    this.searchQuery.set(''); // Only clear the signal!
 
     const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {
       this.salesService.activeModal.set({
         type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${prod.name}:`, value: '1.000',
         onConfirm: (val) => {
-          const weight = this.parseSafe(val);
+          const weight = this.safeParseLocal(val as any);
           if (weight > 0) this.salesService.addToBasket(prod, undefined, weight);
           this.salesService.closeModal();
           setTimeout(() => this.salesService.triggerSearchFocus(), 100);
