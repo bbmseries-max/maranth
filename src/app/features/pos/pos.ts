@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
@@ -9,7 +9,7 @@ import { ShoppingBasketComponent } from './components/shopping-basket/shopping-b
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, ShoppingBasketComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ShoppingBasketComponent],
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
@@ -31,8 +31,16 @@ export class PosComponent implements OnInit, AfterViewInit {
   public editForm: Partial<Product> = {};
 
   // ========================================================
-  // ⭐ BULLETPROOF NUMBER PARSER
+  // ⭐ THE ULTIMATE FIX: CUSTOM MONEY FORMATTER
   // ========================================================
+  // We completely bypass Angular's CurrencyPipe to prevent NG02100 crashes
+  public formatMoney(amount: any): string {
+    if (amount === null || amount === undefined || amount === '') return '€0.00';
+    let parsed = Number(amount);
+    if (isNaN(parsed)) return '€0.00';
+    return '€' + parsed.toFixed(2);
+  }
+
   private parseSafe(value: any): number {
     if (value === null || value === undefined || value === '') return 0;
     const parsed = Number(value);
@@ -42,14 +50,13 @@ export class PosComponent implements OnInit, AfterViewInit {
   // ========================================================
   // ⭐ LIVE CASH TRACKER LOGIC
   // ========================================================
-  public startingFloat = signal<number>(this.parseSafe(localStorage.getItem('maranth_float')));
-  public supplierPayouts = signal<number>(this.parseSafe(localStorage.getItem('maranth_payouts')));
+  public startingFloat = signal<number>(this.parseSafe(typeof window !== 'undefined' ? localStorage.getItem('maranth_float') : 0));
+  public supplierPayouts = signal<number>(this.parseSafe(typeof window !== 'undefined' ? localStorage.getItem('maranth_payouts') : 0));
   
   public liveCashInDrawer = computed(() => {
     const today = new Date().toDateString();
     let todaysCashSales = 0;
     
-    // Safety check for empty transactions
     const txs = this.salesService.transactions() || [];
     
     txs.forEach(tx => {
@@ -65,7 +72,6 @@ export class PosComponent implements OnInit, AfterViewInit {
     const currentPayouts = this.parseSafe(this.supplierPayouts());
     const finalTotal = currentFloat + todaysCashSales - currentPayouts;
     
-    // Final NaN guard before sending to HTML
     return isNaN(finalTotal) ? 0 : finalTotal;
   });
 
@@ -76,7 +82,7 @@ export class PosComponent implements OnInit, AfterViewInit {
         const amount = this.parseSafe(val);
         const newTotal = this.parseSafe(this.startingFloat()) + amount;
         this.startingFloat.set(newTotal);
-        localStorage.setItem('maranth_float', newTotal.toString());
+        if (typeof window !== 'undefined') localStorage.setItem('maranth_float', newTotal.toString());
         this.salesService.closeModal();
       }
     });
@@ -89,7 +95,7 @@ export class PosComponent implements OnInit, AfterViewInit {
         const amount = this.parseSafe(val);
         const newTotal = this.parseSafe(this.supplierPayouts()) + amount;
         this.supplierPayouts.set(newTotal);
-        localStorage.setItem('maranth_payouts', newTotal.toString());
+        if (typeof window !== 'undefined') localStorage.setItem('maranth_payouts', newTotal.toString());
         this.salesService.closeModal();
       }
     });
@@ -101,8 +107,10 @@ export class PosComponent implements OnInit, AfterViewInit {
       onConfirm: () => {
         this.startingFloat.set(0);
         this.supplierPayouts.set(0);
-        localStorage.setItem('maranth_float', '0');
-        localStorage.setItem('maranth_payouts', '0');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('maranth_float', '0');
+          localStorage.setItem('maranth_payouts', '0');
+        }
         this.salesService.closeModal();
       }
     });
@@ -154,7 +162,6 @@ export class PosComponent implements OnInit, AfterViewInit {
     const safeRev = isNaN(todayRev) ? 0 : todayRev;
     let rawPercent = (safeRev / this.salesTarget) * 100;
     
-    // Absolute NaN guard for division by zero or bad data
     if (isNaN(rawPercent) || !isFinite(rawPercent)) rawPercent = 0;
     
     const safePercent = Math.min(100, rawPercent);
@@ -250,7 +257,7 @@ export class PosComponent implements OnInit, AfterViewInit {
   public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
     if (!expire) return 'none';
     const expDate = new Date(expire + 'T00:00:00');
-    if (isNaN(expDate.getTime())) return 'none'; // Invalid date guard
+    if (isNaN(expDate.getTime())) return 'none'; 
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);

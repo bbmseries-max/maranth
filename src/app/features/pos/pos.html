@@ -131,27 +131,26 @@
             <button class="app-btn" style="flex: 1; background: #991b1b; color: white; font-size: 11px; padding: 6px; border-radius: 4px;" (click)="removeManualCash()">- Cash</button>
           </div>
 
-          <!-- Fixed Currency Pipes (Only 2 arguments!) -->
           <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
             <span>Starting Float / Added:</span>
-            <span style="color: #cbd5e1;">{{ startingFloat() | currency:'EUR' }}</span>
+            <span style="color: #cbd5e1;">{{ formatMoney(startingFloat()) }}</span>
           </div>
           
           <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
             <span>Supplier Payouts / Drops:</span>
-            <span style="color: #ef4444;">-{{ supplierPayouts() | currency:'EUR' }}</span>
+            <span style="color: #ef4444;">-{{ formatMoney(supplierPayouts()) }}</span>
           </div>
 
           <div style="border-top: 1px dashed #334155; margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline;">
             <span style="color: #cbd5e1; font-size: 12px; font-weight: bold;">Expected Cash:</span>
-            <span style="color: #10b981; font-size: 20px; font-weight: 900;">{{ liveCashInDrawer() | currency:'EUR' }}</span>
+            <span style="color: #10b981; font-size: 20px; font-weight: 900;">{{ formatMoney(liveCashInDrawer()) }}</span>
           </div>
         </div>
 
         <div class="mobile-hide" style="background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
             <div class="panel-title" style="margin: 0; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase;">🎯 Daily Target</div>
-            <span style="color: #3b82f6; font-size: 11px; font-weight: bold;">{{ targetProgress().rev | currency:'EUR' }} / €{{ salesTarget }}</span>
+            <span style="color: #3b82f6; font-size: 11px; font-weight: bold;">{{ formatMoney(targetProgress().rev) }} / €{{ salesTarget }}</span>
           </div>
           <div class="progress-bar-bg" style="width: 100%; height: 8px; background: #0f172a; border-radius: 4px; overflow: hidden;">
             <div class="progress-bar-fill" [style.width.%]="targetProgress().percent" [style.background]="targetProgress().percent >= 100 ? '#10b981' : '#3b82f6'" style="height: 100%; transition: width 0.5s ease;"></div>
@@ -211,7 +210,7 @@
                 <div class="qa-card" (click)="handleProductClick(prod)">
                   <span class="qa-name">{{ prod.name }}</span>
                   <div class="qa-bottom">
-                    <span class="qa-price">{{ prod.price | currency:'EUR' }}</span>
+                    <span class="qa-price">{{ formatMoney(prod.price) }}</span>
                     <span class="qa-badge weighted">⚖️</span>
                   </div>
                 </div>
@@ -226,7 +225,7 @@
                 <div class="qa-card" (click)="handleProductClick(prod)">
                   <span class="qa-name">{{ prod.name }}</span>
                   <div class="qa-bottom">
-                    <span class="qa-price">{{ prod.price | currency:'EUR' }}</span>
+                    <span class="qa-price">{{ formatMoney(prod.price) }}</span>
                     <span class="qa-badge">📦</span>
                   </div>
                 </div>
@@ -275,7 +274,7 @@
                 <div class="prod-stock-badge" [class.low-stock]="liveStock <= 5">
                   📦 {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
                 </div>
-                <div class="prod-price">{{ prod.price | currency:'EUR' }}</div>
+                <div class="prod-price">{{ formatMoney(prod.price) }}</div>
               </div>
             </div>
           } @empty {
@@ -301,7 +300,7 @@
         </span>
       </div>
       <span>View Checkout ➔</span>
-      <span style="font-size: 18px;">{{ salesService.grandTotal() | currency:'EUR' }}</span>
+      <span style="font-size: 18px;">{{ formatMoney(salesService.grandTotal()) }}</span>
     </div>
   }
 

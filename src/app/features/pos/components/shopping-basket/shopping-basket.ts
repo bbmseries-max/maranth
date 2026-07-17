@@ -1,11 +1,11 @@
 import { Component, inject, ViewChild, ElementRef, effect } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { SalesService } from '../../../../shared/services/sales';
 
 @Component({
   selector: 'app-shopping-basket',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DecimalPipe],
+  imports: [CommonModule],
   templateUrl: './shopping-basket.html',
   styleUrls: ['./shopping-basket.css']
 })
@@ -14,15 +14,16 @@ export class ShoppingBasketComponent {
 
   @ViewChild('scrollViewport') private scrollViewport!: ElementRef<HTMLDivElement>;
 
-  // Safe wrapper for the HTML pipes
-  public getSafeGrandTotal(): number {
-    const val = this.salesService.grandTotal();
-    return isNaN(val) ? 0 : val;
+  // ⭐ THE ULTIMATE FIX: CUSTOM MONEY FORMATTER
+  public formatMoney(amount: any): string {
+    if (amount === null || amount === undefined || amount === '') return '€0.00';
+    let parsed = Number(amount);
+    if (isNaN(parsed)) return '€0.00';
+    return '€' + parsed.toFixed(2);
   }
 
   constructor() {
     effect(() => {
-      // Safely access basket to trigger effect
       const currentBasket = this.salesService.basket() || [];
       setTimeout(() => {
         if (this.scrollViewport?.nativeElement) {
