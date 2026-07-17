@@ -34,20 +34,26 @@ export class SalesService {
   public highlightedItemId = signal<string | null>(null);
   public activeModal = signal<POSModal | null>(null);
 
+  // ⭐ THE MISSING SEARCH FOCUS TRIGGER
   public focusSearchTrigger = signal<number>(0);
 
   constructor() {
     const app = initializeApp(firebaseConfig);
     this.db = getFirestore(app);
 
-    this.setupCloudSync('cashiers', this.registeredCashiers);
-    this.setupCloudSync('products', this.products);
-    this.setupCloudSync('transactions', this.transactions);
-    this.setupCloudSync('categories', this.categories);
-    this.setupCloudSync('suppliers', this.suppliers);
+    this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
+    this.setupCloudSync('products', this.products, 'maranth_products');
+    this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
+    this.setupCloudSync('categories', this.categories, 'maranth_categories');
+    this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
 
     effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
     effect(() => localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket())));
+  }
+
+  // ⭐ THE MISSING TRIGGER FUNCTION
+  public triggerSearchFocus(): void {
+    this.focusSearchTrigger.update(v => v + 1);
   }
 
   private loadLocalData(key: string, fallback: any): any {
@@ -55,34 +61,52 @@ export class SalesService {
     return saved ? JSON.parse(saved) : fallback;
   }
 
-  private setupCloudSync(collectionName: string, targetSignal: any) {
+  private setupCloudSync(collectionName: string, targetSignal: any, storageKey: string, fallbackData: any[] = []) {
     onSnapshot(collection(this.db, collectionName), (snapshot) => {
+      if (snapshot.empty) {
+        const localData = localStorage.getItem(storageKey);
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          if (parsed && parsed.length > 0) {
+            parsed.forEach((item: any) => {
+              const docId = (item.id || item.username).toString();
+              setDoc(doc(this.db, collectionName, docId), item);
+            });
+            return; 
+          }
+        }
+        if (fallbackData.length > 0) {
+          fallbackData.forEach((item: any) => {
+            const docId = (item.id || item.username).toString();
+            setDoc(doc(this.db, collectionName, docId), item);
+          });
+          return;
+        }
+      }
       const data = snapshot.docs.map(doc => doc.data());
       targetSignal.set(data);
     });
   }
 
-  public triggerSearchFocus(): void {
-    this.focusSearchTrigger.set(Date.now());
-  }
-
-  public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier', forceApproval: boolean = false): boolean {
+  public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier'): boolean {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
     
-    const isApproved = forceApproval || existingUsers.length === 0;
+    // Auto-approve the very first admin
+    const isApproved = existingUsers.length === 0 ? true : false;
 
     this.registeredCashiers.update(users => [...users, { username, pin, role, isApproved }]);
     setDoc(doc(this.db, 'cashiers', username), { username, pin, role, isApproved });
     return true; 
   }
 
+  // ⭐ THE MISSING STAFF APPROVAL TOGGLE
   public toggleCashierApproval(username: string, isApproved: boolean): void {
     const users = this.registeredCashiers();
-    const user = users.find(u => u.username === username);
-    if (user) {
-       this.registeredCashiers.update(all => all.map(u => u.username === username ? { ...u, isApproved } : u));
-       setDoc(doc(this.db, 'cashiers', username), { ...user, isApproved });
+    const targetUser = users.find(u => u.username === username);
+    if (targetUser) {
+      const updatedUser = { ...targetUser, isApproved };
+      setDoc(doc(this.db, 'cashiers', username), updatedUser);
     }
   }
 
@@ -120,7 +144,7 @@ export class SalesService {
 
   public netSubtotal = computed(() => {
     return this.basket().reduce((acc, item) => {
-      const taxRate = item.product.taxRate || 1.24;
+      const taxRate = item.product.taxRate || 1.24; 
       const lineGross = item.product.price * item.quantity;
       const lineNet = lineGross / taxRate;
       return acc + (item.isRefund ? -lineNet : lineNet);
@@ -141,29 +165,9 @@ export class SalesService {
 
     if (!isRef) {
       const liveProduct = this.products().find(p => p.id === product.id) || product;
-      
-      if (liveProduct.expire) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); 
-        
-        const expDate = new Date(liveProduct.expire + 'T00:00:00');
-        expDate.setHours(0, 0, 0, 0); 
-
-        if (expDate < today) {
-          this.activeModal.set({
-            type: 'warning',
-            title: '☠️ PRODUCT EXPIRED',
-            message: `DO NOT SELL THIS ITEM!\n\n${liveProduct.name} expired on ${liveProduct.expire}.\n\nPlease remove this item from the customer's basket immediately and pull it from the shelf.`,
-            value: '',
-            onConfirm: () => this.closeModal()
-          });
-          return; 
-        }
-      }
-
       const currentQtyInBasket = this.basket().find(item => item.product.id === product.id && !item.isRefund)?.quantity || 0;
-      let intendedQty = 0;
       
+      let intendedQty = 0;
       if (currentQtyInBasket > 0) {
         const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
         intendedQty = parseFloat((currentQtyInBasket + incrementStep).toFixed(3));
@@ -173,15 +177,21 @@ export class SalesService {
 
       const availableStock = parseFloat(liveProduct.stockQuantity as any) || 0;
 
-      if (availableStock <= 0 || intendedQty > availableStock) {
-        this.activeModal.set({
-          type: 'warning',
-          title: '⚠️ Insufficient Stock',
-          message: `Cannot add ${liveProduct.name} to the basket.\n\nAvailable in Store: ${availableStock}\nRequested Amount: ${intendedQty}`,
-          value: '',
-          onConfirm: () => this.closeModal()
-        });
-        return; 
+      // Allow Misc charges to bypass stock checks
+      if (!product.id.startsWith('MISC-')) {
+        if (availableStock <= 0 || intendedQty > availableStock) {
+          this.activeModal.set({
+            type: 'warning',
+            title: '⚠️ Insufficient Stock',
+            message: `Cannot add ${liveProduct.name} to the basket.\n\nAvailable in Store: ${availableStock}\nRequested Amount: ${intendedQty}`,
+            value: '',
+            onConfirm: () => {
+              this.closeModal();
+              this.triggerSearchFocus();
+            }
+          });
+          return; 
+        }
       }
     }
 
@@ -199,8 +209,6 @@ export class SalesService {
         return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
       }
     });
-
-    this.triggerSearchFocus();
   }
 
   public removeFromBasket(product: Product, isRefund: boolean = false): void {
@@ -220,7 +228,6 @@ export class SalesService {
         return updatedBasket;
       }
     });
-
     this.triggerSearchFocus();
   }
 
@@ -244,11 +251,14 @@ export class SalesService {
     };
 
     currentBasket.forEach(item => {
-      const product = this.products().find(p => p.id === item.product.id);
-      if (product) {
-        const change = item.isRefund ? item.quantity : -item.quantity;
-        const newQuantity = parseFloat((product.stockQuantity + change).toFixed(3));
-        setDoc(doc(this.db, 'products', product.id.toString()), { ...product, stockQuantity: newQuantity });
+      // Don't deduct stock for MISC open charges
+      if (!item.product.id.startsWith('MISC-')) {
+        const product = this.products().find(p => p.id === item.product.id);
+        if (product) {
+          const change = item.isRefund ? item.quantity : -item.quantity;
+          const newQuantity = parseFloat((product.stockQuantity + change).toFixed(3));
+          setDoc(doc(this.db, 'products', product.id.toString()), { ...product, stockQuantity: newQuantity });
+        }
       }
     });
 
@@ -264,15 +274,14 @@ export class SalesService {
       value: '', 
       onConfirm: () => {
         this.closeModal();
-        setTimeout(() => this.triggerSearchFocus(), 50);
+        this.triggerSearchFocus();
       }
     });
 
     setTimeout(() => {
       if (this.activeModal()?.title === '✅ Transaction Processed') {
         this.closeModal();
-        // ⭐ THE FIX: Give the DOM 50ms to wipe the modal, then trigger auto-focus!
-        setTimeout(() => this.triggerSearchFocus(), 50);
+        this.triggerSearchFocus();
       }
     }, 2000);
   }
@@ -289,14 +298,12 @@ export class SalesService {
     if (suspended && suspended.length > 0) {
       this.basket.set([...suspended]);
       this.suspendedBasket.set(null);
-      this.triggerSearchFocus();
     }
   }
 
+  // ⭐ THE MISSING EXACT SCANNER LOGIC
   public scanBarcodeExact(query: string): boolean {
     const queryLower = query.toLowerCase().trim();
-    if (!queryLower) return false;
-    
     const found = this.products().find(p => 
       (p.barcode && p.barcode.toLowerCase() === queryLower) || 
       (p.id && p.id.toString().toLowerCase() === queryLower)
@@ -314,16 +321,15 @@ export class SalesService {
             const weight = parseFloat(val);
             if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
             this.closeModal();
-            setTimeout(() => this.triggerSearchFocus(), 100);
+            this.triggerSearchFocus();
           }
         });
       } else {
         this.addToBasket(found);
       }
-      return true; 
+      return true;
     }
-
-    return false; 
+    return false;
   }
 
   public topSellingProducts = computed(() => {
