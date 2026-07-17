@@ -1,47 +1,13 @@
-:host {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  width: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  font-family: 'Inter', system-ui, sans-serif;
-  background-color: #ffffff;
-}
+:host { flex: 1 1 0 !important; min-height: 0 !important; height: 100% !important; width: 100% !important; display: flex !important; flex-direction: column !important; overflow: hidden !important; font-family: 'Inter', system-ui, sans-serif; background-color: #ffffff; }
+.basket-container { flex: 1 1 0 !important; min-height: 0 !important; display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
 
-.basket-container {
-  flex: 1 1 0 !important;
-  min-height: 0 !important;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
-
-.basket-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
-  flex-shrink: 0 !important;
-}
-
+.basket-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0 !important; }
 .header-left { display: flex; align-items: center; gap: 8px; }
 .basket-icon { color: #0b57d0; }
 .basket-title { font-weight: 500; color: #1b1c1d; font-size: 15px; }
 .items-badge { background: #d3e3fd; color: #041e49; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
 
-.basket-items-viewport {
-  flex: 1 1 0 !important;          
-  overflow-y: auto !important;  
-  min-height: 0 !important;
-  padding: 12px;
-  box-sizing: border-box;
-}
-
+.basket-items-viewport { flex: 1 1 0 !important; overflow-y: auto !important; min-height: 0 !important; padding: 12px; box-sizing: border-box; }
 .basket-items-viewport::-webkit-scrollbar { width: 6px; }
 .basket-items-viewport::-webkit-scrollbar-track { background: transparent; }
 .basket-items-viewport::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -65,19 +31,12 @@
 
 .quantity-controls { display: flex; align-items: center; background: #f1f5f9; border-radius: 20px; padding: 2px; }
 .btn-qty { background: none; border: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; color: #0f172a; transition: background-color 0.1s; }
-.btn-qty:hover { background-color: #e2e8f0; }
+.btn-qty:hover { background: #e2e8f0; }
 .qty-display { font-size: 12px; font-weight: 600; padding: 0 8px; min-width: 55px; text-align: center; }
 .price-section { display: flex; align-items: center; gap: 12px; justify-content: flex-end; min-width: 75px; }
 .line-total { font-size: 13px; font-weight: 600; color: #1b1c1d; }
 
-.basket-summary-footer {
-  flex-shrink: 0 !important;
-  background: #f8fafc;
-  border-top: 2px solid #e2e8f0;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
+.basket-summary-footer { flex-shrink: 0 !important; background: #f8fafc; border-top: 2px solid #e2e8f0; padding: 16px; box-sizing: border-box; }
 .summary-matrix { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
 .summary-label { color: #444746; }
