@@ -20,7 +20,6 @@
   overflow: hidden;
 }
 
-/* STREAMING_CHUNK: Header setup... */
 .basket-header {
   display: flex;
   justify-content: space-between;
@@ -35,11 +34,10 @@
 .basket-title { font-weight: 500; color: #1b1c1d; font-size: 15px; }
 .items-badge { background: #d3e3fd; color: #041e49; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
 
-/* STREAMING_CHUNK: Items viewport and scrolling... */
 .basket-items-viewport {
   flex: 1 1 0 !important;          
   overflow-y: auto !important;  
-  min-height: 0 !important; /* ⭐ CRITICAL FIX */
+  min-height: 0 !important;
   padding: 12px;
   box-sizing: border-box;
 }
@@ -54,7 +52,6 @@
 .empty-text { font-size: 14px; font-weight: 500; margin: 0; }
 .empty-hint { font-size: 11px; opacity: 0.75; margin-top: 4px; }
 
-/* STREAMING_CHUNK: Basket item rows... */
 .item-list { display: flex; flex-direction: column; gap: 8px; }
 .basket-item-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; background: #ffffff; padding: 12px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); border-left: 4px solid #e2e8f0; transition: border-color 0.2s, transform 0.15s, background-color 0.2s; }
 .basket-item-row:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
@@ -66,7 +63,6 @@
 .refund-badge { background-color: #ef4444; color: white; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-right: 6px; vertical-align: middle; }
 .negative-price { color: #ef4444 !important; }
 
-/* STREAMING_CHUNK: Quantity controls... */
 .quantity-controls { display: flex; align-items: center; background: #f1f5f9; border-radius: 20px; padding: 2px; }
 .btn-qty { background: none; border: none; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; color: #0f172a; transition: background-color 0.1s; }
 .btn-qty:hover { background-color: #e2e8f0; }
@@ -74,9 +70,8 @@
 .price-section { display: flex; align-items: center; gap: 12px; justify-content: flex-end; min-width: 75px; }
 .line-total { font-size: 13px; font-weight: 600; color: #1b1c1d; }
 
-/* STREAMING_CHUNK: Checkout summary footer... */
 .basket-summary-footer {
-  flex-shrink: 0 !important; /* ⭐ CRITICAL FIX: The arcade buttons will NEVER be crushed again! */
+  flex-shrink: 0 !important;
   background: #f8fafc;
   border-top: 2px solid #e2e8f0;
   padding: 16px;
