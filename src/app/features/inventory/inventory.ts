@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
@@ -9,7 +9,7 @@ import { Product, Category, Supplier } from '../../shared/services/pos-data.mode
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DecimalPipe],
+  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe],
   templateUrl: './inventory.html',
   styleUrls: ['./inventory.css']
 })
