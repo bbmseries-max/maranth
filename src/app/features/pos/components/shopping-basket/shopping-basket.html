@@ -10,7 +10,8 @@
   </div>
 
   <!-- 📦 Scrolling Item Viewport Window -->
-  <div class="basket-items-viewport">
+  <!-- ⭐ THE FIX: Added #scrollViewport right here! -->
+  <div class="basket-items-viewport" #scrollViewport>
     @if (salesService.basket().length === 0) {
       <div class="empty-state">
         <span class="material-icons empty-icon">shopping_cart_checkout</span>
@@ -21,7 +22,6 @@
       <div class="item-list">
         @for (item of salesService.basket(); track item.product.id) {
           
-          <!-- ⭐ Added the is-flashing class binding here! -->
           <div class="basket-item-row" 
                [class.weighted-item]="item.product.isWeighted"
                [class.is-flashing]="salesService.highlightedItemId() === item.product.id">
@@ -64,37 +64,3 @@
       </div>
     }
   </div>
-
-  <!-- 💳 Sticky Summary Action Footer View -->
-  <div class="basket-summary-footer">
-    
-    <!-- 💶 Real-Time Financial Totals Matrix -->
-    @if (salesService.basket().length > 0) {
-      <div class="summary-matrix">
-        <div class="summary-row">
-          <span class="summary-label">Net Subtotal</span>
-          <span class="summary-value">{{ salesService.netSubtotal() | currency:'EUR':'symbol':'1.2-2' }}</span>
-        </div>
-        <div class="summary-row">
-          <span class="summary-label">VAT (24% standard rate)</span>
-          <span class="summary-value">{{ salesService.taxAmount() | currency:'EUR':'symbol':'1.2-2' }}</span>
-        </div>
-        <div class="summary-divider"></div>
-        <div class="summary-row total-row">
-          <span class="grand-total-label">Grand Total</span>
-          <span class="grand-total-value">{{ salesService.grandTotal() | currency:'EUR':'symbol':'1.2-2' }}</span>
-        </div>
-      </div>
-    }
-
-    <!-- 💳 Sticky Payment Method Selector Block -->
-    <div class="payment-method-panel">
-      <div class="payment-button-group">
-        <button type="button" class="btn-payment" (click)="salesService.processPayment('Cash')" [disabled]="salesService.basket().length === 0">💵 Cash</button>
-        <button type="button" class="btn-payment" (click)="salesService.processPayment('Card')" [disabled]="salesService.basket().length === 0">💳 Card</button>
-        <button type="button" class="btn-payment" (click)="salesService.processPayment('Debit')" [disabled]="salesService.basket().length === 0">🏦 Debit</button>
-      </div>
-    </div>
-
-  </div>
-</div>

@@ -1,7 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef, effect } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { SalesService } from '../../../../shared/services/sales';
-import { BasketItem } from '../../../../shared/services/pos-data.models'
 
 @Component({
   selector: 'app-shopping-basket',
@@ -13,36 +12,24 @@ import { BasketItem } from '../../../../shared/services/pos-data.models'
 export class ShoppingBasketComponent {
   public salesService = inject(SalesService);
 
-  // 🎯 This maps the service's "basket" to your component's "basketItems"
-  public basketItems = this.salesService.basket;   
-  public totalAmount = this.salesService.subtotal;  
+  // ⭐ Grab the scrolling container from the HTML
+  @ViewChild('scrollViewport') private scrollViewport!: ElementRef<HTMLDivElement>;
 
-  public increaseQuantity(item: BasketItem): void {
-    // Correct: uses local component property
-    const current = this.basketItems(); 
-    const found = current.find(i => i.product.id === item.product.id);
-    if (found) {
-      found.quantity++;
-      this.basketItems.set([...current]);
-    }
-  }
-
-  public decreaseQuantity(item: BasketItem): void {
-    // Correct: uses local component property
-    const current = this.basketItems(); 
-    const found = current.find(i => i.product.id === item.product.id);
-    if (found) {
-      if (found.quantity > 1) {
-        found.quantity--;
-        this.basketItems.set([...current]);
-      } else {
-        this.basketItems.set(current.filter(i => i.product.id !== item.product.id));
-      }
-    }
-  }
-
-  public processCheckout(): void {
-    this.salesService.clearBasket();
-    alert('Sale completed successfully!');
+  constructor() {
+    // ⭐ THE FIX: Auto-Scroll to the bottom!
+    // This effect runs automatically every time the basket contents change.
+    effect(() => {
+      // 1. Read the basket to trigger the tracking
+      const currentBasket = this.salesService.basket();
+      
+      // 2. Wait 50 milliseconds for Angular to finish drawing the new HTML row
+      setTimeout(() => {
+        if (this.scrollViewport?.nativeElement) {
+          const el = this.scrollViewport.nativeElement;
+          // 3. Force the scrollbar to the absolute bottom
+          el.scrollTop = el.scrollHeight;
+        }
+      }, 50);
+    });
   }
 }
