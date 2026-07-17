@@ -14,11 +14,13 @@ export class ReportsComponent {
   public salesService = inject(SalesService);
   public todayDate = new Date();
 
-  // --- 🎛️ FILTERS ---
+  // --- ⭐ NEW: TABS & TIME FILTERS ---
+  public activeTab = signal<'ANALYTICS' | 'Z_REPORT'>('ANALYTICS');
+  public dateRange = signal<'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'ALL_TIME'>('TODAY');
+
   public selectedCategoryId = signal<string>('ALL');
   public selectedSupplierId = signal<string>('ALL');
   
-  // 📁 Dynamic Category Extractor
   public categoriesList = computed(() => {
     const explicitCategories = this.salesService.categories();
     if (explicitCategories && explicitCategories.length > 0) {
@@ -27,7 +29,6 @@ export class ReportsComponent {
     return [{id: 'ALL', name: '🌐 All Categories'}];
   });
 
-  // 🚚 Dynamic Supplier Extractor
   public suppliersList = computed(() => {
     const explicitSuppliers = this.salesService.suppliers();
     if (explicitSuppliers && explicitSuppliers.length > 0) {
@@ -36,32 +37,75 @@ export class ReportsComponent {
     return [{id: 'ALL', name: '🚚 All Suppliers'}];
   });
 
-  // --- 💶 REVENUE METRICS ---
+  // --- ⭐ NEW: MASTER TRANSACTION FILTER ---
+  // This calculates exactly which receipts belong in the selected time period!
+  public filteredTransactions = computed(() => {
+    const allTx = this.salesService.transactions();
+    const tab = this.activeTab();
+    
+    // Z-Report is ALWAYS locked to Today!
+    const range = tab === 'Z_REPORT' ? 'TODAY' : this.dateRange();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    let start = new Date(0); // Beginning of time
+    let end = new Date(3000, 0, 1); // End of time
+
+    if (range === 'TODAY') {
+      start = today;
+      end = tomorrow;
+    } else if (range === 'YESTERDAY') {
+      start = new Date(today);
+      start.setDate(start.getDate() - 1);
+      end = today;
+    } else if (range === 'THIS_WEEK') {
+      start = new Date(today);
+      const day = start.getDay();
+      const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+      start.setDate(diff);
+      end = tomorrow;
+    } else if (range === 'THIS_MONTH') {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = tomorrow;
+    }
+
+    return allTx.filter(tx => {
+      const txDate = new Date(tx.timestamp);
+      return txDate >= start && txDate < end;
+    });
+  });
+
+  // --- 💶 DYNAMIC REVENUE METRICS ---
+  // These now listen to `filteredTransactions` instead of `allTransactions`!
   public totalRevenue = computed(() => {
-    return this.salesService.transactions().reduce((sum, tx) => sum + tx.grandTotal, 0);
+    return this.filteredTransactions().reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
   public totalTax = computed(() => {
-    return this.salesService.transactions().reduce((sum, tx) => sum + (tx.taxAmount || 0), 0);
+    return this.filteredTransactions().reduce((sum, tx) => sum + (tx.taxAmount || 0), 0);
   });
 
   public cashRevenue = computed(() => {
-    return this.salesService.transactions()
+    return this.filteredTransactions()
       .filter(tx => tx.paymentMethod === 'Cash')
       .reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
   public cardRevenue = computed(() => {
-    return this.salesService.transactions()
+    return this.filteredTransactions()
       .filter(tx => tx.paymentMethod === 'Card' || tx.paymentMethod === 'Debit')
       .reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
   public totalSalesCount = computed(() => {
-    return this.salesService.transactions().length;
+    return this.filteredTransactions().length;
   });
 
-  // --- 📦 INVENTORY VALUATION METRICS ---
+  // --- 📦 INVENTORY VALUATION METRICS (Always live snapshot) ---
   public totalInventoryCost = computed(() => {
     return this.salesService.products()
       .filter(p => p.stockQuantity > 0)
@@ -82,7 +126,21 @@ export class ReportsComponent {
 
   // --- 🏆 PRODUCT LEADERBOARD ---
   public filteredTopSellingProducts = computed(() => {
-    let topProducts = this.salesService.topSellingProducts();
+    const itemsMap = new Map<string, { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number }>();
+    
+    this.filteredTransactions().forEach(tx => {
+      tx.items.forEach(item => {
+        if (!itemsMap.has(item.product.id)) {
+          itemsMap.set(item.product.id, { id: item.product.id, name: item.product.name, unitsSold: 0, totalRevenue: 0, stockQuantity: item.product.stockQuantity || 0 });
+        }
+        const stats = itemsMap.get(item.product.id)!;
+        const effectiveQuantity = item.isRefund ? -item.quantity : item.quantity;
+        stats.unitsSold += effectiveQuantity;
+        stats.totalRevenue += (item.product.price * effectiveQuantity);
+      });
+    });
+    
+    let topProducts = Array.from(itemsMap.values()).sort((a, b) => b.unitsSold - a.unitsSold);
     const allProducts = this.salesService.products();
     
     if (this.selectedCategoryId() !== 'ALL') {
@@ -112,10 +170,26 @@ export class ReportsComponent {
   public selectedTxnDetails = computed(() => {
     const id = this.selectedTxnId();
     if (!id) return null;
-    return this.salesService.transactions().find(tx => tx.id === id) || null;
+    return this.filteredTransactions().find(tx => tx.id === id) || null;
   });
 
   // --- 🌡️ HEATMAP HELPER ---
+  public getHourlyHeatmap = computed(() => {
+    const hours = Array.from({length: 24}, (_, i) => ({
+      hour: i, hourLabel: `${i.toString().padStart(2, '0')}:00`, revenue: 0, ticketCount: 0, intensityPercentage: 0
+    }));
+
+    this.filteredTransactions().forEach(tx => {
+      const hour = new Date(tx.timestamp).getHours();
+      hours[hour].revenue += tx.grandTotal;
+      hours[hour].ticketCount += 1;
+    });
+
+    const maxRev = Math.max(...hours.map(h => h.revenue));
+    if (maxRev > 0) hours.forEach(h => { h.intensityPercentage = Math.round((h.revenue / maxRev) * 100); });
+    return hours;
+  });
+
   public getHeatmapBg(intensityPercentage: number): string {
     if (intensityPercentage === 0) return '#f1f5f9';
     if (intensityPercentage <= 25) return '#dbeafe';
