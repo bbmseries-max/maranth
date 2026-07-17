@@ -85,7 +85,6 @@
         </button>
       </div>
 
-      <!-- ⭐ NEW: The Quick Filters Row -->
       @if (activeTab() === 'PRODUCTS') {
         <div style="display: flex; gap: 8px; padding-bottom: 12px; padding-right: 20px;">
           <button class="app-btn" [style.background]="stockFilter() === 'ALL' ? '#334155' : '#e2e8f0'" [style.color]="stockFilter() === 'ALL' ? 'white' : '#475569'" (click)="stockFilter.set('ALL')">🌐 All Items</button>
@@ -107,12 +106,10 @@
                   <th style="text-align: right;">Cost</th>
                   <th style="text-align: right;">Retail</th>
                   <th style="text-align: center;">Stock</th>
-                  <!-- ⭐ NEW: Expiration Column -->
                   <th style="text-align: center;">Expires</th> 
                 </tr>
               </thead>
               <tbody>
-                <!-- ⭐ Change from managedProducts() to displayProducts() -->
                 @for (product of displayProducts().slice(0, 100); track product.id) {
                   <tr (click)="selectProductToEdit(product)" [style.background]="selectedProduct()?.id === product.id ? '#eff6ff' : 'transparent'" style="cursor: pointer;">
                     <td style="font-family: monospace; font-weight: bold; color: #64748b; font-size: 12px;">{{ product.id }}</td>
@@ -127,7 +124,6 @@
                         {{ product.stockQuantity }}
                       </span>
                     </td>
-                    <!-- ⭐ NEW: Dynamic Expiration Cell -->
                     <td style="text-align: center;">
                       @let expStatus = getExpireStatus(product.expire);
                       @if (product.expire) {
@@ -199,6 +195,7 @@
     <!-- RIGHT COLUMN: PRODUCT DETAIL WORKBENCH -->
     <div class="app-card" style="flex: 1; height: 100%; box-sizing: border-box; overflow-y: auto;">
         
+      <!-- ⭐ CONTEXT A: STOCKS & PRODUCTS MATRIX WORKBENCH -->
       @if (activeTab() === 'PRODUCTS') {
         @if (selectedProduct() || isCreatingNew()) {
           <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -312,10 +309,104 @@
         }
       }
 
-      @if (activeTab() === 'CATEGORIES') { ... }
-      @if (activeTab() === 'SUPPLIERS') { ... }
-      @if (activeTab() === 'STAFF') { ... }
+      <!-- ⭐ CONTEXT B: CATEGORIES CONFIGURATION WORKBENCH -->
+      @if (activeTab() === 'CATEGORIES') {
+        @if (editingCategory() || isCreatingNew()) {
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
+              <h3 class="app-title" style="margin: 0;">{{ isCreatingNew() ? '✨ New Matrix Category' : '📝 Modify Category Group' }}</h3>
+              <span class="app-badge info">ID: {{ formCategory.id || 'AUTO' }}</span>
+            </div>
 
+            <div class="app-form-group" style="margin-bottom: 16px;">
+              <label class="app-form-label">Category Short Code / Unique key</label>
+              <input type="text" class="app-input" [(ngModel)]="formCategory.id" [disabled]="!isCreatingNew()" placeholder="e.g., SMOKE" />
+            </div>
+
+            <div class="app-form-group" style="margin-bottom: 16px;">
+              <label class="app-form-label">Display Category Name</label>
+              <input type="text" class="app-input" [(ngModel)]="formCategory.name" placeholder="e.g., Tobacco Products" />
+            </div>
+
+            <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; width: 100%;">
+                <input type="checkbox" [(ngModel)]="formCategory.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Category Available for POS Sales
+              </label>
+            </div>
+
+            <div class="app-form-actions">
+              <button type="button" class="app-btn app-btn-secondary" (click)="clearAllWorkbenches()">Cancel</button>
+              <button type="button" class="app-btn app-btn-primary" (click)="saveCategoryChanges()">💾 Save Category</button>
+            </div>
+          </div>        
+        } @else {
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 2px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center;">
+            <span style="font-size: 24px; margin-bottom: 8px;">📁</span>
+            <p style="margin: 0; font-size: 14px; font-weight: 500;">No Category Selected</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Select a category item from the directory list to modify its details.</p>
+          </div>
+        }
+      }
+
+      <!-- ⭐ CONTEXT C: SUPPLIER DIRECTORY WORKBENCH -->
+      @if (activeTab() === 'SUPPLIERS') {
+        @if (selectedSupplier() || isCreatingNew()) {
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">
+              <h3 class="app-title" style="margin: 0;">{{ isCreatingNew() ? '✨ Register New Supplier Profile' : '📝 Edit Vendor Ledger' }}</h3>
+              <span class="app-badge info">ID: {{ formSupplier.id || 'AUTO' }}</span>
+            </div>
+
+            <div class="app-form-group" style="margin-bottom: 16px;">
+              <label class="app-form-label">Company Name</label>
+              <input type="text" class="app-input" [(ngModel)]="formSupplier.name" placeholder="e.g., Wholesale Corp S.A." />
+            </div>
+
+            <div class="app-form-grid">
+              <div class="app-form-group">
+                <label class="app-form-label">Contact Person</label>
+                <input type="text" class="app-input" [(ngModel)]="formSupplier.contact" placeholder="e.g., John Doe" />
+              </div>
+              <div class="app-form-group">
+                <label class="app-form-label">Phone Number</label>
+                <input type="text" class="app-input" [(ngModel)]="formSupplier.phone" placeholder="e.g., +30 210..." />
+              </div>
+            </div>
+
+            <div class="app-form-group" style="margin-bottom: 16px;">
+              <label class="app-form-label">Internal Notes / Observations</label>
+              <textarea class="app-input" [(ngModel)]="formSupplier.notes" placeholder="e.g., Delivers on Tuesdays..." rows="3" style="resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; background: #f8fafc; border-radius: 8px; padding: 12px; align-items: center; border: 1px dashed #cbd5e1; margin-bottom: 24px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer; width: 100%;">
+                <input type="checkbox" [(ngModel)]="formSupplier.isActive" style="width: 16px; height: 16px; cursor: pointer;" /> 🟢 Vendor Active
+              </label>
+            </div>
+
+            <div class="app-form-actions">
+              <button type="button" class="app-btn app-btn-secondary" (click)="clearAllWorkbenches()">Cancel</button>
+              <button type="button" class="app-btn app-btn-primary" (click)="saveSupplierChanges()">💾 Save Vendor</button>
+            </div>
+          </div>
+        } @else {
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 2px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center;">
+            <span style="font-size: 24px; margin-bottom: 8px;">🚚</span>
+            <p style="margin: 0; font-size: 14px; font-weight: 500;">No Supplier Selected</p>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Select a vendor item from the directory table on the left to modify details.</p>
+          </div>
+        }
+      }
+
+      <!-- ⭐ CONTEXT D: STAFF MANAGEMENT WORKBENCH -->
+      @if (activeTab() === 'STAFF') {
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 2px dashed #cbd5e1; border-radius: 8px; color: #64748b; text-align: center;">
+          <span style="font-size: 24px; margin-bottom: 8px;">👥</span>
+          <p style="margin: 0; font-size: 14px; font-weight: 500;">Staff Management</p>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Use the grid on the left to instantly approve or revoke register access.</p>
+        </div>
+      }
+      
     </div>
   </div>
 </div>

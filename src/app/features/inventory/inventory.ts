@@ -21,13 +21,10 @@ export class InventoryComponent implements AfterViewInit {
   @ViewChild('barcodeInput') mainSearchInputRef!: ElementRef<HTMLInputElement>;
 
   public activeTab = signal<'PRODUCTS' | 'CATEGORIES' | 'SUPPLIERS' | 'STAFF'>('PRODUCTS');
-
-  // ⭐ NEW: Quick Filters State
   public stockFilter = signal<'ALL' | 'EXPIRED' | 'EXPIRING_SOON' | 'LOW_STOCK'>('ALL');
 
   public managedProducts = this.inventoryService.filteredProducts;
   
-  // ⭐ NEW: Applies the Quick Filters on top of the search bar results!
   public displayProducts = computed(() => {
     const baseList = this.managedProducts();
     const filter = this.stockFilter();
@@ -64,9 +61,12 @@ export class InventoryComponent implements AfterViewInit {
     this.focusMainSearchBar();
   }
 
+  // ⭐ THE FIX: Clears the search text instantly when focused!
   public focusMainSearchBar(): void {
     setTimeout(() => {
       if (this.activeTab() === 'PRODUCTS' && !this.isCreatingNew() && !this.selectedProduct() && this.mainSearchInputRef?.nativeElement) {
+        this.searchQuery.set('');
+        this.mainSearchInputRef.nativeElement.value = '';
         this.mainSearchInputRef.nativeElement.focus();
       }
     }, 100);
@@ -106,7 +106,6 @@ export class InventoryComponent implements AfterViewInit {
     return product.stockQuantity <= (product.minStockWarning || 5);
   }
 
-  // ⭐ NEW: Calculates expiration status just like the POS screen!
   public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
     if (!expire) return 'none';
     const expDate = new Date(expire + 'T00:00:00');
@@ -170,19 +169,10 @@ export class InventoryComponent implements AfterViewInit {
     this.searchQuery.set(query);
   }
 
-  public getProductsInEditingCategory(): Product[] {
-    const cat = this.editingCategory();
-    if (!cat) return [];
-    return this.salesService.products().filter(p => p.categoryId === cat.id);
-  }
-
   public prepareNewCategory(): void {
     this.clearAllWorkbenches();
     this.isCreatingNew.set(true);
-    this.formCategory = {
-      id: Math.floor(Math.random() * 90000) + 10000 + '',
-      isActive: true
-    };
+    this.formCategory = { id: Math.floor(Math.random() * 90000) + 10000 + '', isActive: true };
   }
 
   public selectCategoryToEdit(category: Category): void {
@@ -203,10 +193,7 @@ export class InventoryComponent implements AfterViewInit {
   public prepareNewSupplier(): void {
     this.clearAllWorkbenches();
     this.isCreatingNew.set(true);
-    this.formSupplier = {
-      id: Math.floor(Math.random() * 90000) + 10000 + '',
-      isActive: true
-    };
+    this.formSupplier = { id: Math.floor(Math.random() * 90000) + 10000 + '', isActive: true };
   }
 
   public selectSupplierToEdit(supplier: Supplier): void {
@@ -244,48 +231,28 @@ export class InventoryComponent implements AfterViewInit {
     reader.onload = (e) => {
       try {
         const jsonText = e.target?.result as string;
-
-        let cleanText = jsonText
-           .replace(/^[\uFEFF\u200B]/, '') 
-           .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '') 
-           .replace(/\\(?!["\\/bfnrtu])/g, '\\\\') 
-           .replace(/,\s*([\]}])/g, '$1'); 
-
+        let cleanText = jsonText.replace(/^[\uFEFF\u200B]/, '').replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, '').replace(/\\(?!["\\/bfnrtu])/g, '\\\\').replace(/,\s*([\]}])/g, '$1'); 
         const rawData = JSON.parse(cleanText);
         
         let extracted = rawData;
         if (!Array.isArray(rawData)) {
-          const foundKey = Object.keys(rawData).find(k => 
-            ['records', 'data', 'items', 'categories', 'category', 'suppliers', 'supplier', 'products', 'product'].includes(k.toLowerCase())
-          );
-          
-          if (foundKey && Array.isArray(rawData[foundKey])) {
-            extracted = rawData[foundKey];
-          } else {
-            extracted = Object.values(rawData).find(val => Array.isArray(val)) || rawData;
-          }
+          const foundKey = Object.keys(rawData).find(k => ['records', 'data', 'items', 'categories', 'category', 'suppliers', 'supplier', 'products', 'product'].includes(k.toLowerCase()));
+          if (foundKey && Array.isArray(rawData[foundKey])) extracted = rawData[foundKey];
+          else extracted = Object.values(rawData).find(val => Array.isArray(val)) || rawData;
         }
 
         let dataArray: any[] = [];
-        if (Array.isArray(extracted)) {
-          dataArray = extracted;
-        } else if (typeof extracted === 'object' && extracted !== null) {
-          dataArray = Object.values(extracted);
-        }
+        if (Array.isArray(extracted)) dataArray = extracted;
+        else if (typeof extracted === 'object' && extracted !== null) dataArray = Object.values(extracted);
 
         if (dataArray.length === 0) throw new Error("No valid data found in file.");
         
         let importCount = 0;
         const sample = dataArray[0] || {};
-
         let targetType = 'CATEGORIES'; 
         
-        if (sample.Price !== undefined || sample.price !== undefined || sample.Barcode !== undefined || sample.barcode !== undefined || sample.ProductID !== undefined || sample.Blerje !== undefined) {
-          targetType = 'PRODUCTS';
-        } 
-        else if (sample.Phone !== undefined || sample.phone !== undefined || sample.Contact !== undefined || sample.contact !== undefined || sample.SupplierID !== undefined || sample.CompanyName !== undefined) {
-          targetType = 'SUPPLIERS';
-        }
+        if (sample.Price !== undefined || sample.price !== undefined || sample.Barcode !== undefined || sample.barcode !== undefined || sample.ProductID !== undefined || sample.Blerje !== undefined) targetType = 'PRODUCTS';
+        else if (sample.Phone !== undefined || sample.phone !== undefined || sample.Contact !== undefined || sample.contact !== undefined || sample.SupplierID !== undefined || sample.CompanyName !== undefined) targetType = 'SUPPLIERS';
 
         if (targetType === 'PRODUCTS') {
           const normalizeDate = (rawDate: any): string => {
@@ -339,8 +306,7 @@ export class InventoryComponent implements AfterViewInit {
             type: 'success', title: '✅ Live Sync Complete', message: `Successfully blasted ${importCount} products straight to Firebase!`, value: '', onConfirm: () => this.salesService.closeModal()
           });
 
-        } 
-        else if (targetType === 'CATEGORIES') {
+        } else if (targetType === 'CATEGORIES') {
           dataArray.forEach(item => {
             const rawId = item.CategoryID || item.categoryId || item.id || item.ID || item.Category_ID || ('CAT-' + Math.floor(Math.random() * 90000));
             if (rawId) {

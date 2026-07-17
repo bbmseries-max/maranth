@@ -494,3 +494,9 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+@media (max-width: 1024px) {
+  .mobile-nav-links {
+    display: flex !important; /* Forces the internal menu links to appear on phones */
+  }
+}

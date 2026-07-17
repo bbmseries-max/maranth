@@ -27,12 +27,39 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   public isSidebarMobileOpen = signal<boolean>(false); 
   public isMobileBasketOpen = signal<boolean>(false);
 
-  // ⭐ NEW: Quick Edit State
   public editingProduct = signal<Product | null>(null);
   public editForm: Partial<Product> = {};
 
   public liveTime = signal<Date>(new Date());
   private clockInterval: any;
+
+  // ⭐ NEW: Top 15 Products of the Day Calculator
+  public dailyTopProducts = computed(() => {
+    const today = new Date().toDateString();
+    const itemsMap = new Map<string, { name: string, qty: number, rev: number }>();
+
+    this.salesService.transactions().forEach(tx => {
+      const txDate = new Date(tx.timestamp);
+      if (txDate.toDateString() === today) {
+        tx.items.forEach(item => {
+          const effectiveQty = item.isRefund ? -item.quantity : item.quantity;
+          const effectiveRev = item.isRefund ? -(item.product.price * item.quantity) : (item.product.price * item.quantity);
+          
+          if (!itemsMap.has(item.product.id)) {
+            itemsMap.set(item.product.id, { name: item.product.name, qty: 0, rev: 0 });
+          }
+          const stat = itemsMap.get(item.product.id)!;
+          stat.qty += effectiveQty;
+          stat.rev += effectiveRev;
+        });
+      }
+    });
+
+    return Array.from(itemsMap.values())
+      .filter(p => p.qty > 0)
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 15); // Takes only the Top 15
+  });
 
   public dailyProfitSnapshots = computed(() => {
     const today = new Date().toDateString();
@@ -77,28 +104,18 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
         buckets[currentBucketIndex].active = true;
     }
 
-    return {
-      buckets: buckets.filter(b => b.active),
-      total: totalDayProfit
-    };
+    return { buckets: buckets.filter(b => b.active), total: totalDayProfit };
   });
 
-  public weightedProducts = computed(() => {
-    return this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true'));
-  });
-
-  public looseProducts = computed(() => {
-    return this.salesService.products().filter(p => p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true');
-  });
+  public weightedProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true')));
+  public looseProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true'));
 
   public filteredCatalogProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const categoryId = this.selectedCategoryId();
     let products = this.salesService.products().filter(p => p.isActive !== false);
 
-    if (categoryId !== 'ALL') {
-      products = products.filter(p => p.categoryId === categoryId);
-    }
+    if (categoryId !== 'ALL') products = products.filter(p => p.categoryId === categoryId);
 
     if (query) {
       products = products.filter(p => 
@@ -122,34 +139,29 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   });
 
   constructor() {
+    // ⭐ THE FIX: Auto-Clear the input box whenever focus is triggered!
     effect(() => {
       const trigger = this.salesService.focusSearchTrigger();
       if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {
         setTimeout(() => {
+          this.searchQuery.set('');
+          this.searchInput.nativeElement.value = '';
           this.searchInput.nativeElement.focus();
         }, 50);
       }
     });
 
     effect(() => {
-      if (this.salesService.basket().length === 0) {
-        this.isMobileBasketOpen.set(false);
-      }
+      if (this.salesService.basket().length === 0) this.isMobileBasketOpen.set(false);
     }, { allowSignalWrites: true });
   }
 
   ngOnInit() {
-    this.clockInterval = setInterval(() => {
-      this.liveTime.set(new Date());
-    }, 1000);
+    this.clockInterval = setInterval(() => { this.liveTime.set(new Date()); }, 1000);
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-      if (this.searchInput?.nativeElement) {
-        this.searchInput.nativeElement.focus();
-      }
-    }, 100);
+    setTimeout(() => { if (this.searchInput?.nativeElement) this.searchInput.nativeElement.focus(); }, 100);
   }
 
   ngOnDestroy() {
@@ -170,21 +182,14 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
     return 'safe'; 
   }
 
-  // =========================================================
-  // ⭐ NEW: QUICK EDIT LOGIC
-  // =========================================================
   public openQuickEdit(prod: Product, event: Event): void {
-    // Prevent the card click from also adding the item to the basket!
     event.stopPropagation();
-    
-    // Require admin access to change prices on the fly
     if (this.salesService.currentRole() !== 'admin') {
       this.salesService.activeModal.set({
         type: 'warning', title: '⛔ Access Denied', message: 'Only Store Admins can edit product details from the register.', value: '', onConfirm: () => this.salesService.closeModal()
       });
       return;
     }
-
     this.editingProduct.set(prod);
     this.editForm = { ...prod };
   }
@@ -196,14 +201,9 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public saveQuickEdit(): void {
     if (!this.editForm.name || !this.editForm.price || !this.editForm.id) return;
-    
-    // Save directly to Firebase
     this.salesService.saveProduct(this.editForm.id, this.editForm as Product);
-    
-    // Close the popup and go right back to scanning!
     this.closeQuickEdit();
   }
-  // =========================================================
 
   public onSearchEnter(query: string): void {
     const cleanQuery = query.trim();
@@ -213,9 +213,7 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
     
     if (wasBarcode) {
       this.searchQuery.set('');
-      if (this.searchInput?.nativeElement) {
-        this.searchInput.nativeElement.value = '';
-      }
+      if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
     } else {
       const isNumericBarcode = /^\d{7,14}$/.test(cleanQuery);
       const isUrl = cleanQuery.toLowerCase().startsWith('http') || cleanQuery.toLowerCase().startsWith('www');
@@ -223,23 +221,12 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
 
       if (isNumericBarcode || isUrl || isLongQrHash) {
         this.searchQuery.set('');
-        if (this.searchInput?.nativeElement) {
-          this.searchInput.nativeElement.value = '';
-        }
+        if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
         
         let msg = `The barcode [ ${cleanQuery} ] is not in your inventory.`;
-        if (isUrl || isLongQrHash) {
-          msg = "⚠️ QR CODE DETECTED ⚠️\n\nYou accidentally scanned a QR code instead of the product barcode! Please aim the scanner at the striped retail barcode.";
-        }
+        if (isUrl || isLongQrHash) msg = "⚠️ QR CODE DETECTED ⚠️\n\nYou accidentally scanned a QR code instead of the product barcode! Please aim the scanner at the striped retail barcode.";
 
-        this.salesService.activeModal.set({
-           type: 'warning',
-           title: '⚠️ Scan Failed',
-           message: msg,
-           value: '',
-           onConfirm: () => {} 
-        });
-
+        this.salesService.activeModal.set({ type: 'warning', title: '⚠️ Scan Failed', message: msg, value: '', onConfirm: () => {} });
         setTimeout(() => {
           if (this.salesService.activeModal()?.title === '⚠️ Scan Failed') {
             this.salesService.closeModal();
@@ -256,6 +243,10 @@ export class PosComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public handleProductClick(prod: Product): void {
+    // ⭐ THE FIX: Clear the search box instantly when a product is clicked manually
+    this.searchQuery.set('');
+    if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
+
     const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {
       this.salesService.activeModal.set({
