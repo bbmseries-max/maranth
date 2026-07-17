@@ -1,6 +1,5 @@
 <div class="basket-container">
   
-  <!-- 🛒 Header Meta Panel -->
   <div class="basket-header">
     <div class="header-left">
       <span class="material-icons basket-icon">shopping_cart</span>
@@ -9,8 +8,6 @@
     <span class="items-badge">{{ salesService.totalItems() }} items</span>
   </div>
 
-  <!-- 📦 Scrolling Item Viewport Window -->
-  <!-- ⭐ THE FIX: Added #scrollViewport right here! -->
   <div class="basket-items-viewport" #scrollViewport>
     @if (salesService.basket().length === 0) {
       <div class="empty-state">
@@ -21,41 +18,35 @@
     } @else {
       <div class="item-list">
         @for (item of salesService.basket(); track item.product.id) {
-          
           <div class="basket-item-row" 
                [class.weighted-item]="item.product.isWeighted"
                [class.is-flashing]="salesService.highlightedItemId() === item.product.id">
             
-            <!-- 📋 Product Info Details -->
             <div class="item-details">
               <span class="item-name">
                 @if (item.isRefund) { <span class="refund-badge">REFUND</span> }
                 {{ item.product.name }}
               </span>
               <span class="item-unit-price">
-                {{ item.product.price | currency:'EUR':'symbol':'1.2-2' }} / {{ item.product.isWeighted ? 'kg' : 'pc' }}
+                <!-- Fixed Currency Pipe! -->
+                {{ item.product.price | currency:'EUR' }} / {{ item.product.isWeighted ? 'kg' : 'pc' }}
               </span>
             </div>
 
-            <!-- 🔢 Quantity Controls Cluster -->
             <div class="quantity-controls">
-              <button type="button" class="btn-qty" (click)="salesService.removeFromBasket(item.product, item.isRefund)">
-                ➖
-              </button>
+              <button type="button" class="btn-qty" (click)="salesService.removeFromBasket(item.product, item.isRefund)">➖</button>
               
               <span class="qty-display">
                 {{ item.product.isWeighted ? (item.quantity | number:'1.3-3') + ' kg' : item.quantity + ' pcs' }}
               </span>
               
-              <button type="button" class="btn-qty" (click)="salesService.addToBasket(item.product, item.isRefund)">
-                ➕
-              </button>
+              <button type="button" class="btn-qty" (click)="salesService.addToBasket(item.product, item.isRefund)">➕</button>
             </div>
 
-            <!-- 💶 Calculated Price Column -->
             <div class="price-section">
+              <!-- Fixed Currency Pipe! -->
               <span class="line-total" [class.negative-price]="item.isRefund">
-                {{ (item.isRefund ? -(item.product.price * item.quantity) : (item.product.price * item.quantity)) | currency:'EUR':'symbol':'1.2-2' }}
+                {{ (item.isRefund ? -(item.product.price * item.quantity) : (item.product.price * item.quantity)) | currency:'EUR' }}
               </span>
             </div>
 
@@ -64,3 +55,37 @@
       </div>
     }
   </div>
+
+  <div class="basket-summary-footer">
+    
+    @if (salesService.basket().length > 0) {
+      <div class="summary-matrix">
+        <div class="summary-row">
+          <span class="summary-label">Net Subtotal</span>
+          <!-- Fixed Currency Pipe! -->
+          <span class="summary-value">{{ salesService.netSubtotal() | currency:'EUR' }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Included VAT</span>
+          <!-- Fixed Currency Pipe! -->
+          <span class="summary-value">{{ salesService.taxAmount() | currency:'EUR' }}</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-row total-row">
+          <span class="grand-total-label">Grand Total</span>
+          <!-- Fixed Currency Pipe! -->
+          <span class="grand-total-value">{{ salesService.grandTotal() | currency:'EUR' }}</span>
+        </div>
+      </div>
+    }
+
+    <div class="payment-method-panel">
+      <div class="payment-button-group">
+        <button type="button" class="btn-payment" (click)="salesService.processPayment('Cash')" [disabled]="salesService.basket().length === 0">💵 Cash</button>
+        <button type="button" class="btn-payment" (click)="salesService.processPayment('Card')" [disabled]="salesService.basket().length === 0">💳 Card</button>
+        <button type="button" class="btn-payment" (click)="salesService.processPayment('Debit')" [disabled]="salesService.basket().length === 0">🏦 Debit</button>
+      </div>
+    </div>
+
+  </div>
+</div>
