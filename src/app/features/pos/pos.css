@@ -142,12 +142,18 @@
   .main-catalog-panel { width: 100% !important; flex: 1 1 0 !important; min-height: 0 !important; border-radius: 0 !important; }
   .catalog-scroll-viewport { padding-bottom: 120px !important; } /* Space for FAB */
 
-  .checkout-basket-panel {
+ .checkout-basket-panel {
     width: 100% !important; flex: 0 0 auto !important; position: fixed !important;
-    bottom: -120% !important; left: 0 !important; height: 85vh !important;
+    bottom: 0 !important; left: 0 !important; height: 85vh !important;
     z-index: 1000 !important; border-radius: 24px 24px 0 0 !important;
     box-shadow: 0 -10px 40px rgba(0,0,0,0.3) !important;
+    transform: translateY(120%) !important; 
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; margin: 0 !important;
+  }
+  
+  /* ⭐ FIX: Simply brings it back to its natural bottom position */
+  .checkout-basket-panel.mobile-open { 
+    transform: translateY(0) !important; 
   }
   .checkout-basket-panel.mobile-open { transform: translateY(-100%); bottom: 0 !important; }
   .mobile-basket-fab {
