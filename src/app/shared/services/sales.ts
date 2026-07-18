@@ -21,6 +21,20 @@ export class SalesService {
 
   public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier', isApproved?: boolean}[]>([]);
   public transactions = signal<TransactionRecord[]>([]);
+
+  public clearTransactions(): void {
+    // 1. Empty the live Angular signal
+    this.transactions.set([]);
+    
+    // 2. Wipe it from the browser's local storage memory
+    if (typeof window !== 'undefined') {
+      // Overwriting the common keys used to store the ledger
+      localStorage.setItem('maranth_transactions', '[]');
+      localStorage.setItem('pos_transactions', '[]');
+      localStorage.removeItem('maranth_transactions');
+    }
+  }
+
   public products = signal<Product[]>([]);
   public categories = signal<Category[]>([]);
   public suppliers = signal<Supplier[]>([]);
