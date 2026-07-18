@@ -160,7 +160,8 @@
             @for (prod of weightedProducts(); track prod.id) {
               <div class="pos-touch-btn" (click)="handleProductClick(prod)">
                 <span class="touch-price">{{ formatMoney(prod.price) }}/kg</span>
-                <span class="touch-name">{{ prod.name }}</span>
+                <!-- Bumps long names down to 12 chars -->
+                <span class="touch-name">{{ prod.name.length > 12 ? prod.name.substring(0, 12) + '..' : prod.name }}</span>
               </div>
             }
           </div>
@@ -177,11 +178,12 @@
               <div class="zone-subtitle">Bakery & items without barcodes</div>
             </div>
           </div>
-          <div class="pos-touch-grid loose-grid">
+         <div class="pos-touch-grid loose-grid">
             @for (prod of looseProducts(); track prod.id) {
               <div class="pos-touch-btn" (click)="handleProductClick(prod)">
                 <span class="touch-price">{{ formatMoney(prod.price) }}</span>
-                <span class="touch-name">{{ prod.name }}</span>
+                <!-- Bumps long names down to 12 chars -->
+                <span class="touch-name">{{ prod.name.length > 12 ? prod.name.substring(0, 12) + '..' : prod.name }}</span>
               </div>
             }
           </div>
