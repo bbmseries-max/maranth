@@ -143,6 +143,45 @@ export class ReportsComponent {
   // ========================================================
   // ⭐ TAB 3: LIVE DASHBOARD WIDGETS
   // ========================================================
+  
+ public todayProfit = computed(() => {
+    const todayStr = new Date().toDateString();
+    let totalEarnings = 0;
+
+    const txs = this.salesService.transactions() || [];
+    
+    txs.forEach(tx => {
+      // Only calculate for today's transactions
+      if (tx && tx.timestamp && new Date(tx.timestamp).toDateString() === todayStr) {
+        
+        // ⭐ FIX: Tell TypeScript to relax by casting tx to 'any'
+        const pastOrder: any = tx;
+        
+        // Grab the items array (it might be saved as 'basket' or 'items')
+        const itemsArray = pastOrder.basket || pastOrder.items || [];
+
+        // Loop through every item in this transaction
+        if (Array.isArray(itemsArray)) {
+          itemsArray.forEach((item: any) => {
+            
+            const product = item.product || item; 
+            
+            const retailPrice = this.safeParseLocal(product.price);
+            // Check both costPrice and purchasePrice depending on what you named it
+            const wholesaleCost = this.safeParseLocal(product.costPrice || product.purchasePrice || 0);
+            const quantity = this.safeParseLocal(item.quantity || 1);
+
+            // Calculate profit for this line item and add to total
+            const itemProfit = (retailPrice - wholesaleCost) * quantity;
+            totalEarnings += itemProfit;
+          });
+        }
+      }
+    });
+
+    return isNaN(totalEarnings) ? 0 : totalEarnings;
+  });
+  
   public startingFloat = signal<number>(this.safeParseLocal('maranth_float'));
   public supplierPayouts = signal<number>(this.safeParseLocal('maranth_payouts'));
   

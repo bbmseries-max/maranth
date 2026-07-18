@@ -11,19 +11,14 @@ export interface Product {
   purchasePrice?: number;
   taxRate?: number;
   costPrice?: number;
-  
-  // ⭐ NEW ACCESS DATABASE FIELDS
   afterTaxRate?: number;
   status?: string;
   statusDate?: string;
-
   supplierId?: string;
   minStockWarning?: number;
   notes?: string;
   isWeighted?: boolean;
   imageUrl?: string;
-  
-  // UI Display Helpers
   isFirstOfCategory?: boolean;
   displayCategoryName?: string;
 }

@@ -107,10 +107,6 @@
           <span style="font-weight: 700; font-size: 15px;">Menu & Categories</span>
         </div>
       </div>
-      <div class="sidebar-mobile-toggle" (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
-        <span style="font-weight: 700; font-size: 14px;">📁 Menu & Categories</span>
-        <span style="font-size: 12px;">{{ isSidebarMobileOpen() ? '🔼' : '🔽' }}</span>
-      </div>
 
       <!-- 4. COLLAPSIBLE CATEGORIES CONTENT -->
       <div class="sidebar-collapsible-content" [class.expanded]="isSidebarMobileOpen()">

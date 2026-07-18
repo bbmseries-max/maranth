@@ -256,36 +256,19 @@
       </div>
       <div class="widgets-grid no-print" style="margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
         
-        <!-- NEW 3-LINE SHIFT WIDGET -->
-        <div class="dashboard-card snapshot-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
-          <div class="card-title" style="font-size: 14px; font-weight: 800; color: #334155; text-transform: uppercase; margin-bottom: 16px;">📊 Daily Earnings Shifts</div>
+        <!-- NEW NET EARNINGS (PROFIT) WIDGET -->
+        <div class="dashboard-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-top: 16px;">
+          <div style="font-size: 14px; font-weight: 800; color: #334155; text-transform: uppercase; margin-bottom: 4px;">📈 Today's Net Earnings</div>
+          <div style="font-size: 11px; color: #64748b; margin-bottom: 16px; font-weight: 600;">
+            Sum of (Retail Price - Wholesale Cost)
+          </div>
           
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <!-- Line 1: Morning -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <div style="font-size: 13px; color: #64748b; font-weight: 700;">🌅 [ 08:00 - 15:00 ]</div>
-              <div style="text-align: right;">
-                <span style="font-size: 16px; font-weight: 900; color: #0ea5e9; margin-right: 12px;">{{ formatMoney(dailyShifts().shift1.rev) }}</span>
-                <span style="font-size: 12px; color: #94a3b8; font-weight: 600;">{{ dailyShifts().shift1.count }} txns</span>
-              </div>
+          <div style="display: flex; align-items: baseline; gap: 12px;">
+            <div style="font-size: 36px; font-weight: 900; color: #16a34a;">
+              {{ formatMoney(todayProfit()) }}
             </div>
-
-            <!-- Line 2: Afternoon -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <div style="font-size: 13px; color: #64748b; font-weight: 700;">☀️ [ 15:00 - 17:00 ]</div>
-              <div style="text-align: right;">
-                <span style="font-size: 16px; font-weight: 900; color: #0ea5e9; margin-right: 12px;">{{ formatMoney(dailyShifts().shift2.rev) }}</span>
-                <span style="font-size: 12px; color: #94a3b8; font-weight: 600;">{{ dailyShifts().shift2.count }} txns</span>
-              </div>
-            </div>
-
-            <!-- Line 3: Evening -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <div style="font-size: 13px; color: #64748b; font-weight: 700;">🌙 [ 17:00 - 23:00 ]</div>
-              <div style="text-align: right;">
-                <span style="font-size: 16px; font-weight: 900; color: #0ea5e9; margin-right: 12px;">{{ formatMoney(dailyShifts().shift3.rev) }}</span>
-                <span style="font-size: 12px; color: #94a3b8; font-weight: 600;">{{ dailyShifts().shift3.count }} txns</span>
-              </div>
+            <div style="font-size: 13px; font-weight: 700; color: #10b981; background: #dcfce7; padding: 4px 8px; border-radius: 6px;">
+              Pure Profit
             </div>
           </div>
         </div>
