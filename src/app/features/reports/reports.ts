@@ -1,219 +1,190 @@
 import { Component, inject, computed, signal } from '@angular/core';
-import { CommonModule, CurrencyPipe, DecimalPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink],
+  imports: [CommonModule, RouterLink, DatePipe],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })
 export class ReportsComponent {
   public salesService = inject(SalesService);
-  public todayDate = new Date();
 
-  // --- ⭐ NEW: TABS & TIME FILTERS ---
-  public activeTab = signal<'ANALYTICS' | 'Z_REPORT'>('ANALYTICS');
-  public dateRange = signal<'TODAY' | 'YESTERDAY' | 'THIS_WEEK' | 'THIS_MONTH' | 'ALL_TIME'>('TODAY');
+  // ⭐ Updated Tabs
+  public activeTab = signal<string>('dashboard');
 
-  public selectedCategoryId = signal<string>('ALL');
-  public selectedSupplierId = signal<string>('ALL');
+  public formatMoney(amount: any): string {
+    if (amount === null || amount === undefined || amount === '') return '€0.00';
+    let parsed = Number(amount);
+    if (isNaN(parsed)) return '€0.00';
+    return '€' + parsed.toFixed(2);
+  }
+
+  private safeParseLocal(key: string | number): number {
+    if (typeof key === 'number') {
+      return isNaN(key) ? 0 : key;
+    }
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 0;
+    const val = localStorage.getItem(key as string);
+    if (val === null || val === undefined || val === '' || val === 'undefined' || val === 'NaN') return 0;
+    const parsed = Number(val);
+    return isNaN(parsed) ? 0 : parsed;
+  }
   
-  public categoriesList = computed(() => {
-    const explicitCategories = this.salesService.categories();
-    if (explicitCategories && explicitCategories.length > 0) {
-      return [{id: 'ALL', name: '🌐 All Categories'}, ...explicitCategories];
-    }
-    return [{id: 'ALL', name: '🌐 All Categories'}];
-  });
-
-  public suppliersList = computed(() => {
-    const explicitSuppliers = this.salesService.suppliers();
-    if (explicitSuppliers && explicitSuppliers.length > 0) {
-       return [{id: 'ALL', name: '🚚 All Suppliers'}, ...explicitSuppliers];
-    }
-    return [{id: 'ALL', name: '🚚 All Suppliers'}];
-  });
-
-  // --- ⭐ NEW: MASTER TRANSACTION FILTER ---
-  // This calculates exactly which receipts belong in the selected time period!
-  public filteredTransactions = computed(() => {
-    const allTx = this.salesService.transactions();
-    const tab = this.activeTab();
+  public startingFloat = signal<number>(this.safeParseLocal('maranth_float'));
+  public supplierPayouts = signal<number>(this.safeParseLocal('maranth_payouts'));
+  
+  public liveCashInDrawer = computed(() => {
+    const today = new Date().toDateString();
+    let todaysCashSales = 0;
+    const txs = this.salesService.transactions() || [];
     
-    // Z-Report is ALWAYS locked to Today!
-    const range = tab === 'Z_REPORT' ? 'TODAY' : this.dateRange();
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    let start = new Date(0); // Beginning of time
-    let end = new Date(3000, 0, 1); // End of time
-
-    if (range === 'TODAY') {
-      start = today;
-      end = tomorrow;
-    } else if (range === 'YESTERDAY') {
-      start = new Date(today);
-      start.setDate(start.getDate() - 1);
-      end = today;
-    } else if (range === 'THIS_WEEK') {
-      start = new Date(today);
-      const day = start.getDay();
-      const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Monday start
-      start.setDate(diff);
-      end = tomorrow;
-    } else if (range === 'THIS_MONTH') {
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-      end = tomorrow;
-    }
-
-    return allTx.filter(tx => {
-      const txDate = new Date(tx.timestamp);
-      return txDate >= start && txDate < end;
-    });
-  });
-
-  // --- 💶 DYNAMIC REVENUE METRICS ---
-  // These now listen to `filteredTransactions` instead of `allTransactions`!
-  public totalRevenue = computed(() => {
-    return this.filteredTransactions().reduce((sum, tx) => sum + tx.grandTotal, 0);
-  });
-
-  public totalTax = computed(() => {
-    return this.filteredTransactions().reduce((sum, tx) => sum + (tx.taxAmount || 0), 0);
-  });
-
-  public cashRevenue = computed(() => {
-    return this.filteredTransactions()
-      .filter(tx => tx.paymentMethod === 'Cash')
-      .reduce((sum, tx) => sum + tx.grandTotal, 0);
-  });
-
-  public cardRevenue = computed(() => {
-    return this.filteredTransactions()
-      .filter(tx => tx.paymentMethod === 'Card' || tx.paymentMethod === 'Debit')
-      .reduce((sum, tx) => sum + tx.grandTotal, 0);
-  });
-
-  public totalSalesCount = computed(() => {
-    return this.filteredTransactions().length;
-  });
-
-  // --- 📦 INVENTORY VALUATION METRICS (Always live snapshot) ---
-  public totalInventoryCost = computed(() => {
-    return this.salesService.products()
-      .filter(p => p.stockQuantity > 0)
-      .reduce((sum, p) => sum + (p.stockQuantity * (p.purchasePrice || 0)), 0);
-  });
-
-  public totalInventoryRetail = computed(() => {
-    return this.salesService.products()
-      .filter(p => p.stockQuantity > 0)
-      .reduce((sum, p) => sum + (p.stockQuantity * (p.price || 0)), 0);
-  });
-
-  public totalStockItems = computed(() => {
-    return this.salesService.products()
-      .filter(p => p.stockQuantity > 0)
-      .reduce((sum, p) => sum + p.stockQuantity, 0);
-  });
-
-  // --- 🏆 PRODUCT LEADERBOARD ---
-  public filteredTopSellingProducts = computed(() => {
-    const itemsMap = new Map<string, { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number }>();
-    
-    this.filteredTransactions().forEach(tx => {
-      tx.items.forEach(item => {
-        if (!itemsMap.has(item.product.id)) {
-          itemsMap.set(item.product.id, { id: item.product.id, name: item.product.name, unitsSold: 0, totalRevenue: 0, stockQuantity: item.product.stockQuantity || 0 });
+    txs.forEach(tx => {
+      if (tx && tx.timestamp) {
+        if (new Date(tx.timestamp).toDateString() === today && tx.paymentMethod === 'Cash') {
+          todaysCashSales += this.safeParseLocal(tx.grandTotal as any);
         }
-        const stats = itemsMap.get(item.product.id)!;
-        const effectiveQuantity = item.isRefund ? -item.quantity : item.quantity;
-        stats.unitsSold += effectiveQuantity;
-        stats.totalRevenue += (item.product.price * effectiveQuantity);
-      });
-    });
-    
-    let topProducts = Array.from(itemsMap.values()).sort((a, b) => b.unitsSold - a.unitsSold);
-    const allProducts = this.salesService.products();
-    
-    if (this.selectedCategoryId() !== 'ALL') {
-      topProducts = topProducts.filter(tp => {
-         const prod = allProducts.find(p => p.id === tp.id);
-         return prod && prod.categoryId === this.selectedCategoryId();
-      });
-    }
-    
-    if (this.selectedSupplierId() !== 'ALL') {
-      topProducts = topProducts.filter(tp => {
-         const prod = allProducts.find(p => p.id === tp.id);
-         return prod && (prod as any).supplierId === this.selectedSupplierId();
-      });
-    }
-
-    return topProducts;
-  });
-
-  // --- 🧾 LEDGER AUDITOR ---
-  public selectedTxnId = signal<string | null>(null);
-
-  public selectTxn(id: string) {
-    this.selectedTxnId.set(id);
-  }
-
-  public selectedTxnDetails = computed(() => {
-    const id = this.selectedTxnId();
-    if (!id) return null;
-    return this.filteredTransactions().find(tx => tx.id === id) || null;
-  });
-
-  // --- 🌡️ HEATMAP HELPER ---
-  public getHourlyHeatmap = computed(() => {
-    const hours = Array.from({length: 24}, (_, i) => ({
-      hour: i, hourLabel: `${i.toString().padStart(2, '0')}:00`, revenue: 0, ticketCount: 0, intensityPercentage: 0
-    }));
-
-    this.filteredTransactions().forEach(tx => {
-      const hour = new Date(tx.timestamp).getHours();
-      hours[hour].revenue += tx.grandTotal;
-      hours[hour].ticketCount += 1;
+      }
     });
 
-    const maxRev = Math.max(...hours.map(h => h.revenue));
-    if (maxRev > 0) hours.forEach(h => { h.intensityPercentage = Math.round((h.revenue / maxRev) * 100); });
-    return hours;
+    const currentFloat = this.safeParseLocal(this.startingFloat() as any);
+    const currentPayouts = this.safeParseLocal(this.supplierPayouts() as any);
+    const finalTotal = currentFloat + todaysCashSales - currentPayouts;
+    return isNaN(finalTotal) ? 0 : finalTotal;
   });
 
-  public getHeatmapBg(intensityPercentage: number): string {
-    if (intensityPercentage === 0) return '#f1f5f9';
-    if (intensityPercentage <= 25) return '#dbeafe';
-    if (intensityPercentage <= 50) return '#93c5fd';
-    if (intensityPercentage <= 75) return '#3b82f6';
-    return '#1e40af';
+  public salesTarget = 1000; 
+  public targetProgress = computed(() => {
+    const today = new Date().toDateString();
+    let todayRev = 0;
+    const txs = this.salesService.transactions() || [];
+    
+    txs.forEach(tx => {
+      if (tx && tx.timestamp && new Date(tx.timestamp).toDateString() === today) {
+        todayRev += this.safeParseLocal(tx.grandTotal as any);
+      }
+    });
+    
+    const safeRev = isNaN(todayRev) ? 0 : todayRev;
+    let rawPercent = (safeRev / this.salesTarget) * 100;
+    if (isNaN(rawPercent) || !isFinite(rawPercent)) rawPercent = 0;
+    
+    return { rev: safeRev, percent: Math.min(100, rawPercent) };
+  });
+
+  public threeHourSnapshot = computed(() => {
+    const now = Date.now();
+    const threeHoursAgo = now - (3 * 60 * 60 * 1000); 
+    let rev = 0;
+    let count = 0;
+
+    const txs = this.salesService.transactions() || [];
+    txs.forEach(tx => {
+      if (tx && tx.timestamp) {
+        const txTime = new Date(tx.timestamp).getTime();
+        if (txTime >= threeHoursAgo && txTime <= now) {
+          rev += this.safeParseLocal(tx.grandTotal as any);
+          count++;
+        }
+      }
+    });
+
+    return { revenue: isNaN(rev) ? 0 : rev, count };
+  });
+
+  // ========================================================
+  // ⭐ NEW: BUSIEST HOURS CHART LOGIC
+  // ========================================================
+  public busiestHours = computed(() => {
+    const txs = this.salesService.transactions() || [];
+    const hourlyData = new Array(24).fill(0);
+    
+    txs.forEach(tx => {
+      if (tx && tx.timestamp) {
+        const hour = new Date(tx.timestamp).getHours();
+        hourlyData[hour] += this.safeParseLocal(tx.grandTotal as any);
+      }
+    });
+
+    // Find the max hour to scale the bars from 0 to 100%
+    const maxRev = Math.max(...hourlyData, 1); 
+
+    return hourlyData.map((rev, index) => {
+      const hourLabel = index.toString().padStart(2, '0') + ':00';
+      const percentage = (rev / maxRev) * 100;
+      return { hour: hourLabel, revenue: rev, percentage };
+    });
+  });
+
+  public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
+    if (!expire) return 'none';
+    const expDate = new Date(expire + 'T00:00:00');
+    if (isNaN(expDate.getTime())) return 'none'; 
+    const diffDays = Math.ceil((expDate.getTime() - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return 'danger'; 
+    if (diffDays <= 14) return 'warning'; 
+    return 'safe'; 
   }
 
-  // --- ⚡ ACTIONS ---
-  public printZReport() {
-    window.print();
-  }
+  public systemAlerts = computed(() => {
+    const alerts: { type: string, msg: string }[] = [];
+    const prods = this.salesService.products() || [];
+    prods.forEach(p => {
+      if (!p) return;
+      const stock = this.safeParseLocal(p.stockQuantity as any);
+      if (stock <= this.safeParseLocal(p.minStockWarning || 5 as any)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
+      if (this.getExpireStatus(p.expire) === 'danger') alerts.push({ type: 'danger', msg: `🔴 EXPIRED: ${p.name}!` });
+    });
+    return alerts;
+  });
 
-  public clearAllLedgerData() {
+  public addManualCash(): void {
     this.salesService.activeModal.set({
-      type: 'warning',
-      title: '⚠️ Clear Ledger',
-      message: 'Are you sure you want to permanently erase all sales history?',
-      value: '',
-      onConfirm: () => {
-         this.salesService.clearLedger();
-         this.selectedTxnId.set(null);
-         this.salesService.closeModal();
+      type: 'prompt', title: '💵 Add Cash to Drawer', message: 'Enter the amount of cash added (Starting float or top-up):', value: '',
+      onConfirm: (val) => {
+        const amount = this.safeParseLocal(val as any);
+        const newTotal = this.safeParseLocal(this.startingFloat() as any) + amount;
+        this.startingFloat.set(newTotal);
+        if (typeof window !== 'undefined') localStorage.setItem('maranth_float', newTotal.toString());
+        this.salesService.closeModal();
       }
     });
   }
+
+  public removeManualCash(): void {
+    this.salesService.activeModal.set({
+      type: 'prompt', title: '📤 Remove Cash from Drawer', message: 'Enter the amount removed (Supplier payment or safe drop):', value: '',
+      onConfirm: (val) => {
+        const amount = this.safeParseLocal(val as any);
+        const newTotal = this.safeParseLocal(this.supplierPayouts() as any) + amount;
+        this.supplierPayouts.set(newTotal);
+        if (typeof window !== 'undefined') localStorage.setItem('maranth_payouts', newTotal.toString());
+        this.salesService.closeModal();
+      }
+    });
+  }
+
+  public resetDrawer(): void {
+    this.salesService.activeModal.set({
+      type: 'warning', title: '⚠️ Close Shift / Reset Drawer', message: 'Are you sure you want to reset the Cash Tracker back to zero?', value: '',
+      onConfirm: () => {
+        this.startingFloat.set(0);
+        this.supplierPayouts.set(0);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('maranth_float', '0');
+          localStorage.setItem('maranth_payouts', '0');
+        }
+        this.salesService.closeModal();
+      }
+    });
+  }
+
+  public todaysTransactions = computed(() => {
+    const today = new Date().toDateString();
+    const txs = this.salesService.transactions() || [];
+    return txs.filter(tx => tx && tx.timestamp && new Date(tx.timestamp).toDateString() === today).reverse();
+  });
 }
