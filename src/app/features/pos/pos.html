@@ -98,6 +98,15 @@
       </div>
 
       <!-- 3. MOBILE CATEGORY TOGGLE -->
+       <div class="sidebar-mobile-toggle" (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <!-- The Hamburger / Close Icon -->
+          <span style="font-size: 22px; line-height: 1;">
+            {{ isSidebarMobileOpen() ? '✕' : '☰' }}
+          </span>
+          <span style="font-weight: 700; font-size: 15px;">Menu & Categories</span>
+        </div>
+      </div>
       <div class="sidebar-mobile-toggle" (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
         <span style="font-weight: 700; font-size: 14px;">📁 Menu & Categories</span>
         <span style="font-size: 12px;">{{ isSidebarMobileOpen() ? '🔼' : '🔽' }}</span>

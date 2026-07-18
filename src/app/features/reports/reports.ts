@@ -174,21 +174,29 @@ export class ReportsComponent {
     return { rev: safeRev, percent: Math.min(100, isNaN(rawPercent) ? 0 : rawPercent) };
   });
 
-  public threeHourSnapshot = computed(() => {
-    const now = Date.now();
-    const threeHoursAgo = now - (3 * 60 * 60 * 1000); 
-    let rev = 0; let count = 0;
+ public dailyShifts = computed(() => {
+    const todayStr = new Date().toDateString();
+    let shift1 = { rev: 0, count: 0 }; // 08:00 - 15:00
+    let shift2 = { rev: 0, count: 0 }; // 15:00 - 17:00
+    let shift3 = { rev: 0, count: 0 }; // 17:00 - 23:00
+
     const txs = this.salesService.transactions() || [];
     txs.forEach(tx => {
-      if (tx && tx.timestamp) {
-        const txTime = new Date(tx.timestamp).getTime();
-        if (txTime >= threeHoursAgo && txTime <= now) {
-          rev += this.safeParseLocal(tx.grandTotal as any);
-          count++;
+      if (tx && tx.timestamp && new Date(tx.timestamp).toDateString() === todayStr) {
+        const txHour = new Date(tx.timestamp).getHours(); 
+        const amount = this.safeParseLocal(tx.grandTotal as any);
+
+        if (txHour >= 8 && txHour < 15) {
+          shift1.rev += amount; shift1.count++;
+        } else if (txHour >= 15 && txHour < 17) {
+          shift2.rev += amount; shift2.count++;
+        } else if (txHour >= 17 && txHour < 23) {
+          shift3.rev += amount; shift3.count++;
         }
       }
     });
-    return { revenue: isNaN(rev) ? 0 : rev, count };
+
+    return { shift1, shift2, shift3 };
   });
 
   public systemAlerts = computed(() => {
