@@ -131,12 +131,16 @@
 
 @media (max-width: 1024px) {
   .pos-main-layout { flex-direction: column !important; overflow-y: auto !important; height: auto !important; padding-bottom: 90px !important; padding: 0 !important; gap: 0 !important; }
-  .pos-sidebar-panel { width: 100% !important; flex: 0 0 auto !important; padding: 0 !important; border-radius: 0 !important; min-height: min-content; border-bottom: 1px solid #1e293b; }
+  
+  /* ⭐ FIX 1: Added 'height: auto !important' so it shrinks instead of covering the screen */
+  .pos-sidebar-panel { width: 100% !important; flex: 0 0 auto !important; height: auto !important; padding: 0 !important; border-radius: 0 !important; min-height: min-content; border-bottom: 1px solid #1e293b; }
   
   /* Collapsible logic for mobile */
   .sidebar-mobile-toggle { display: flex !important; }
   .sidebar-collapsible-content { display: none !important; }
-  .pos-sidebar-panel.expanded .sidebar-collapsible-content { display: flex !important; }
+  
+  /* ⭐ FIX 2: Corrected this selector so the menu actually drops down when tapped */
+  .sidebar-collapsible-content.expanded { display: flex !important; }
 
   .checkout-basket-panel {
     width: 100% !important; flex: 0 0 auto !important; position: fixed !important;
@@ -146,6 +150,7 @@
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; margin: 0 !important;
   }
   .checkout-basket-panel.mobile-open { transform: translateY(-100%); bottom: 0 !important; }
+  
   .mobile-basket-fab {
     display: flex !important; position: fixed; bottom: 20px; left: 5%; width: 90%;
     background: #0b57d0; color: white; padding: 16px 24px; border-radius: 99px;
