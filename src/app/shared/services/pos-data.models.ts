@@ -10,6 +10,7 @@ export interface Product {
   sku?: string;
   purchasePrice?: number;
   taxRate?: number;
+  costPrice?: number;
   
   // ⭐ NEW ACCESS DATABASE FIELDS
   afterTaxRate?: number;
