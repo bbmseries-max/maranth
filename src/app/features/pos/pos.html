@@ -134,7 +134,7 @@
       </div>
     </aside>
 
-    <section class="main-catalog-panel">
+ <section class="main-catalog-panel">
       <!-- Pinned Search Bar -->
       <div class="search-action-bar" style="background: #ffffff; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; flex: 0 0 auto;">
         <div class="search-input-wrapper" style="display: flex; align-items: center; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 0 12px; height: 44px;">
@@ -143,47 +143,60 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 8px; padding: 8px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap;">
-        <button class="app-btn toggle-btn" [class.active]="showWeightedShelf()" (click)="showWeightedShelf.set(!showWeightedShelf()); salesService.triggerSearchFocus()">⚖️ Scaled Items</button>
-        <button class="app-btn toggle-btn" [class.active-loose]="showLooseShelf()" (click)="showLooseShelf.set(!showLooseShelf()); salesService.triggerSearchFocus()">🏷️ Loose Items</button>
-      </div>
-
-      @if ((showWeightedShelf() && weightedProducts().length > 0) || (showLooseShelf() && looseProducts().length > 0)) {
-        <div class="quick-access-shelf">
-          @if (showWeightedShelf() && weightedProducts().length > 0) {
-            <div class="qa-header">⚖️ Scaled Produce</div>
-            <div class="qa-scroll-track" style="margin-bottom: 12px;">
-              @for (prod of weightedProducts(); track prod.id) {
-                <div class="qa-card" (click)="handleProductClick(prod)">
-                  <span class="qa-name">{{ prod.name }}</span>
-                  <div class="qa-bottom"><span class="qa-price">{{ formatMoney(prod.price) }}</span><span class="qa-badge weighted">⚖️</span></div>
-                </div>
-              }
-            </div>
-          }
-          @if (showLooseShelf() && looseProducts().length > 0) {
-            <div class="qa-header">🏷️ Loose Items</div>
-            <div class="qa-scroll-track">
-              @for (prod of looseProducts(); track prod.id) {
-                <div class="qa-card" (click)="handleProductClick(prod)">
-                  <span class="qa-name">{{ prod.name }}</span>
-                  <div class="qa-bottom"><span class="qa-price">{{ formatMoney(prod.price) }}</span><span class="qa-badge">📦</span></div>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      }
-
       <div class="catalog-scroll-viewport">
-        <div class="grid-layout-scroll">
-          @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
-            @if (prod.isFirstOfCategory) {
-              <div class="category-divider-row" style="grid-column: 1 / -1; display: flex; align-items: center; margin-top: 12px; margin-bottom: 4px;">
-                <span style="font-weight: 700; font-size: 13px; color: #64748b; text-transform: uppercase; background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">📁 {{ prod.displayCategoryName || salesService.getCategoryName(prod.categoryId) }}</span>
+        
+        <!-- ========================================== -->
+        <!-- PRIORITY 1: SCALED ITEMS (Always Top)      -->
+        <!-- ========================================== -->
+        @if (weightedProducts().length > 0 && !searchQuery()) {
+          <div class="zone-header">
+            <span class="zone-icon">⚖️</span> 
+            <div>
+              <div class="zone-title" style="color: #166534;">Weighing Station</div>
+              <div class="zone-subtitle">Scaled items require weight input</div>
+            </div>
+          </div>
+          <div class="pos-touch-grid scaled-grid">
+            @for (prod of weightedProducts(); track prod.id) {
+              <div class="pos-touch-btn" (click)="handleProductClick(prod)">
+                <span class="touch-price">{{ formatMoney(prod.price) }}/kg</span>
+                <span class="touch-name">{{ prod.name }}</span>
               </div>
             }
+          </div>
+        }
 
+        <!-- ========================================== -->
+        <!-- PRIORITY 2: LOOSE ITEMS                    -->
+        <!-- ========================================== -->
+        @if (looseProducts().length > 0 && !searchQuery()) {
+          <div class="zone-header" style="margin-top: 16px;">
+            <span class="zone-icon">🏷️</span> 
+            <div>
+              <div class="zone-title" style="color: #0b57d0;">Loose Items</div>
+              <div class="zone-subtitle">Bakery & items without barcodes</div>
+            </div>
+          </div>
+          <div class="pos-touch-grid loose-grid">
+            @for (prod of looseProducts(); track prod.id) {
+              <div class="pos-touch-btn" (click)="handleProductClick(prod)">
+                <span class="touch-price">{{ formatMoney(prod.price) }}</span>
+                <span class="touch-name">{{ prod.name }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ========================================== -->
+        <!-- PRIORITY 3: STANDARD CATALOG               -->
+        <!-- ========================================== -->
+        <div class="zone-header" style="margin-top: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+          <div class="zone-title" style="color: #475569;">{{ searchQuery() ? 'Search Results' : '📦 Standard Catalog (Max 30)' }}</div>
+        </div>
+
+        <div class="grid-layout-scroll" style="padding-top: 12px;">
+          @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
+            
             <div class="product-item-card" (click)="handleProductClick(prod)">
               <div class="prod-name-row">
                 <span class="prod-name">{{ prod.name }}</span>
@@ -211,6 +224,7 @@
             <div class="empty-msg" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #64748b;">⚠️ No items match your search.</div>
           }
         </div>
+
       </div>
     </section>
 
