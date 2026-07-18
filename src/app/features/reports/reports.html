@@ -144,33 +144,40 @@
             </button>
           </div>
           <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-            <thead>
-              <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 600;">
-                <th style="padding: 12px 8px;">Ticket ID</th>
-                <th style="padding: 12px 8px;">Time</th>
-                <th style="padding: 12px 8px;">Payment</th>
-                <th style="padding: 12px 8px; text-align: right;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (tx of filteredTransactions(); track tx.id) {
-                <tr (click)="selectTxn(tx.id)" [style.background]="selectedTxnId() === tx.id ? '#f0fdf4' : 'transparent'" style="border-bottom: 1px solid #f1f5f9; color: #334155; cursor: pointer;">
-                  <td style="padding: 12px 8px; font-weight: 600; color: #2563eb;">{{ tx.id.slice(-8) }}</td>
-                  <td style="padding: 12px 8px;">
-                     {{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}
-                </td>
-                  <td style="padding: 12px 8px;">
-                    <span [style.background]="tx.paymentMethod === 'Cash' ? '#ccfbf1' : '#e0e7ff'" [style.color]="tx.paymentMethod === 'Cash' ? '#115e59' : '#3730a3'" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
-                      {{ tx.paymentMethod }}
-                    </span>
-                  </td>
-                  <td style="padding: 12px 8px; text-align: right; font-weight: 700;">{{ formatMoney(tx.grandTotal) }}</td>
-                </tr>
-              } @empty {
-                <tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 48px 0;">No receipts found.</td></tr>
-              }
-            </tbody>
-          </table>
+  <thead>
+    <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 600;">
+      <th style="padding: 12px 8px;">Ticket ID</th>
+      <th style="padding: 12px 8px;">Time</th>
+      <th style="padding: 12px 8px;">Cashier</th>
+      <th style="padding: 12px 8px;">Payment</th>
+      <th style="padding: 12px 8px; text-align: right;">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (tx of filteredTransactions(); track tx.id) {
+      <tr (click)="selectTxn(tx.id)" [style.background]="selectedTxnId() === tx.id ? '#f0fdf4' : 'transparent'" style="border-bottom: 1px solid #f1f5f9; color: #334155; cursor: pointer;">
+        <td style="padding: 12px 8px; font-weight: 600; color: #2563eb;">{{ tx.id.slice(-8) }}</td>
+        
+        <!-- Beautifully formatted Time -->
+        <td style="padding: 12px 8px;">{{ tx.timestamp | date:'HH:mm' }}</td>
+        
+        <!-- Safely checks all possible Cashier fields -->
+        <td style="padding: 12px 8px; font-weight: 500;">
+          {{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}
+        </td>
+        
+        <td style="padding: 12px 8px;">
+          <span [style.background]="tx.paymentMethod === 'Cash' ? '#ccfbf1' : '#e0e7ff'" [style.color]="tx.paymentMethod === 'Cash' ? '#115e59' : '#3730a3'" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+            {{ tx.paymentMethod }}
+          </span>
+        </td>
+        <td style="padding: 12px 8px; text-align: right; font-weight: 700;">{{ formatMoney(tx.grandTotal) }}</td>
+      </tr>
+    } @empty {
+      <tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 48px 0;">No receipts found.</td></tr>
+    }
+  </tbody>
+</table>
         </div>
 
         <!-- Sticky Itemized Auditor -->

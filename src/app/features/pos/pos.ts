@@ -208,7 +208,10 @@ export class PosComponent implements OnInit, AfterViewInit {
         type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${prod.name}:`, value: '1.000',
         onConfirm: (val) => {
           const weight = Number(val);
-          if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
+          // ⭐ THE FIX: We pass 'weight' directly as the second argument (the quantity)
+          if (!isNaN(weight) && weight > 0) {
+            this.salesService.addToBasket(prod, weight); 
+          }
           this.salesService.closeModal();
           setTimeout(() => this.salesService.triggerSearchFocus(), 100);
         }
