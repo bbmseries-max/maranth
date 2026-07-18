@@ -22,17 +22,19 @@ export class InventoryComponent {
   public editingProductId = signal<string | null>(null);
   public editForm = signal<Partial<Product>>({});
 
-  public filteredProducts = computed(() => {
+ public filteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const allProds = this.salesService.products() || [];
     
-    if (!query) return allProds;
+    // If no search, only show the first 100 items so the phone doesn't crash!
+    if (!query) return allProds.slice(0, 100);
 
+    // If searching, search the ENTIRE 3,487 catalog and show results!
     return allProds.filter(p => 
       (p.name && p.name.toLowerCase().includes(query)) || 
       (p.barcode && p.barcode.toLowerCase().includes(query)) ||
       (p.id && p.id.toString().toLowerCase().includes(query))
-    );
+    ).slice(0, 100); // Also limits search results to top 100 for speed
   });
 
   // Toggle the edit form and trigger the smooth scroll
