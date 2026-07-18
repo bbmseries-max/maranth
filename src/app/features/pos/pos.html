@@ -156,7 +156,16 @@
               <div class="zone-subtitle">Scaled items require weight input</div>
             </div>
           </div>
-          <div class="pos-touch-grid scaled-grid">
+         <div class="pos-touch-grid scaled-grid">
+            @for (prod of weightedProducts(); track prod.id) {
+              <div class="pos-touch-btn" (click)="handleProductClick(prod)">
+                <!-- Name on top (Lines 1 & 2), 15 letters max -->
+                <span class="touch-name">{{ prod.name.length > 15 ? prod.name.substring(0, 15) + '..' : prod.name }}</span>
+                <!-- Price on bottom (Line 3) -->
+                <span class="touch-price">{{ formatMoney(prod.price) }}/kg</span>
+              </div>
+            }
+          </div> <div class="pos-touch-grid scaled-grid">
             @for (prod of weightedProducts(); track prod.id) {
               <div class="pos-touch-btn" (click)="handleProductClick(prod)">
                 <span class="touch-price">{{ formatMoney(prod.price) }}/kg</span>
@@ -178,12 +187,13 @@
               <div class="zone-subtitle">Bakery & items without barcodes</div>
             </div>
           </div>
-         <div class="pos-touch-grid loose-grid">
+        <div class="pos-touch-grid loose-grid">
             @for (prod of looseProducts(); track prod.id) {
               <div class="pos-touch-btn" (click)="handleProductClick(prod)">
+                <!-- Name on top (Lines 1 & 2), 15 letters max -->
+                <span class="touch-name">{{ prod.name.length > 15 ? prod.name.substring(0, 15) + '..' : prod.name }}</span>
+                <!-- Price on bottom (Line 3) -->
                 <span class="touch-price">{{ formatMoney(prod.price) }}</span>
-                <!-- Bumps long names down to 12 chars -->
-                <span class="touch-name">{{ prod.name.length > 12 ? prod.name.substring(0, 12) + '..' : prod.name }}</span>
               </div>
             }
           </div>

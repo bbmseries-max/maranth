@@ -174,15 +174,31 @@
 }
 
 .pos-touch-btn {
-  display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
-  padding: 16px 8px; border-radius: 12px; cursor: pointer; user-select: none;
+  display: flex; flex-direction: column; justify-content: space-between; align-items: center; 
+  text-align: center; padding: 12px 6px; border-radius: 12px; cursor: pointer; user-select: none;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: transform 0.1s, filter 0.1s;
-  min-height: 80px;
+  min-height: 100px; 
 }
 .pos-touch-btn:active { transform: scale(0.95); filter: brightness(0.9); }
 
-.touch-price { font-size: 14px; font-weight: 900; margin-bottom: 4px; }
-.touch-name { font-size: 12px; font-weight: 700; line-height: 1.2; word-wrap: break-word; }
+.touch-name { 
+  font-size: 19px; /* ⭐ Up 2px (from 17px to 19px) */
+  font-weight: 900; 
+  line-height: 1.1; 
+  letter-spacing: -0.02em; 
+  word-wrap: break-word; 
+  margin-bottom: 8px; /* Gives breathing room before the price */
+  width: 100%;
+}
+
+.touch-price { 
+  font-size: 14px; 
+  font-weight: 800; 
+  opacity: 0.85; 
+  text-align: center; /* Forces center alignment */
+  width: 100%;
+  margin-top: auto; /* Pushes the price strictly to the bottom line */
+}
 
 /* Scaled Items get a distinct Green POS look */
 .scaled-grid .pos-touch-btn {
