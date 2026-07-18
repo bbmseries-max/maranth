@@ -15,39 +15,33 @@ import { Product } from '../../shared/services/pos-data.models';
 export class InventoryComponent {
   public salesService = inject(SalesService);
 
-  // Search and Filter
   public searchQuery = signal<string>('');
   
-  // The product currently being edited
-  public editingProductId = signal<string | null>(null);
-  public editForm = signal<Partial<Product>>({});
+  // ⭐ FIXED: Changed from Signals to standard variables so the HTML form works perfectly
+  public editingProductId: string | null = null;
+  public editForm: Partial<Product> = {};
 
- public filteredProducts = computed(() => {
+  public filteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const allProds = this.salesService.products() || [];
     
-    // If no search, only show the first 100 items so the phone doesn't crash!
+    // Limits to 100 to prevent mobile lag!
     if (!query) return allProds.slice(0, 100);
 
-    // If searching, search the ENTIRE 3,487 catalog and show results!
     return allProds.filter(p => 
       (p.name && p.name.toLowerCase().includes(query)) || 
       (p.barcode && p.barcode.toLowerCase().includes(query)) ||
       (p.id && p.id.toString().toLowerCase().includes(query))
-    ).slice(0, 100); // Also limits search results to top 100 for speed
+    ).slice(0, 100);
   });
 
-  // Toggle the edit form and trigger the smooth scroll
   public toggleEdit(prod: Product): void {
-    if (this.editingProductId() === prod.id) {
-      // If tapping the same product, close it
-      this.editingProductId.set(null);
+    if (this.editingProductId === prod.id) {
+      this.editingProductId = null;
     } else {
-      // Open the new product
-      this.editingProductId.set(prod.id);
-      this.editForm.set({ ...prod });
+      this.editingProductId = prod.id;
+      this.editForm = { ...prod };
 
-      // Wait a tiny fraction of a second for the DOM to expand, then smooth scroll!
       setTimeout(() => {
         const element = document.getElementById('prod-card-' + prod.id);
         if (element) {
@@ -57,20 +51,16 @@ export class InventoryComponent {
     }
   }
 
-  // Save changes and close the accordion
   public saveEdit(): void {
-    const currentForm = this.editForm();
-    if (!currentForm.id || !currentForm.name || currentForm.price === undefined) return;
-    
-    this.salesService.saveProduct(currentForm.id, currentForm as Product);
-    this.editingProductId.set(null);
+    if (!this.editForm.id || !this.editForm.name || this.editForm.price === undefined) return;
+    this.salesService.saveProduct(this.editForm.id, this.editForm as Product);
+    this.editingProductId = null;
   }
 
   public cancelEdit(): void {
-    this.editingProductId.set(null);
+    this.editingProductId = null;
   }
 
-  // Helper formatting
   public formatMoney(amount: any): string {
     if (amount === null || amount === undefined || amount === '') return '€0.00';
     let parsed = Number(amount);

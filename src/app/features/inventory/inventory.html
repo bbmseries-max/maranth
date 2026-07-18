@@ -1,6 +1,5 @@
 <div class="field-app-container">
 
-  <!-- 1. THE SKY HEADER (Phone Menu) -->
   <header class="sky-header">
     <div class="brand-logo">🍊 MARANTH</div>
     <nav class="phone-menu">
@@ -10,7 +9,6 @@
     </nav>
   </header>
 
-  <!-- 2. THE PINNED SEARCH BAR -->
   <div class="sticky-search-area">
     <div class="search-input-wrapper">
       <span class="search-icon">🔍</span>
@@ -28,14 +26,11 @@
     <div class="results-count">{{ filteredProducts().length }} items found</div>
   </div>
 
-  <!-- 3. THE 5-LINE SCROLLABLE LIST -->
   <div class="inventory-scroll-list">
     @for (prod of filteredProducts(); track prod.id) {
       
-      <!-- The Product Card (ID used for smooth scrolling) -->
-      <div class="prod-card" [id]="'prod-card-' + prod.id" [class.is-editing]="editingProductId() === prod.id">
+      <div class="prod-card" [id]="'prod-card-' + prod.id" [class.is-editing]="editingProductId === prod.id">
         
-        <!-- The Tappable Summary Line -->
         <div class="prod-summary" (click)="toggleEdit(prod)">
           <div class="prod-info-group">
             <div class="prod-name">{{ prod.name }}</div>
@@ -47,37 +42,37 @@
             </div>
           </div>
           <div class="edit-chevron">
-            {{ editingProductId() === prod.id ? '🔼' : '✏️' }}
+            {{ editingProductId === prod.id ? '🔼' : '✏️' }}
           </div>
         </div>
 
-        <!-- The Expanding Inline Edit Form -->
-        @if (editingProductId() === prod.id) {
+        @if (editingProductId === prod.id) {
           <div class="inline-edit-form">
             
             <div class="edit-grid">
               <div class="input-group">
                 <label>Name</label>
-                <input type="text" [(ngModel)]="editForm().name" />
+                <!-- FIXED BINDING -->
+                <input type="text" [(ngModel)]="editForm.name" />
               </div>
               <div class="input-group">
                 <label>Barcode</label>
-                <input type="text" [(ngModel)]="editForm().barcode" placeholder="Tap to scan..." />
+                <input type="text" [(ngModel)]="editForm.barcode" placeholder="Tap to scan..." />
               </div>
             </div>
 
             <div class="edit-grid triple">
               <div class="input-group">
                 <label>Price (€)</label>
-                <input type="number" step="0.01" [(ngModel)]="editForm().price" class="highlight-input" />
+                <input type="number" step="0.01" [(ngModel)]="editForm.price" class="highlight-input" />
               </div>
               <div class="input-group">
                 <label>Cost (€)</label>
-                <input type="number" step="0.01" [(ngModel)]="editForm().costPrice" />
+                <input type="number" step="0.01" [(ngModel)]="editForm.costPrice" />
               </div>
               <div class="input-group">
                 <label>Stock</label>
-                <input type="number" [(ngModel)]="editForm().stockQuantity" class="highlight-input" />
+                <input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" />
               </div>
             </div>
 
