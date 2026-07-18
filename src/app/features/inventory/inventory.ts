@@ -16,6 +16,7 @@ export class InventoryComponent {
   public salesService = inject(SalesService);
 
   public searchQuery = signal<string>('');
+  public activeTab = signal<string>('products');
   
   // ⭐ FIXED: Changed from Signals to standard variables so the HTML form works perfectly
   public editingProductId: string | null = null;

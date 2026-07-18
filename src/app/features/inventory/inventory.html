@@ -1,5 +1,6 @@
 <div class="field-app-container">
 
+  <!-- 1. THE SKY HEADER -->
   <header class="sky-header">
     <div class="brand-logo">🍊 MARANTH</div>
     <nav class="phone-menu">
@@ -9,89 +10,118 @@
     </nav>
   </header>
 
-  <div class="sticky-search-area">
-    <div class="search-input-wrapper">
-      <span class="search-icon">🔍</span>
-      <input 
-        type="text" 
-        class="field-search-input"
-        placeholder="Scan barcode or type name..." 
-        [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)"
-      />
-      @if (searchQuery()) {
-        <button class="clear-btn" (click)="searchQuery.set('')">✖</button>
-      }
-    </div>
-    <div class="results-count">{{ filteredProducts().length }} items found</div>
+  <!-- ⭐ NEW: THE SUB-MENU TABS -->
+  <div class="field-tab-bar">
+    <button class="field-tab-btn" [class.active]="activeTab() === 'products'" (click)="activeTab.set('products')">📦 Items</button>
+    <button class="field-tab-btn" [class.active]="activeTab() === 'add'" (click)="activeTab.set('add')">➕ Add New</button>
+    <button class="field-tab-btn" [class.active]="activeTab() === 'suppliers'" (click)="activeTab.set('suppliers')">🚚 Suppliers</button>
+    <button class="field-tab-btn" [class.active]="activeTab() === 'categories'" (click)="activeTab.set('categories')">📁 Categories</button>
   </div>
 
-  <div class="inventory-scroll-list">
-    @for (prod of filteredProducts(); track prod.id) {
-      
-      <div class="prod-card" [id]="'prod-card-' + prod.id" [class.is-editing]="editingProductId === prod.id">
+  <!-- ========================================== -->
+  <!-- TAB 1: PRODUCTS LIST (The mobile view we just built) -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'products') {
+    <div class="sticky-search-area">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          class="field-search-input"
+          placeholder="Scan barcode or type name..." 
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+        @if (searchQuery()) {
+          <button class="clear-btn" (click)="searchQuery.set('')">✖</button>
+        }
+      </div>
+      <div class="results-count">{{ filteredProducts().length }} items found</div>
+    </div>
+
+    <div class="inventory-scroll-list">
+      @for (prod of filteredProducts(); track prod.id) {
         
-        <div class="prod-summary" (click)="toggleEdit(prod)">
-          <div class="prod-info-group">
-            <div class="prod-name">{{ prod.name }}</div>
-            <div class="prod-badges">
-              <span class="stock-badge" [class.low-stock]="prod.stockQuantity <= 5">
-                📦 {{ prod.stockQuantity }} {{ prod.isWeighted ? 'kg' : 'pcs' }}
-              </span>
-              <span class="price-badge">{{ formatMoney(prod.price) }}</span>
+        <div class="prod-card" [id]="'prod-card-' + prod.id" [class.is-editing]="editingProductId === prod.id">
+          
+          <div class="prod-summary" (click)="toggleEdit(prod)">
+            <div class="prod-info-group">
+              <div class="prod-name">{{ prod.name }}</div>
+              <div class="prod-badges">
+                <span class="stock-badge" [class.low-stock]="prod.stockQuantity <= 5">
+                  📦 {{ prod.stockQuantity }} {{ prod.isWeighted ? 'kg' : 'pcs' }}
+                </span>
+                <span class="price-badge">{{ formatMoney(prod.price) }}</span>
+              </div>
+            </div>
+            <div class="edit-chevron">
+              {{ editingProductId === prod.id ? '🔼' : '✏️' }}
             </div>
           </div>
-          <div class="edit-chevron">
-            {{ editingProductId === prod.id ? '🔼' : '✏️' }}
-          </div>
+
+          @if (editingProductId === prod.id) {
+            <div class="inline-edit-form">
+              <div class="edit-grid">
+                <div class="input-group"><label>Name</label><input type="text" [(ngModel)]="editForm.name" /></div>
+                <div class="input-group"><label>Barcode</label><input type="text" [(ngModel)]="editForm.barcode" /></div>
+              </div>
+              <div class="edit-grid triple">
+                <div class="input-group"><label>Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="highlight-input" /></div>
+                <div class="input-group"><label>Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" /></div>
+                <div class="input-group"><label>Stock</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" /></div>
+              </div>
+              <div class="form-actions">
+                <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
+                <button class="btn-save" (click)="saveEdit()">💾 Save Changes</button>
+              </div>
+            </div>
+          }
+
         </div>
 
-        @if (editingProductId === prod.id) {
-          <div class="inline-edit-form">
-            
-            <div class="edit-grid">
-              <div class="input-group">
-                <label>Name</label>
-                <!-- FIXED BINDING -->
-                <input type="text" [(ngModel)]="editForm.name" />
-              </div>
-              <div class="input-group">
-                <label>Barcode</label>
-                <input type="text" [(ngModel)]="editForm.barcode" placeholder="Tap to scan..." />
-              </div>
-            </div>
+      } @empty {
+        <div class="empty-state">
+          <span style="font-size: 32px; display: block; margin-bottom: 12px;">📦</span>
+          No products found.<br>Try a different search or scan.
+        </div>
+      }
+    </div>
+  }
 
-            <div class="edit-grid triple">
-              <div class="input-group">
-                <label>Price (€)</label>
-                <input type="number" step="0.01" [(ngModel)]="editForm.price" class="highlight-input" />
-              </div>
-              <div class="input-group">
-                <label>Cost (€)</label>
-                <input type="number" step="0.01" [(ngModel)]="editForm.costPrice" />
-              </div>
-              <div class="input-group">
-                <label>Stock</label>
-                <input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" />
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
-              <button class="btn-save" (click)="saveEdit()">💾 Save Changes</button>
-            </div>
-            
-          </div>
-        }
-
+  <!-- ========================================== -->
+  <!-- TAB 2: ADD NEW PRODUCT -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'add') {
+    <div class="inventory-scroll-list" style="padding: 24px;">
+      <h2 style="margin-top: 0; color: #0f172a;">➕ Add New Product</h2>
+      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <p style="color: #64748b; font-size: 14px;">(Form goes here... Do you want me to build the new mobile-friendly form for this, or do you have the old one?)</p>
       </div>
+    </div>
+  }
 
-    } @empty {
-      <div class="empty-state">
-        <span style="font-size: 32px; display: block; margin-bottom: 12px;">📦</span>
-        No products found.<br>Try a different search or scan.
+  <!-- ========================================== -->
+  <!-- TAB 3: SUPPLIERS -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'suppliers') {
+    <div class="inventory-scroll-list" style="padding: 24px;">
+      <h2 style="margin-top: 0; color: #0f172a;">🚚 Manage Suppliers</h2>
+      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <p style="color: #64748b; font-size: 14px;">(Supplier list goes here... Do you have your old supplier HTML code, or should I write a new one?)</p>
       </div>
-    }
-  </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 4: CATEGORIES -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'categories') {
+    <div class="inventory-scroll-list" style="padding: 24px;">
+      <h2 style="margin-top: 0; color: #0f172a;">📁 Manage Categories</h2>
+      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <p style="color: #64748b; font-size: 14px;">(Categories list goes here... Do you have your old category HTML code, or should I write a new one?)</p>
+      </div>
+    </div>
+  }
 
 </div>

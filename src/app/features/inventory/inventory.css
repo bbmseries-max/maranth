@@ -96,3 +96,34 @@
 .btn-save { flex: 2; padding: 12px; background: #16a34a; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; }
 
 .empty-state { text-align: center; color: #94a3b8; padding: 60px 20px; font-weight: 600; line-height: 1.5; }
+
+/* ⭐ NEW TAB BAR STYLES */
+.field-tab-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none; /* Hide scrollbar for a clean look */
+}
+.field-tab-bar::-webkit-scrollbar { display: none; }
+
+.field-tab-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.field-tab-btn.active {
+  background: #0f172a;
+  color: white;
+  border-color: #0f172a;
+}
