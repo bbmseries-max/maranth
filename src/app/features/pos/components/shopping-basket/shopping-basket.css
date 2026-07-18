@@ -48,7 +48,7 @@
 
 .payment-method-panel { padding-top: 8px; }
 .payment-button-group { display: flex; gap: 12px; }
-.btn-payment { flex: 1; padding: 16px 10px; border-radius: 12px; border: 2px solid #cbd5e1; background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); font-weight: 800; font-size: 28px; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 0 #94a3b8, 0 10px 15px rgba(0,0,0,0.1); transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1); text-transform: uppercase; letter-spacing: 0.05em; }
+.btn-payment { flex: 1; padding: 16px 10px; border-radius: 12px; border: 2px solid #cbd5e1; background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); font-weight: 800; font-size: 22px; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 0 #94a3b8, 0 10px 15px rgba(0,0,0,0.1); transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1); text-transform: uppercase; letter-spacing: 0.05em; }
 .btn-payment:hover:not(:disabled) { background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%); transform: translateY(2px); box-shadow: 0 4px 0 #94a3b8, 0 6px 10px rgba(0,0,0,0.1); }
 .btn-payment:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 #94a3b8, 0 2px 4px rgba(0,0,0,0.1); background: #e2e8f0; border-color: #94a3b8; }
 .btn-payment:disabled { opacity: 0.4; cursor: not-allowed; transform: translateY(6px); box-shadow: 0 0 0 #cbd5e1; background: #f1f5f9; }
