@@ -1,6 +1,6 @@
 <div class="field-app-container">
 
-  <!-- 1. THE SKY HEADER -->
+  <!-- THE SKY HEADER -->
   <header class="sky-header">
     <div class="brand-logo">🍊 MARANTH</div>
     <nav class="phone-menu">
@@ -10,118 +10,193 @@
     </nav>
   </header>
 
-  <!-- ⭐ NEW: THE SUB-MENU TABS -->
+  <!-- THE SUB-MENU TABS -->
   <div class="field-tab-bar">
-    <button class="field-tab-btn" [class.active]="activeTab() === 'products'" (click)="activeTab.set('products')">📦 Items</button>
-    <button class="field-tab-btn" [class.active]="activeTab() === 'add'" (click)="activeTab.set('add')">➕ Add New</button>
-    <button class="field-tab-btn" [class.active]="activeTab() === 'suppliers'" (click)="activeTab.set('suppliers')">🚚 Suppliers</button>
-    <button class="field-tab-btn" [class.active]="activeTab() === 'categories'" (click)="activeTab.set('categories')">📁 Categories</button>
+    <button class="field-tab-btn" [class.active]="activeTab() === 'products'" (click)="activeTab.set('products'); cancelAllEdits()">📦 Items</button>
+    <button class="field-tab-btn" [class.active]="activeTab() === 'suppliers'" (click)="activeTab.set('suppliers'); cancelAllEdits()">🚚 Suppliers</button>
+    <button class="field-tab-btn" [class.active]="activeTab() === 'categories'" (click)="activeTab.set('categories'); cancelAllEdits()">📁 Categories</button>
   </div>
 
   <!-- ========================================== -->
-  <!-- TAB 1: PRODUCTS LIST (The mobile view we just built) -->
+  <!-- TAB 1: PRODUCTS LIST -->
   <!-- ========================================== -->
   @if (activeTab() === 'products') {
-    <div class="sticky-search-area">
-      <div class="search-input-wrapper">
+    <div class="sticky-search-area" style="display: flex; gap: 8px; align-items: center;">
+      <div class="search-input-wrapper" style="flex: 1;">
         <span class="search-icon">🔍</span>
-        <input 
-          type="text" 
-          class="field-search-input"
-          placeholder="Scan barcode or type name..." 
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-        />
-        @if (searchQuery()) {
-          <button class="clear-btn" (click)="searchQuery.set('')">✖</button>
-        }
+        <input type="text" class="field-search-input" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+        @if (searchQuery()) { <button class="clear-btn" (click)="searchQuery.set('')">✖</button> }
       </div>
-      <div class="results-count">{{ filteredProducts().length }} items found</div>
+      <button (click)="prepareNewProduct()" style="background: #16a34a; color: white; border: none; padding: 0 16px; height: 48px; border-radius: 8px; font-weight: 700; cursor: pointer;">➕ Add</button>
     </div>
-
+    
     <div class="inventory-scroll-list">
+      
+      <!-- New Product Form Header (Shows if creating new) -->
+      @if (editingProductId === 'NEW') {
+        <div class="prod-card is-editing" style="border-top: 4px solid #16a34a;">
+          <div style="padding: 16px; font-weight: 800; color: #16a34a; border-bottom: 1px dashed #e2e8f0;">✨ Register New Item</div>
+          <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
+        </div>
+      }
+
       @for (prod of filteredProducts(); track prod.id) {
-        
         <div class="prod-card" [id]="'prod-card-' + prod.id" [class.is-editing]="editingProductId === prod.id">
-          
           <div class="prod-summary" (click)="toggleEdit(prod)">
             <div class="prod-info-group">
               <div class="prod-name">{{ prod.name }}</div>
               <div class="prod-badges">
-                <span class="stock-badge" [class.low-stock]="prod.stockQuantity <= 5">
-                  📦 {{ prod.stockQuantity }} {{ prod.isWeighted ? 'kg' : 'pcs' }}
-                </span>
+                <span class="stock-badge" [class.low-stock]="prod.stockQuantity <= 5">📦 {{ prod.stockQuantity }}</span>
                 <span class="price-badge">{{ formatMoney(prod.price) }}</span>
               </div>
             </div>
-            <div class="edit-chevron">
-              {{ editingProductId === prod.id ? '🔼' : '✏️' }}
-            </div>
+            <div class="edit-chevron">{{ editingProductId === prod.id ? '🔼' : '✏️' }}</div>
           </div>
-
           @if (editingProductId === prod.id) {
-            <div class="inline-edit-form">
-              <div class="edit-grid">
-                <div class="input-group"><label>Name</label><input type="text" [(ngModel)]="editForm.name" /></div>
-                <div class="input-group"><label>Barcode</label><input type="text" [(ngModel)]="editForm.barcode" /></div>
-              </div>
-              <div class="edit-grid triple">
-                <div class="input-group"><label>Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="highlight-input" /></div>
-                <div class="input-group"><label>Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" /></div>
-                <div class="input-group"><label>Stock</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" /></div>
-              </div>
-              <div class="form-actions">
-                <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
-                <button class="btn-save" (click)="saveEdit()">💾 Save Changes</button>
-              </div>
-            </div>
+            <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
           }
-
         </div>
-
       } @empty {
-        <div class="empty-state">
-          <span style="font-size: 32px; display: block; margin-bottom: 12px;">📦</span>
-          No products found.<br>Try a different search or scan.
+        <div class="empty-state">No products found.</div>
+      }
+    </div>
+
+    <!-- Reusable Product Form Template (Keeps HTML clean) -->
+    <ng-template #productFormTemplate>
+      <div class="inline-edit-form">
+        <div class="edit-grid">
+          <div class="input-group"><label>Code / ID</label><input type="text" [(ngModel)]="editForm.id" [disabled]="editingProductId !== 'NEW'" /></div>
+          <div class="input-group"><label>Barcode</label><input type="text" [(ngModel)]="editForm.barcode" /></div>
+        </div>
+        <div class="edit-grid" style="grid-template-columns: 1fr;">
+          <div class="input-group"><label>Name</label><input type="text" [(ngModel)]="editForm.name" /></div>
+        </div>
+        <div class="edit-grid triple">
+          <div class="input-group"><label>Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="highlight-input" /></div>
+          <div class="input-group"><label>Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" /></div>
+          <div class="input-group"><label>Stock</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" /></div>
+        </div>
+        <div class="edit-grid">
+          <div class="input-group">
+            <label>Category</label>
+            <select [(ngModel)]="editForm.categoryId" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white;">
+              @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Supplier</label>
+            <select [(ngModel)]="editForm.supplierId" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white;">
+              <option [value]="null">-- None --</option>
+              @for (sup of suppliers(); track sup.id) { <option [value]="sup.id">{{ sup.name }}</option> }
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-cancel" (click)="cancelAllEdits()">Cancel</button>
+          <button class="btn-save" (click)="saveEdit()">💾 Save</button>
+        </div>
+      </div>
+    </ng-template>
+  }
+
+  <!-- ========================================== -->
+  <!-- TAB 2: SUPPLIERS -->
+  <!-- ========================================== -->
+  @if (activeTab() === 'suppliers') {
+    <div class="sticky-search-area" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; color: #0f172a;">🚚 Supplier Directory</h3>
+      <button (click)="prepareNewSupplier()" style="background: #16a34a; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700;">➕ Add</button>
+    </div>
+    
+    <div class="inventory-scroll-list">
+      @if (editingSupplierId === 'NEW') {
+        <div class="prod-card is-editing" style="border-top: 4px solid #16a34a;">
+          <div style="padding: 16px; font-weight: 800; color: #16a34a; border-bottom: 1px dashed #e2e8f0;">✨ New Supplier Profile</div>
+          <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
+        </div>
+      }
+
+      @for (sup of suppliers(); track sup.id) {
+        <div class="prod-card" [class.is-editing]="editingSupplierId === sup.id">
+          <div class="prod-summary" (click)="toggleSupplierEdit(sup)">
+            <div class="prod-info-group">
+              <div class="prod-name">{{ sup.name }}</div>
+              <div style="font-size: 12px; color: #64748b;">{{ sup.contact ? '👤 ' + sup.contact : 'No Contact' }} • 📞 {{ sup.phone || 'N/A' }}</div>
+            </div>
+            <div class="edit-chevron">{{ editingSupplierId === sup.id ? '🔼' : '✏️' }}</div>
+          </div>
+          @if (editingSupplierId === sup.id) {
+            <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
+          }
         </div>
       }
     </div>
-  }
 
-  <!-- ========================================== -->
-  <!-- TAB 2: ADD NEW PRODUCT -->
-  <!-- ========================================== -->
-  @if (activeTab() === 'add') {
-    <div class="inventory-scroll-list" style="padding: 24px;">
-      <h2 style="margin-top: 0; color: #0f172a;">➕ Add New Product</h2>
-      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <p style="color: #64748b; font-size: 14px;">(Form goes here... Do you want me to build the new mobile-friendly form for this, or do you have the old one?)</p>
+    <ng-template #supplierFormTemplate>
+      <div class="inline-edit-form">
+        <div class="edit-grid" style="grid-template-columns: 1fr;">
+          <div class="input-group"><label>Company Name</label><input type="text" [(ngModel)]="supplierForm.name" /></div>
+        </div>
+        <div class="edit-grid">
+          <div class="input-group"><label>Contact Person</label><input type="text" [(ngModel)]="supplierForm.contact" /></div>
+          <div class="input-group"><label>Phone</label><input type="text" [(ngModel)]="supplierForm.phone" /></div>
+        </div>
+        <div class="edit-grid" style="grid-template-columns: 1fr;">
+          <div class="input-group"><label>Notes</label><input type="text" [(ngModel)]="supplierForm.notes" /></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-cancel" (click)="cancelAllEdits()">Cancel</button>
+          <button class="btn-save" (click)="saveSupplierChanges()">💾 Save Supplier</button>
+        </div>
       </div>
-    </div>
+    </ng-template>
   }
 
   <!-- ========================================== -->
-  <!-- TAB 3: SUPPLIERS -->
-  <!-- ========================================== -->
-  @if (activeTab() === 'suppliers') {
-    <div class="inventory-scroll-list" style="padding: 24px;">
-      <h2 style="margin-top: 0; color: #0f172a;">🚚 Manage Suppliers</h2>
-      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <p style="color: #64748b; font-size: 14px;">(Supplier list goes here... Do you have your old supplier HTML code, or should I write a new one?)</p>
-      </div>
-    </div>
-  }
-
-  <!-- ========================================== -->
-  <!-- TAB 4: CATEGORIES -->
+  <!-- TAB 3: CATEGORIES -->
   <!-- ========================================== -->
   @if (activeTab() === 'categories') {
-    <div class="inventory-scroll-list" style="padding: 24px;">
-      <h2 style="margin-top: 0; color: #0f172a;">📁 Manage Categories</h2>
-      <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <p style="color: #64748b; font-size: 14px;">(Categories list goes here... Do you have your old category HTML code, or should I write a new one?)</p>
-      </div>
+    <div class="sticky-search-area" style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; color: #0f172a;">📁 Categories Matrix</h3>
+      <button (click)="prepareNewCategory()" style="background: #16a34a; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700;">➕ Add</button>
     </div>
+    
+    <div class="inventory-scroll-list">
+      @if (editingCategoryId === 'NEW') {
+        <div class="prod-card is-editing" style="border-top: 4px solid #16a34a;">
+          <div style="padding: 16px; font-weight: 800; color: #16a34a; border-bottom: 1px dashed #e2e8f0;">✨ New Category</div>
+          <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
+        </div>
+      }
+
+      @for (cat of categories(); track cat.id) {
+        <div class="prod-card" [class.is-editing]="editingCategoryId === cat.id">
+          <div class="prod-summary" (click)="toggleCategoryEdit(cat)">
+            <div class="prod-info-group">
+              <div class="prod-name">{{ cat.name }}</div>
+              <div style="font-size: 11px; font-family: monospace; color: #64748b;">ID: {{ cat.id }}</div>
+            </div>
+            <div class="edit-chevron">{{ editingCategoryId === cat.id ? '🔼' : '✏️' }}</div>
+          </div>
+          @if (editingCategoryId === cat.id) {
+            <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
+          }
+        </div>
+      }
+    </div>
+
+    <ng-template #categoryFormTemplate>
+      <div class="inline-edit-form">
+        <div class="edit-grid">
+          <div class="input-group"><label>Category ID</label><input type="text" [(ngModel)]="categoryForm.id" [disabled]="editingCategoryId !== 'NEW'" /></div>
+          <div class="input-group"><label>Display Name</label><input type="text" [(ngModel)]="categoryForm.name" /></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-cancel" (click)="cancelAllEdits()">Cancel</button>
+          <button class="btn-save" (click)="saveCategoryChanges()">💾 Save Category</button>
+        </div>
+      </div>
+    </ng-template>
   }
 
 </div>
