@@ -156,7 +156,9 @@
               @for (tx of filteredTransactions(); track tx.id) {
                 <tr (click)="selectTxn(tx.id)" [style.background]="selectedTxnId() === tx.id ? '#f0fdf4' : 'transparent'" style="border-bottom: 1px solid #f1f5f9; color: #334155; cursor: pointer;">
                   <td style="padding: 12px 8px; font-weight: 600; color: #2563eb;">{{ tx.id.slice(-8) }}</td>
-                  <td style="padding: 12px 8px;">{{ tx.timestamp | date:'HH:mm' }}</td>
+                  <td style="padding: 12px 8px;">
+                     {{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}
+                </td>
                   <td style="padding: 12px 8px;">
                     <span [style.background]="tx.paymentMethod === 'Cash' ? '#ccfbf1' : '#e0e7ff'" [style.color]="tx.paymentMethod === 'Cash' ? '#115e59' : '#3730a3'" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
                       {{ tx.paymentMethod }}
@@ -179,6 +181,7 @@
               <div style="display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 12px;">
                 <span>Ref: <strong>{{ tx.id }}</strong></span>
                 <span>{{ tx.timestamp | date:'HH:mm' }}</span>
+                <span>Cashier: <strong>{{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}</strong></span>
               </div>
               <div style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 12px;">
                 @for (item of tx.items; track item.product.id) {

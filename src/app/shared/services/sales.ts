@@ -261,7 +261,8 @@ export class SalesService {
       subtotal: parseFloat(this.netSubtotal().toFixed(2)),
       taxAmount: parseFloat(this.taxAmount().toFixed(2)),
       grandTotal: parseFloat(this.grandTotal().toFixed(2)),
-      paymentMethod: method
+      paymentMethod: method,
+      cashierId: this.currentCashier() || 'Unknown'
     };
 
     currentBasket.forEach(item => {
