@@ -73,7 +73,7 @@ export class InventoryComponent {
       costPrice: 0, 
       stockQuantity: 0, 
       categoryId: '',
-      supplierId: null,
+      supplierId: undefined, // ⭐ FIX 1: Changed from null to undefined
       isActive: true,
       isWeighted: false
     };
@@ -104,7 +104,8 @@ export class InventoryComponent {
 
   public saveCategoryChanges(): void {
     if (!this.categoryForm.id || !this.categoryForm.name) return;
-    this.salesService.saveCategory(this.categoryForm.id, this.categoryForm as Category);
+    // ⭐ FIX 2: Removed the extra ID argument
+    this.salesService.saveCategory(this.categoryForm as Category);
     this.editingCategoryId = null;
   }
 
@@ -127,7 +128,8 @@ export class InventoryComponent {
 
   public saveSupplierChanges(): void {
     if (!this.supplierForm.id || !this.supplierForm.name) return;
-    this.salesService.saveSupplier(this.supplierForm.id, this.supplierForm as Supplier);
+    // ⭐ FIX 3: Removed the extra ID argument
+    this.salesService.saveSupplier(this.supplierForm as Supplier);
     this.editingSupplierId = null;
   }
 
