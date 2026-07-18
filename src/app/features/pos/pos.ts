@@ -199,19 +199,26 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/login']);
   }
 
-  public handleProductClick(prod: Product): void {
+public handleProductClick(prod: Product): void {
     this.searchQuery.set(''); 
 
     const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {
       this.salesService.activeModal.set({
-        type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${prod.name}:`, value: '1.000',
+        type: 'prompt', 
+        title: '⚖️ Scale Weight (kg)', 
+        message: `Enter the measured weight for ${prod.name}:`, 
+        value: '1.000',
         onConfirm: (val) => {
-          const weight = Number(val);
-          // ⭐ THE FIX: We pass 'weight' directly as the second argument (the quantity)
+          // ⭐ FIX 1: Safely swap Greek commas to dots so math doesn't fail
+          const safeVal = String(val).replace(',', '.');
+          const weight = parseFloat(safeVal);
+          
           if (!isNaN(weight) && weight > 0) {
-            this.salesService.addToBasket(prod, weight); 
+            // ⭐ FIX 2: Put 'undefined' back in the 2nd slot to satisfy TypeScript
+            this.salesService.addToBasket(prod, undefined, weight); 
           }
+          
           this.salesService.closeModal();
           setTimeout(() => this.salesService.triggerSearchFocus(), 100);
         }
