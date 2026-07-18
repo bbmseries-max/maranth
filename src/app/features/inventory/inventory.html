@@ -86,11 +86,22 @@
           <div class="input-group">
             <label>Supplier</label>
             <select [(ngModel)]="editForm.supplierId" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white;">
-              <option [value]="null">-- None --</option>
+              <option [value]="undefined">-- None --</option>
               @for (sup of suppliers(); track sup.id) { <option [value]="sup.id">{{ sup.name }}</option> }
             </select>
           </div>
         </div>
+
+        <!-- ⭐ I ADDED THE MISSING TOGGLES HERE! -->
+        <div style="display: flex; gap: 16px; margin-top: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
+            <input type="checkbox" [(ngModel)]="editForm.isWeighted" style="width: 18px; height: 18px;" /> ⚖️ Scaled Item
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
+            <input type="checkbox" [(ngModel)]="editForm.isActive" style="width: 18px; height: 18px;" /> 🟢 Active Status
+          </label>
+        </div>
+
         <div class="form-actions">
           <button class="btn-cancel" (click)="cancelAllEdits()">Cancel</button>
           <button class="btn-save" (click)="saveEdit()">💾 Save</button>
