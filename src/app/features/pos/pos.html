@@ -45,11 +45,11 @@
 
 <div class="pos-container">
   
+  <!-- The Header (We will upgrade this to the "Sky Header" in a future step) -->
   <header class="pos-header" style="flex-wrap: wrap;">
     <div class="header-left" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
       <button class="pos-admin-btn" (click)="salesService.linkCloudFolder()">🔗 Cloud Sync Active</button>
       <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px; margin-left: 8px;">🍊 MARANTH</span>
-      <span class="system-tag mobile-hide" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">POS System v2.0</span>
     </div>
     <div class="header-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
       <div style="background: #0f172a; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; color: white; font-size: 13px; display: flex; align-items: center; gap: 8px;">
@@ -73,7 +73,6 @@
 
       <div class="sidebar-collapsible-content">
         <div class="mobile-nav-links" style="display: none; flex-direction: column; gap: 8px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px dashed #475569;">
-          <div class="panel-title" style="margin-bottom: 8px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase;">Navigation</div>
           <a routerLink="/reports" class="app-btn" style="background: #3b82f6; color: white; text-align: left; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">📊 View Reports</a>
           <a routerLink="/inventory" class="app-btn" style="background: #8b5cf6; color: white; text-align: left; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: 600;">📦 Manage Inventory</a>
         </div>
@@ -108,67 +107,15 @@
             </button>
           }
         </div>
-      </div>
 
-      <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 16px; flex-shrink: 0; padding-bottom: 16px;">
-        
-        <div class="mobile-hide" style="background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
+        <!-- The only widget we left is the quick Misc Charge because a cashier needs it instantly -->
+        <div class="mobile-hide" style="background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155; margin-top: 16px;">
           <div class="panel-title" style="margin-bottom: 8px; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase;">⚡ Quick Misc Charge</div>
           <div style="display: flex; gap: 8px;">
             <input type="number" class="pos-input" style="flex: 1; padding: 8px; font-size: 14px;" placeholder="€0.00" [value]="miscAmount()" (input)="miscAmount.set($any($event.target).value)" (keyup.enter)="addMiscCharge()">
             <button class="app-btn" style="background: #3b82f6; color: white; padding: 8px 12px; font-weight: bold; border-radius: 6px;" (click)="addMiscCharge()">Add</button>
           </div>
         </div>
-
-        <div class="mobile-hide" style="background: #0f172a; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <div class="panel-title" style="margin: 0; color: #10b981; font-size: 12px; font-weight: 800; text-transform: uppercase;">💵 Live Cash Drawer</div>
-            <button class="app-btn" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 2px 6px; font-size: 10px; border-radius: 4px;" (click)="resetDrawer()">Reset</button>
-          </div>
-          
-          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <button class="app-btn" style="flex: 1; background: #166534; color: white; font-size: 11px; padding: 6px; border-radius: 4px;" (click)="addManualCash()">+ Cash</button>
-            <button class="app-btn" style="flex: 1; background: #991b1b; color: white; font-size: 11px; padding: 6px; border-radius: 4px;" (click)="removeManualCash()">- Cash</button>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
-            <span>Starting Float / Added:</span>
-            <span style="color: #cbd5e1;">{{ formatMoney(startingFloat()) }}</span>
-          </div>
-          
-          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
-            <span>Supplier Payouts / Drops:</span>
-            <span style="color: #ef4444;">-{{ formatMoney(supplierPayouts()) }}</span>
-          </div>
-
-          <div style="border-top: 1px dashed #334155; margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline;">
-            <span style="color: #cbd5e1; font-size: 12px; font-weight: bold;">Expected Cash:</span>
-            <span style="color: #10b981; font-size: 20px; font-weight: 900;">{{ formatMoney(liveCashInDrawer()) }}</span>
-          </div>
-        </div>
-
-        <div class="mobile-hide" style="background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-            <div class="panel-title" style="margin: 0; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase;">🎯 Daily Target</div>
-            <span style="color: #3b82f6; font-size: 11px; font-weight: bold;">{{ formatMoney(targetProgress().rev) }} / €{{ salesTarget }}</span>
-          </div>
-          <div class="progress-bar-bg" style="width: 100%; height: 8px; background: #0f172a; border-radius: 4px; overflow: hidden;">
-            <div class="progress-bar-fill" [style.width.%]="targetProgress().percent" [style.background]="targetProgress().percent >= 100 ? '#10b981' : '#3b82f6'" style="height: 100%; transition: width 0.5s ease;"></div>
-          </div>
-        </div>
-
-        @if (systemAlerts().length > 0) {
-          <div class="mobile-hide" style="background: #1e293b; border-radius: 8px; border: 1px solid #ef4444; max-height: 120px; overflow-y: auto;">
-            <div style="position: sticky; top: 0; background: #7f1d1d; color: white; padding: 6px 12px; font-size: 11px; font-weight: 800; text-transform: uppercase;">⚠️ System Alerts ({{ systemAlerts().length }})</div>
-            <div style="padding: 8px;">
-              @for (alert of systemAlerts(); track alert.msg) {
-                <div style="font-size: 11px; font-weight: 600; padding: 4px 0; border-bottom: 1px solid #334155;" [style.color]="alert.type === 'danger' ? '#fca5a5' : '#fde047'">
-                  {{ alert.msg }}
-                </div>
-              }
-            </div>
-          </div>
-        }
 
       </div>
     </aside>
@@ -177,8 +124,6 @@
       <div class="search-action-bar" style="background: #ffffff; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; flex: 0 0 auto;">
         <div class="search-input-wrapper">
           <span style="font-size: 16px; color: #94a3b8; margin-right: 8px;">🔍</span>
-          
-          <!-- ⭐ THE FIXED INPUT BINDING -->
           <input 
             #searchInput
             type="text" 
@@ -190,7 +135,6 @@
             autocomplete="off"
             autofocus
           />
-
           <span style="font-size: 11px; color: #94a3b8; font-weight: 600; white-space: nowrap; background: #e2e8f0; padding: 3px 6px; border-radius: 4px;">Press [ENTER]</span>
         </div>
       </div>
