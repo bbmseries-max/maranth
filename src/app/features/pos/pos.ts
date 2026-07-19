@@ -184,32 +184,42 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.closeQuickEdit();
   }
 
- public onSearchEnter(): void {
+public onSearchEnter(event?: Event): void {
+    // 🛡️ Safety net: Stops the "Enter" key from accidentally causing a browser reload
+    if (event) event.preventDefault();
+
     const cleanQuery = this.searchQuery().trim();
     if (!cleanQuery) return;
 
     // This handles adding the exact barcode to the basket if it finds it
     const wasBarcode = this.salesService.scanBarcodeExact(cleanQuery);
     
-    // Only fire the error popup if it WAS NOT a recognized barcode, 
-    // AND it looks like a barcode (just numbers)
-    if (!wasBarcode) {
+    if (wasBarcode) {
+      // ✅ SUCCESSFUL SCAN: 
+      // Clear the search box instantly so the scanner is ready for the next physical scan!
+      this.searchQuery.set('');
+    } else {
+      // ❌ NOT FOUND:
+      // Only fire the error popup if it WAS NOT a recognized barcode, 
+      // AND it looks like a barcode (just numbers)
       const isNumericBarcode = /^\d{4,20}$/.test(cleanQuery);
+      
       if (isNumericBarcode) {
         this.salesService.activeModal.set({ 
           type: 'warning', 
           title: '⚠️ Not Found', 
           message: `The barcode [ ${cleanQuery} ] is not registered in your inventory.`, 
           value: '', 
-          onConfirm: () => this.salesService.closeModal() 
+          onConfirm: () => {
+             this.salesService.closeModal();
+             // Clear the bad barcode so they don't get stuck
+             this.searchQuery.set('');
+             this.salesService.triggerSearchFocus();
+          } 
         });
-        setTimeout(() => {
-          if (this.salesService.activeModal()?.title === '⚠️ Not Found') {
-            this.salesService.closeModal();
-            setTimeout(() => this.salesService.triggerSearchFocus(), 50);
-          }
-        }, 2000);
       }
+      // If it wasn't a barcode (e.g., they typed "Lays" and hit Enter),
+      // we do NOTHING. The text stays in the box, and the list stays open!
     }
   }
 
