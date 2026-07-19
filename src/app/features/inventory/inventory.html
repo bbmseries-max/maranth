@@ -77,9 +77,41 @@
     <!-- Reusable Product Form Template (Keeps HTML clean) -->
     <ng-template #productFormTemplate>
       <div class="inline-edit-form">
+        <!-- ROW 2: Name & VAT Dropdown -->
+        <div class="edit-grid" style="grid-template-columns: 2fr 1fr;">
+          <div class="input-group">
+            <label>Product Name</label>
+            <input type="text" [(ngModel)]="editForm.name" />
+          </div>
+          <div class="input-group">
+            <label>VAT Rate</label>
+            <!-- ⭐ Use [ngValue] to pass true numbers to your math, not strings! -->
+            <select [(ngModel)]="editForm.taxRate" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-weight: bold;">
+              <option [ngValue]="0.24">24%</option>
+              <option [ngValue]="0.13">13%</option>
+              <option [ngValue]="0.06">6%</option>
+              <option [ngValue]="0">0%</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ROW 3: Financials & Stock -->
+        <div class="edit-grid triple">
+          <div class="input-group"><label>Retail Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="highlight-input" /></div>
+          <div class="input-group"><label>Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" /></div>
+          <div class="input-group"><label>Stock Qty</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" /></div>
+        </div>
+        
+        <!-- ROW 4: Expiration & Min Stock -->
         <div class="edit-grid">
-          <div class="input-group"><label>Code / ID</label><input type="text" [(ngModel)]="editForm.id" [disabled]="editingProductId !== 'NEW'" /></div>
-          <div class="input-group"><label>Barcode</label><input type="text" [(ngModel)]="editForm.barcode" /></div>
+          <div class="input-group">
+            <label>Expiration Date</label>
+            <input type="date" [(ngModel)]="editForm.expire" style="font-family: monospace; font-weight: bold; width: 100%; box-sizing: border-box;" />
+          </div>
+          <div class="input-group">
+            <label>Low Stock At</label>
+            <input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" />
+          </div>
         </div>
         <div class="edit-grid" style="grid-template-columns: 1fr;">
           <div class="input-group"><label>Name</label><input type="text" [(ngModel)]="editForm.name" /></div>

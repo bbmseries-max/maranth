@@ -71,9 +71,10 @@ export class InventoryComponent {
     id: 'PROD-' + Date.now().toString().slice(-6),
     name: '', 
     price: 0, 
-    costPrice: 0, 
+    costPrice: 0,
+    taxRate: 0.24,
     stockQuantity: 0,
-    minStockWarning: 5,  // 👈 Using your original name
+    minStockWarning: 2,  // 👈 Using your original name
     expire: '',          // 👈 Using your original name
     categoryId: '',
     supplierId: undefined, 
