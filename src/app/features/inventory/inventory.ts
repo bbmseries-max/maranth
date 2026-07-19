@@ -25,7 +25,11 @@ export class InventoryComponent {
   public products = this.salesService.products;
   public categories = this.salesService.categories;
   public suppliers = this.salesService.suppliers;
+
   public expireFilterDate = signal<string>('');
+  public filterStatus = signal<'active' | 'inactive' | 'all'>('active'); // Defaults to Active!
+  public filterLowStock = signal<boolean>(false);
+  public filterCategory = signal<string>('ALL');
 
   // Edit states
   public editingProductId: string | null = null;
@@ -40,16 +44,48 @@ export class InventoryComponent {
   // ==========================================
   // PRODUCTS LOGIC
   // ==========================================
-  public filteredProducts = computed(() => {
+   public filteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
-    const allProds = this.products() || [];
-    if (!query) return allProds.slice(0, 100);
+    const filterDate = this.expireFilterDate();
+    const status = this.filterStatus();
+    const lowStock = this.filterLowStock();
+    const category = this.filterCategory();
 
-    return allProds.filter(p => 
-      (p.name && p.name.toLowerCase().includes(query)) || 
-      (p.barcode && p.barcode.toLowerCase().includes(query)) ||
-      (p.id && p.id.toString().toLowerCase().includes(query))
-    ).slice(0, 100);
+    let allProds = this.products() || [];
+
+    // 1. STATUS: Hide inactive by default
+    if (status === 'active') {
+      // Treat undefined as active just in case older products don't have the field
+      allProds = allProds.filter(p => p.isActive !== false); 
+    } else if (status === 'inactive') {
+      allProds = allProds.filter(p => p.isActive === false);
+    }
+
+    // 2. CATEGORY: Filter by specific category
+    if (category !== 'ALL') {
+      allProds = allProds.filter(p => p.categoryId === category);
+    }
+
+    // 3. LOW STOCK: Show only items that need reordering
+    if (lowStock) {
+      allProds = allProds.filter(p => p.stockQuantity <= (p.minStockWarning || 5));
+    }
+
+    // 4. EXPIRATION: Show items expiring by this date
+    if (filterDate) {
+      allProds = allProds.filter(p => p.expire && p.expire <= filterDate);
+    }
+
+    // 5. SEARCH TEXT
+    if (query) {
+      allProds = allProds.filter(p => 
+        (p.name && p.name.toLowerCase().includes(query)) || 
+        (p.barcode && p.barcode.toLowerCase().includes(query)) ||
+        (p.id && p.id.toString().toLowerCase().includes(query))
+      );
+    }
+
+    return allProds.slice(0, 100);
   });
 
   public toggleEdit(prod: Product): void {
