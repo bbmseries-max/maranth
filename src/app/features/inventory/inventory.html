@@ -27,6 +27,19 @@
         <input type="text" class="field-search-input" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
         @if (searchQuery()) { <button class="clear-btn" (click)="searchQuery.set('')">✖</button> }
       </div>
+      
+      <!-- ⭐ NEW: Simple Date Filter -->
+      <div style="display: flex; align-items: center; background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding-right: 8px;">
+        <input type="date" 
+               [ngModel]="expireFilterDate()" 
+               (ngModelChange)="expireFilterDate.set($event)" 
+               style="padding: 0 12px; height: 46px; border: none; border-radius: 8px; font-weight: 600; outline: none; background: transparent;" 
+               title="Filter by expiration date" />
+        @if (expireFilterDate()) { 
+          <button (click)="expireFilterDate.set('')" style="background: none; border: none; cursor: pointer; color: #ef4444; font-weight: bold; font-size: 16px;">✖</button> 
+        }
+      </div>
+
       <button (click)="prepareNewProduct()" style="background: #16a34a; color: white; border: none; padding: 0 16px; height: 48px; border-radius: 8px; font-weight: 700; cursor: pointer;">➕ Add</button>
     </div>
     
@@ -46,7 +59,7 @@
             <div class="prod-info-group">
               <div class="prod-name">{{ prod.name }}</div>
               <div class="prod-badges">
-                <span class="stock-badge" [class.low-stock]="prod.stockQuantity <= 5">📦 {{ prod.stockQuantity }}</span>
+                <span class="stock-badge" [class.low-stock]="prod.stockQuantity <= (prod.minStockWarning || 5)">📦 {{ prod.stockQuantity }}</span>
                 <span class="price-badge">{{ formatMoney(prod.price) }}</span>
               </div>
             </div>
@@ -76,6 +89,19 @@
           <div class="input-group"><label>Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" /></div>
           <div class="input-group"><label>Stock</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" /></div>
         </div>
+        
+        <!-- ⭐ NEW: Expiration and Min Stock -->
+        <div class="edit-grid">
+          <div class="input-group">
+            <label>Expiration Date</label>
+            <input type="date" [(ngModel)]="editForm.expire" style="font-family: monospace; font-weight: bold;" />
+          </div>
+          <div class="input-group">
+            <label>Low Stock Warning At</label>
+            <input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" />
+          </div>
+        </div>
+
         <div class="edit-grid">
           <div class="input-group">
             <label>Category</label>
@@ -92,8 +118,7 @@
           </div>
         </div>
 
-        <!-- ⭐ I ADDED THE MISSING TOGGLES HERE! -->
-        <div style="display: flex; gap: 16px; margin-top: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div style="display: flex; gap: 16px; margin-top: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
           <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
             <input type="checkbox" [(ngModel)]="editForm.isWeighted" style="width: 18px; height: 18px;" /> ⚖️ Scaled Item
           </label>
@@ -102,7 +127,7 @@
           </label>
         </div>
 
-        <div class="form-actions">
+        <div class="form-actions" style="margin-top: 24px;">
           <button class="btn-cancel" (click)="cancelAllEdits()">Cancel</button>
           <button class="btn-save" (click)="saveEdit()">💾 Save</button>
         </div>

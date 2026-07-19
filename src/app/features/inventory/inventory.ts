@@ -25,6 +25,7 @@ export class InventoryComponent {
   public products = this.salesService.products;
   public categories = this.salesService.categories;
   public suppliers = this.salesService.suppliers;
+  public expireFilterDate = signal<string>('');
 
   // Edit states
   public editingProductId: string | null = null;
@@ -65,19 +66,21 @@ export class InventoryComponent {
   }
 
   public prepareNewProduct(): void {
-    this.editingProductId = 'NEW';
-    this.editForm = { 
-      id: 'PROD-' + Date.now().toString().slice(-6),
-      name: '', 
-      price: 0, 
-      costPrice: 0, 
-      stockQuantity: 0, 
-      categoryId: '',
-      supplierId: undefined, // ⭐ FIX 1: Changed from null to undefined
-      isActive: true,
-      isWeighted: false
-    };
-  }
+  this.editingProductId = 'NEW';
+  this.editForm = { 
+    id: 'PROD-' + Date.now().toString().slice(-6),
+    name: '', 
+    price: 0, 
+    costPrice: 0, 
+    stockQuantity: 0,
+    minStockWarning: 5,  // 👈 Using your original name
+    expire: '',          // 👈 Using your original name
+    categoryId: '',
+    supplierId: undefined, 
+    isActive: true,
+    isWeighted: false
+  };
+}
 
   public saveEdit(): void {
     if (!this.editForm.id || !this.editForm.name || this.editForm.price === undefined) return;
