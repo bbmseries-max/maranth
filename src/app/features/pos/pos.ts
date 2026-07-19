@@ -110,6 +110,25 @@ export class PosComponent implements OnInit, AfterViewInit {
     });
 
     effect(() => {
+      // Read the signal so the effect knows to track it
+      const triggerTick = this.salesService.focusSearchTrigger();
+      
+      if (triggerTick > 0) {
+        // We use a tiny 50ms timeout to ensure Angular has finished updating 
+        // the DOM (like opening a modal or clearing the basket) before we steal focus.
+        setTimeout(() => {
+          if (this.searchInput && this.searchInput.nativeElement) {
+            this.searchInput.nativeElement.focus();
+            
+            // Optional but recommended for barcode scanners: 
+            // Highlight the text so the next scan instantly overwrites it
+            this.searchInput.nativeElement.select(); 
+          }
+        }, 50);
+      }
+    });
+  
+    effect(() => {
       const bsk = this.salesService.basket() || [];
       if (bsk.length === 0) {
         this.isMobileBasketOpen.set(false);
@@ -165,18 +184,18 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.closeQuickEdit();
   }
 
-  public onSearchEnter(): void {
+ public onSearchEnter(): void {
     const cleanQuery = this.searchQuery().trim();
     if (!cleanQuery) return;
 
+    // This handles adding the exact barcode to the basket if it finds it
     const wasBarcode = this.salesService.scanBarcodeExact(cleanQuery);
     
-    if (wasBarcode) {
-      this.searchQuery.set('');
-    } else {
+    // Only fire the error popup if it WAS NOT a recognized barcode, 
+    // AND it looks like a barcode (just numbers)
+    if (!wasBarcode) {
       const isNumericBarcode = /^\d{4,20}$/.test(cleanQuery);
       if (isNumericBarcode) {
-        this.searchQuery.set('');
         this.salesService.activeModal.set({ 
           type: 'warning', 
           title: '⚠️ Not Found', 

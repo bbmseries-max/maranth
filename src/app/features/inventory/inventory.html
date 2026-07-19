@@ -299,42 +299,44 @@
     </ng-template>
   }
 
+ <!-- ========================================== -->
+  <!-- TAB 4: STAFF APPROVALS (Beautified) -->
+  <!-- ========================================== -->
   @if (activeTab() === 'staff') {
-    <div class="sticky-search-area" style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
-      <div>
-        <h3 style="margin: 0; color: #0f172a;">👥 POS Access Management</h3>
-        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Approve or suspend cashier registers</div>
+    <div style="max-width: 480px; margin: 40px auto; background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden;">
+      
+      <div style="padding: 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; text-align: center;">
+        <h3 style="margin: 0; color: #0f172a; font-size: 18px;">👥 Staff Approvals</h3>
+        <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Authorize or revoke POS access.</p>
       </div>
-    </div>
-    
-    <div class="inventory-scroll-list">
-      @for (user of salesService.registeredCashiers(); track user.username) {
-        <div class="prod-card" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 12px;">
-          
-          <div class="prod-info-group">
-            <div class="prod-name" style="font-size: 16px; font-weight: 800; color: #1e293b;">
-              {{ user.username }}
+      
+      <div style="padding: 16px; background: #f1f5f9;">
+        @for (user of salesService.registeredCashiers(); track user.username) {
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            
+            <div class="prod-info-group">
+              <div style="font-size: 16px; font-weight: 800; color: #1e293b;">
+                {{ user.username }}
+              </div>
+              <div style="font-size: 11px; font-weight: 700; margin-top: 6px; padding: 4px 8px; border-radius: 6px; display: inline-block;" 
+                   [style.background]="user.role === 'admin' ? '#fef3c7' : '#f1f5f9'"
+                   [style.color]="user.role === 'admin' ? '#b45309' : '#475569'">
+                {{ user.role === 'admin' ? '🛡️ Admin' : '👤 Cashier' }}
+              </div>
             </div>
-            <div style="font-size: 12px; font-weight: 700; margin-top: 6px; padding: 2px 8px; border-radius: 4px; display: inline-block;" 
-                 [style.background]="user.role === 'admin' ? '#fef3c7' : '#f1f5f9'"
-                 [style.color]="user.role === 'admin' ? '#b45309' : '#475569'">
-              {{ user.role === 'admin' ? '🛡️ Store Admin' : '👤 Cashier' }}
-            </div>
+            
+            <button (click)="salesService.toggleCashierApproval(user.username, !user.isApproved)"
+                    [style.background]="user.isApproved ? '#16a34a' : '#e2e8f0'"
+                    [style.color]="user.isApproved ? 'white' : '#64748b'"
+                    style="padding: 8px 16px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; width: 100px;">
+              {{ user.isApproved ? '✅ Active' : '❌ Blocked' }}
+            </button>
+            
           </div>
-          
-          <!-- The Magic Toggle Button -->
-          <button (click)="salesService.toggleCashierApproval(user.username, !user.isApproved)"
-                  [style.background]="user.isApproved ? '#16a34a' : '#f8fafc'"
-                  [style.color]="user.isApproved ? 'white' : '#64748b'"
-                  [style.border]="user.isApproved ? 'none' : '1px solid #cbd5e1'"
-                  style="padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; width: 120px;">
-            {{ user.isApproved ? '✅ Active' : '❌ Blocked' }}
-          </button>
-          
-        </div>
-      } @empty {
-        <div class="empty-state">No users registered yet.</div>
-      }
+        } @empty {
+          <div style="text-align: center; padding: 32px; color: #94a3b8; font-weight: 600;">No users registered yet.</div>
+        }
+      </div>
     </div>
   }
 

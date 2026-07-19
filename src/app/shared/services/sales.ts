@@ -118,6 +118,24 @@ export class SalesService {
     this.focusSearchTrigger.update(v => v + 1);
   }
 
+  public playScanBeep(): void {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(850, ctx.currentTime); // 850Hz scanner tone
+      gain.gain.setValueAtTime(0.1, ctx.currentTime); // Gentle volume
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1); // 100ms duration
+      osc.stop(ctx.currentTime + 0.1);
+    } catch (e) {
+      console.log('Audio not supported', e);
+    }
+  }
+
   private loadLocalData(key: string, fallback: any): any {
     const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : fallback;
@@ -220,6 +238,7 @@ export class SalesService {
   public totalItems = computed(() => this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0));
 
   public addToBasket(product: Product, forceRefundState?: boolean, customQty?: number): void {
+    this.playScanBeep();
     this.highlightedItemId.set(product.id);
     setTimeout(() => this.highlightedItemId.set(null), 500);
 
