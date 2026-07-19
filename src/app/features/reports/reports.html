@@ -214,28 +214,34 @@
       </div>
     }
 
-    <!-- ================== TAB 2: ANALYTICS ================== -->
+  <!-- ================== TAB 2: ANALYTICS ================== -->
     @if (activeTab() === 'analytics') {
       <div class="heatmap-card" style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;">
         <div style="margin-bottom: 20px;">
           <h3 style="margin: 0; color: #0f172a; font-size: 16px;">⏰ Hourly Performance Heatmap</h3>
           <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Identify peak velocity sales windows.</p>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(24, 1fr); gap: 6px; align-items: end; min-height: 140px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 8px;">
-          @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
-            <div [title]="slot.hourLabel + '\nRevenue: ' + formatMoney(slot.revenue) + '\nTickets: ' + slot.ticketCount" style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%; cursor: pointer;">
-              <div [style.height.%]="slot.intensityPercentage" [style.background]="getHeatmapBg(slot.intensityPercentage)" style="border-radius: 4px 4px 0 0; transition: all 0.2s ease; width: 100%; min-height: 4px;"></div>
-            </div>
-          }
+
+        <!-- ⭐ NEW: Scroll wrapper so only the chart swipes, not the title! -->
+        <div class="heatmap-scroll-wrapper">
+          <div style="display: grid; grid-template-columns: repeat(24, 1fr); gap: 6px; align-items: end; min-height: 140px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 8px; min-width: 600px;">
+            @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
+              <div [title]="slot.hourLabel + '\nRevenue: ' + formatMoney(slot.revenue) + '\nTickets: ' + slot.ticketCount" style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%; cursor: pointer;">
+                <div [style.height.%]="slot.intensityPercentage" [style.background]="getHeatmapBg(slot.intensityPercentage)" style="border-radius: 4px 4px 0 0; transition: all 0.2s ease; width: 100%; min-height: 4px;"></div>
+              </div>
+            }
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(24, 1fr); gap: 6px; text-align: center; font-size: 10px; font-weight: 600; color: #94a3b8; min-width: 600px;">
+            @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
+              <div>{{ slot.hour % 2 === 0 ? slot.hour : '' }}</div>
+            }
+          </div>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(24, 1fr); gap: 6px; text-align: center; font-size: 10px; font-weight: 600; color: #94a3b8;">
-          @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
-            <div>{{ slot.hour % 2 === 0 ? slot.hour : '' }}</div>
-          }
-        </div>
+
         <div style="margin-top: 24px; border-top: 1px dashed #e2e8f0; padding-top: 16px;">
           <h4 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: #475569;">High-Velocity Windows</h4>
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;">
+          <!-- ⭐ NEW: Added a class here to control mobile stacking -->
+          <div class="velocity-windows-grid">
             @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
               @if (slot.ticketCount > 0) {
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">

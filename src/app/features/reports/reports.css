@@ -134,4 +134,18 @@
   .heatmap-card > div:nth-child(3) {
     min-width: 600px !important; 
   }
+
+  /* Keeps the chart horizontally swipeable on small screens */
+.heatmap-scroll-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+/* Default grid for desktop */
+.velocity-windows-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
 }
