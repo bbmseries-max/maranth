@@ -219,7 +219,8 @@ export class PosComponent implements OnInit, AfterViewInit {
   }
 
 public handleProductClick(prod: Product): void {
-    this.searchQuery.set(''); 
+    // 🚫 REMOVED: this.searchQuery.set(''); 
+    // Now your search list will stay exactly where it is!
 
     const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {
@@ -244,6 +245,9 @@ public handleProductClick(prod: Product): void {
       });
     } else {
       this.salesService.addToBasket(prod);
+      
+      // ⭐ Keeps the cursor in the search box after you click, so you can keep typing or scanning!
+      this.salesService.triggerSearchFocus(); 
     }
   }
 }
