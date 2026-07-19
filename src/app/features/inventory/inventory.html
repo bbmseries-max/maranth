@@ -135,26 +135,7 @@
         </div>
         
         <!-- ROW 4: Expiration & Min Stock -->
-        <div class="edit-grid">
-          <div class="input-group">
-            <label>Expiration Date</label>
-            <input type="date" [(ngModel)]="editForm.expire" style="font-family: monospace; font-weight: bold; width: 100%; box-sizing: border-box;" />
-          </div>
-          <div class="input-group">
-            <label>Low Stock At</label>
-            <input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" />
-          </div>
-        </div>
-        <div class="edit-grid" style="grid-template-columns: 1fr;">
-          <div class="input-group"><label>Name</label><input type="text" [(ngModel)]="editForm.name" /></div>
-        </div>
-        <div class="edit-grid triple">
-          <div class="input-group"><label>Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="highlight-input" /></div>
-          <div class="input-group"><label>Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" /></div>
-          <div class="input-group"><label>Stock</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" /></div>
-        </div>
-        
-        <!-- ⭐ NEW: Expiration and Min Stock -->
+
         <div class="edit-grid">
           <div class="input-group">
             <label>Expiration Date</label>
@@ -164,7 +145,7 @@
             <label>Low Stock Warning At</label>
             <input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" />
           </div>
-        </div>
+       </div>
 
         <div class="edit-grid">
           <div class="input-group">
