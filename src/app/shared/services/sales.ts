@@ -2,7 +2,7 @@ import { Injectable, signal, computed, effect } from '@angular/core';
 import { Product, BasketItem, Category, Supplier, TransactionRecord, POSModal } from './pos-data.models';
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVlkxyVZIPEgXSukJxPEWK3WLnjoujsjU",
@@ -56,13 +56,61 @@ export class SalesService {
     this.db = getFirestore(app);
 
     this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
-    this.setupCloudSync('products', this.products, 'maranth_products');
+
+    this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
+    
+    // ⭐ SWAPPED: Use the once-a-day cache for products to save 50k reads!
+    this.setupDailyProductCache(); 
+    
+    this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
+    this.setupCloudSync('categories', this.categories, 'maranth_categories');
+    this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
+
     this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
     this.setupCloudSync('categories', this.categories, 'maranth_categories');
     this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
 
     effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
     effect(() => localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket())));
+  }
+
+  // ==========================================
+  // LOCAL CACHING ENGINE
+  // ==========================================
+
+  public async setupDailyProductCache() {
+    const today = new Date().toDateString(); // e.g., "Sun Jul 19 2026"
+    const cachedDate = localStorage.getItem('maranth_products_date');
+    const cachedProducts = localStorage.getItem('maranth_products');
+
+    // If we already downloaded today, load instantly from browser memory (0 Firebase Reads!)
+    if (cachedDate === today && cachedProducts) {
+      this.products.set(JSON.parse(cachedProducts));
+    } else {
+      // Download from Firebase (Costs reads, but only happens ONCE per day per device)
+      const snapshot = await getDocs(collection(this.db, 'products'));
+      const data = snapshot.docs.map(doc => doc.data() as Product);
+      
+      this.products.set(data);
+      localStorage.setItem('maranth_products', JSON.stringify(data));
+      localStorage.setItem('maranth_products_date', today);
+    }
+  }
+
+  // Forces the local cache to update when you edit a product or make a sale
+  public updateLocalProduct(updatedProduct: Product): void {
+    this.products.update(prods => {
+      const index = prods.findIndex(p => p.id === updatedProduct.id);
+      if (index > -1) {
+        prods[index] = updatedProduct;
+      } else {
+        prods.push(updatedProduct);
+      }
+      
+      // Save it back to memory so a page refresh doesn't erase the change
+      localStorage.setItem('maranth_products', JSON.stringify(prods));
+      return [...prods];
+    });
   }
 
   // ⭐ THE MISSING TRIGGER FUNCTION
@@ -265,14 +313,18 @@ export class SalesService {
       cashierId: this.currentCashier() || 'Unknown'
     };
 
-    currentBasket.forEach(item => {
+   currentBasket.forEach(item => {
       // Don't deduct stock for MISC open charges
       if (!item.product.id.startsWith('MISC-')) {
         const product = this.products().find(p => p.id === item.product.id);
         if (product) {
           const change = item.isRefund ? item.quantity : -item.quantity;
           const newQuantity = parseFloat((product.stockQuantity + change).toFixed(3));
-          setDoc(doc(this.db, 'products', product.id.toString()), { ...product, stockQuantity: newQuantity });
+          
+          // ⭐ Create the updated product object and sync it locally & to cloud
+          const updatedProduct = { ...product, stockQuantity: newQuantity };
+          setDoc(doc(this.db, 'products', product.id.toString()), updatedProduct);
+          this.updateLocalProduct(updatedProduct); 
         }
       }
     });
@@ -394,6 +446,7 @@ export class SalesService {
 
   public saveProduct(productId: string, payload: Product): void {
     setDoc(doc(this.db, 'products', productId.toString()), payload);
+    this.updateLocalProduct(payload); // ⭐ Keep local cache in sync!
   }
 
   public saveCategory(payload: Category): void {

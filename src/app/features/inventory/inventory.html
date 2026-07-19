@@ -15,6 +15,7 @@
     <button class="field-tab-btn" [class.active]="activeTab() === 'products'" (click)="activeTab.set('products'); cancelAllEdits()">📦 Items</button>
     <button class="field-tab-btn" [class.active]="activeTab() === 'suppliers'" (click)="activeTab.set('suppliers'); cancelAllEdits()">🚚 Suppliers</button>
     <button class="field-tab-btn" [class.active]="activeTab() === 'categories'" (click)="activeTab.set('categories'); cancelAllEdits()">📁 Categories</button>
+    <button class="field-tab-btn" [class.active]="activeTab() === 'staff'" (click)="activeTab.set('staff'); cancelAllEdits()">👥 Staff</button>
   </div>
 
   <!-- ========================================== -->
@@ -98,6 +99,7 @@
           @if (editingProductId === prod.id) {
             <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
           }
+          
         </div>
       } @empty {
         <div class="empty-state">No products found.</div>
@@ -295,6 +297,45 @@
         </div>
       </div>
     </ng-template>
+  }
+
+  @if (activeTab() === 'staff') {
+    <div class="sticky-search-area" style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+      <div>
+        <h3 style="margin: 0; color: #0f172a;">👥 POS Access Management</h3>
+        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Approve or suspend cashier registers</div>
+      </div>
+    </div>
+    
+    <div class="inventory-scroll-list">
+      @for (user of salesService.registeredCashiers(); track user.username) {
+        <div class="prod-card" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 12px;">
+          
+          <div class="prod-info-group">
+            <div class="prod-name" style="font-size: 16px; font-weight: 800; color: #1e293b;">
+              {{ user.username }}
+            </div>
+            <div style="font-size: 12px; font-weight: 700; margin-top: 6px; padding: 2px 8px; border-radius: 4px; display: inline-block;" 
+                 [style.background]="user.role === 'admin' ? '#fef3c7' : '#f1f5f9'"
+                 [style.color]="user.role === 'admin' ? '#b45309' : '#475569'">
+              {{ user.role === 'admin' ? '🛡️ Store Admin' : '👤 Cashier' }}
+            </div>
+          </div>
+          
+          <!-- The Magic Toggle Button -->
+          <button (click)="salesService.toggleCashierApproval(user.username, !user.isApproved)"
+                  [style.background]="user.isApproved ? '#16a34a' : '#f8fafc'"
+                  [style.color]="user.isApproved ? 'white' : '#64748b'"
+                  [style.border]="user.isApproved ? 'none' : '1px solid #cbd5e1'"
+                  style="padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; width: 120px;">
+            {{ user.isApproved ? '✅ Active' : '❌ Blocked' }}
+          </button>
+          
+        </div>
+      } @empty {
+        <div class="empty-state">No users registered yet.</div>
+      }
+    </div>
   }
 
 </div>
