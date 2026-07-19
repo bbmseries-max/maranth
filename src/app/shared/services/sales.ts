@@ -39,6 +39,32 @@ export class SalesService {
   public categories = signal<Category[]>([]);
   public suppliers = signal<Supplier[]>([]);
 
+  // ==========================================
+  // DARK MODE ENGINE
+  // ==========================================
+  public isDarkMode = signal<boolean>(
+    typeof localStorage !== 'undefined' && localStorage.getItem('maranth_theme') === 'dark'
+  );
+
+  public toggleTheme(): void {
+    const newTheme = this.isDarkMode() ? 'light' : 'dark';
+    this.isDarkMode.set(newTheme === 'dark');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('maranth_theme', newTheme);
+    }
+    this.applyThemeToBody();
+  }
+
+  public applyThemeToBody(): void {
+    if (typeof document !== 'undefined') {
+      if (this.isDarkMode()) {
+        document.body.classList.add('dark-theme');
+      } else {
+        document.body.classList.remove('dark-theme');
+      }
+    }
+  }
+
   public currentCashier = signal<string | null>(localStorage.getItem('maranth_active_cashier') || null);
   public currentRole = signal<'admin' | 'cashier' | null>(localStorage.getItem('maranth_active_role') as any || null);
   public basket = signal<BasketItem[]>(this.loadLocalData('maranth_basket', []));
@@ -52,6 +78,8 @@ export class SalesService {
   public focusSearchTrigger = signal<number>(0);
 
   constructor() {
+    this.applyThemeToBody();
+
     const app = initializeApp(firebaseConfig);
     this.db = getFirestore(app);
 

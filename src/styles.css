@@ -1,3 +1,51 @@
+/* ==========================================
+   🌙 MARANTH DARK THEME OVERRIDES
+   ========================================== */
+body.dark-theme, 
+body.dark-theme .field-app-container {
+  background-color: #0f172a !important; /* Deep slate background */
+  color: #f8fafc !important; /* Soft white text */
+}
+
+/* Cards, Inputs, and Modals */
+body.dark-theme .prod-card,
+body.dark-theme .sticky-search-area,
+body.dark-theme .search-action-bar,
+body.dark-theme .inline-edit-form,
+body.dark-theme .search-input-wrapper,
+body.dark-theme select,
+body.dark-theme input {
+  background-color: #1e293b !important; /* Slightly lighter slate for depth */
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
+}
+
+/* Headers and Labels */
+body.dark-theme .zone-title,
+body.dark-theme label,
+body.dark-theme h3,
+body.dark-theme .prod-name {
+  color: #cbd5e1 !important; /* Soft gray-blue so it doesn't glare */
+}
+
+/* Tab Buttons */
+body.dark-theme .field-tab-btn {
+  color: #94a3b8 !important;
+}
+body.dark-theme .field-tab-btn.active {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+}
+
+/* Specific background resets for inner div wrappers */
+body.dark-theme div[style*="background: white"],
+body.dark-theme div[style*="background: #ffffff"],
+body.dark-theme div[style*="background: #f8fafc"],
+body.dark-theme div[style*="background: #f1f5f9"] {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
 /* STREAMING_CHUNK: Configuring base resets and animations... */
 body {
 margin: 0;
