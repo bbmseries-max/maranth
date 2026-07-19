@@ -79,7 +79,59 @@
 .chart-bar-col:hover .chart-bar-track { background: #e2e8f0; }
 
 @media (max-width: 768px) {
+  /* Hide desktop-only elements */
   .mobile-hide { display: none !important; }
-  .dashboard-scroll-area { padding: 16px; }
-  .tab-navigation-bar { padding: 0 16px; }
+  
+  /* Reduce outer padding to give the widgets more breathing room */
+  .reports-dashboard-wrapper,
+  .dashboard-scroll-area { padding: 12px !important; }
+  .tab-navigation-bar { padding: 0 12px; }
+
+  /* 1. Stack the Top KPI Metrics vertically */
+  .metrics-row-grid { 
+    flex-direction: column !important; 
+    gap: 12px !important; 
+  }
+
+  /* 2. Stack the Z-Report and Product Leaderboard vertically */
+  .analytics-split-row { 
+    flex-direction: column !important; 
+    gap: 16px !important; 
+  }
+
+  /* 3. Stack the Ledger Archive and the Ticket Auditor vertically */
+  .main-split-layout { 
+    flex-direction: column !important; 
+    gap: 16px !important; 
+  }
+
+  /* 4. Fix the Sticky Auditor (so it doesn't float weirdly over the table on mobile) */
+  .receipt-inspector-panel {
+    position: relative !important;
+    max-height: none !important;
+  }
+
+  /* 5. Shrink inner padding on ALL cards to maximize screen real estate */
+  .kpi-card,
+  .z-report-card,
+  .product-leaderboard-card,
+  .ledger-table-container,
+  .receipt-inspector-panel,
+  .dashboard-card,
+  .heatmap-card {
+    padding: 16px !important;
+  }
+
+  /* 6. Make tables horizontally swipeable so they never break the screen width */
+  .ledger-table-container,
+  .product-leaderboard-card > div {
+    overflow-x: auto !important;
+  }
+
+  /* 7. Prevent the 24-hour Heatmap from turning into an unreadable mess */
+  .heatmap-card { overflow-x: auto !important; }
+  .heatmap-card > div:nth-child(2),
+  .heatmap-card > div:nth-child(3) {
+    min-width: 600px !important; 
+  }
 }
