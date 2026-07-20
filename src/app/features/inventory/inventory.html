@@ -22,88 +22,8 @@
   <!-- TAB 1: PRODUCTS LIST -->
   <!-- ========================================== -->
   @if (activeTab() === 'products') {
-    <div class="sticky-search-area" style="display: flex; flex-direction: column; gap: 12px; padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
       
-      <!-- TOP ROW: Search & Add -->
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <div class="search-input-wrapper" style="flex: 1;">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="field-search-input" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-          @if (searchQuery()) { <button class="clear-btn" (click)="searchQuery.set('')">✖</button> }
-        </div>
-        <button (click)="prepareNewProduct()" style="background: #16a34a; color: white; border: none; padding: 0 16px; height: 48px; border-radius: 8px; font-weight: 700; cursor: pointer;">➕ Add</button>
-      </div>
-
-      <!-- ALTERNATIVE BARCODES SECTION -->
-<div style="margin-top: 15px; padding: 10px; border: 1px dashed #ccc; border-radius: 6px;">
-  <label style="font-weight: bold; display: block; margin-bottom: 5px;">
-    Alternative Barcodes (New Packaging, Promos)
-  </label>
-  
-  <!-- Add New Barcode -->
-  <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-    <input 
-      type="text" 
-      [(ngModel)]="newAltBarcode" 
-      placeholder="Scan or type new barcode..." 
-      style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
-      (keyup.enter)="addAltBarcode()" 
-    />
-    <button 
-      type="button" 
-      (click)="addAltBarcode()" 
-      style="background: #3b82f6; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-      + Add
-    </button>
-  </div>
-
-
-</div>
-      
-      <!-- BOTTOM ROW: The Ultimate Filters (Swipeable on Mobile) -->
-      <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; align-items: center; width: 100%;">
-        
-        <!-- Status Dropdown -->
-        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" style="padding: 0 12px; height: 38px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-weight: 600; outline: none; flex-shrink: 0;">
-          <option value="active">🟢 Active Items</option>
-          <option value="inactive">🔴 Inactive Items</option>
-          <option value="all">⚪ All Items</option>
-        </select>
-
-        <!-- Category Dropdown -->
-        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" style="padding: 0 12px; height: 38px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-weight: 600; outline: none; flex-shrink: 0; max-width: 150px;">
-          <option value="ALL">📁 All Categories</option>
-          @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
-        </select>
-
-        <!-- Low Stock Toggle -->
-        <button (click)="filterLowStock.set(!filterLowStock())" 
-                [style.background]="filterLowStock() ? '#f59e0b' : 'white'"
-                [style.color]="filterLowStock() ? 'white' : '#475569'"
-                [style.border]="filterLowStock() ? '1px solid #f59e0b' : '1px solid #cbd5e1'"
-                style="height: 38px; padding: 0 16px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; flex-shrink: 0;">
-          📦 Low Stock
-        </button>
-
-        <!-- Expiration Date Filter -->
-        <div style="display: flex; align-items: center; background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding-right: 8px; height: 38px; flex-shrink: 0;">
-          <input type="date" 
-                 [ngModel]="expireFilterDate()" 
-                 (ngModelChange)="expireFilterDate.set($event)" 
-                 style="padding: 0 12px; height: 36px; border: none; border-radius: 8px; font-weight: 600; outline: none; background: transparent; color: #475569;" 
-                 title="Filter by expiration date" />
-          @if (expireFilterDate()) { 
-            <button (click)="expireFilterDate.set('')" style="background: none; border: none; cursor: pointer; color: #ef4444; font-weight: bold; font-size: 16px;">✖</button> 
-          }
-        </div>
-
-      </div>
-    </div>
-
-      
-    <div class="inventory-scroll-list">
-
-      
+    <div class="inventory-scroll-list">      
       
       <!-- New Product Form Header (Shows if creating new) -->
       @if (editingProductId === 'NEW') {
@@ -135,24 +55,48 @@
       }
     </div>
 
-    <!-- Reusable Product Form Template (Keeps HTML clean) -->
+   <!-- Reusable Product Form Template (Keeps HTML clean) -->
     <ng-template #productFormTemplate>
       <div class="inline-edit-form">
 
+        <!-- ALTERNATIVE BARCODES SECTION (All in one place) -->
+        <div style="margin-bottom: 15px; padding: 10px; border: 1px dashed #ccc; border-radius: 6px; background: #f8fafc;">
+          <label style="font-weight: bold; display: block; margin-bottom: 5px; font-size: 13px; color: #334155;">
+            Alternative Barcodes (New Packaging, Promos)
+          </label>
+          
+          <!-- Add New Barcode -->
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input 
+              type="text" 
+              [(ngModel)]="newAltBarcode" 
+              placeholder="Scan or type new barcode..." 
+              style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+              (keyup.enter)="addAltBarcode()" 
+            />
+            <button 
+              type="button" 
+              (click)="addAltBarcode()" 
+              style="background: #3b82f6; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+              + Add
+            </button>
+          </div>
+
           <!-- Display Added Barcodes as Chips -->
-  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-    @for (code of editForm.altBarcodes; track code) {
-      <div style="background: #e2e8f0; color: #1e293b; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
-        <span>{{ code }}</span>
-        <button 
-          type="button" 
-          (click)="removeAltBarcode(code)" 
-          style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 12px; padding: 0;">
-          ✕
-        </button>
-      </div>
-    }
-  </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            @for (code of editForm.altBarcodes; track code) {
+              <div style="background: #e2e8f0; color: #1e293b; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                <span>{{ code }}</span>
+                <button 
+                  type="button" 
+                  (click)="removeAltBarcode(code)" 
+                  style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 12px; padding: 0;">
+                  ✕
+                </button>
+              </div>
+            }
+          </div>
+        </div>
 
         <!-- ROW 2: Name & VAT Dropdown -->
         <div class="edit-grid" style="grid-template-columns: 2fr 1fr;">
@@ -162,7 +106,6 @@
           </div>
           <div class="input-group">
             <label>VAT Rate</label>
-            <!-- ⭐ Use [ngValue] to pass true numbers to your math, not strings! -->
             <select [(ngModel)]="editForm.taxRate" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-weight: bold;">
               <option [ngValue]="0.24">24%</option>
               <option [ngValue]="0.13">13%</option>
@@ -180,7 +123,6 @@
         </div>
         
         <!-- ROW 4: Expiration & Min Stock -->
-
         <div class="edit-grid">
           <div class="input-group">
             <label>Expiration Date</label>
@@ -190,8 +132,9 @@
             <label>Low Stock Warning At</label>
             <input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" />
           </div>
-       </div>
+        </div>
 
+        <!-- ROW 5: Category & Supplier -->
         <div class="edit-grid">
           <div class="input-group">
             <label>Category</label>
@@ -208,6 +151,7 @@
           </div>
         </div>
 
+        <!-- ROW 6: Toggles -->
         <div style="display: flex; gap: 16px; margin-top: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
           <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
             <input type="checkbox" [(ngModel)]="editForm.isWeighted" style="width: 18px; height: 18px;" /> ⚖️ Scaled Item
