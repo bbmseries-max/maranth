@@ -57,20 +57,7 @@
     </button>
   </div>
 
-  <!-- Display Added Barcodes as Chips -->
-  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-    @for (code of editForm.altBarcodes; track code) {
-      <div style="background: #e2e8f0; color: #1e293b; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
-        <span>{{ code }}</span>
-        <button 
-          type="button" 
-          (click)="removeAltBarcode(code)" 
-          style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 12px; padding: 0;">
-          ✕
-        </button>
-      </div>
-    }
-  </div>
+
 </div>
       
       <!-- BOTTOM ROW: The Ultimate Filters (Swipeable on Mobile) -->
@@ -151,6 +138,22 @@
     <!-- Reusable Product Form Template (Keeps HTML clean) -->
     <ng-template #productFormTemplate>
       <div class="inline-edit-form">
+
+          <!-- Display Added Barcodes as Chips -->
+  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+    @for (code of editForm.altBarcodes; track code) {
+      <div style="background: #e2e8f0; color: #1e293b; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+        <span>{{ code }}</span>
+        <button 
+          type="button" 
+          (click)="removeAltBarcode(code)" 
+          style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 12px; padding: 0;">
+          ✕
+        </button>
+      </div>
+    }
+  </div>
+
         <!-- ROW 2: Name & VAT Dropdown -->
         <div class="edit-grid" style="grid-template-columns: 2fr 1fr;">
           <div class="input-group">
