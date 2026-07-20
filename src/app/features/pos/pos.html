@@ -183,17 +183,18 @@
 <!-- QUICK TAP / PINNED PRODUCTS GRID -->
 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 15px;">
   
-  @for (prod of getPinnedProducts(); track prod.id) {
+@for (prod of getPinnedProducts(); track prod.id) {
   <!-- The Quick Tap Button -->
   <button 
     (click)="handleProductClick(prod)" 
-    style="background: white; border: 2px solid #e2e8f0; border-radius: 12px; padding: 15px 10px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; min-height: 105px;">
+    style="background: rgba(186, 230, 253, 0.5); border: 2px solid #bae6fd; border-radius: 12px; padding: 15px 10px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; min-height: 105px;">
     
-    <!-- THE UPDATED PRODUCT NAME SPAN -->
-    <span style="font-weight: 800; font-size: 14px; color: #1e293b; text-align: center; line-height: 1.2; text-transform: uppercase; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;">
+    <!-- THE PRODUCT NAME SPAN -->
+    <span style="font-weight: 800; font-size: 14px; color: #1e293b; text-align: center; line-height: 1.2; text-transform: uppercase; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;">
       {{ prod.name | slice:0:15 }}{{ prod.name.length > 15 ? '.' : '' }}
     </span>
     
+    <!-- THE PRICE TAG -->
     <span style="font-weight: 700; color: #16a34a; background: #dcfce7; padding: 4px 8px; border-radius: 6px; font-size: 13px; white-space: nowrap;">
       {{ prod.price }}€
     </span>
@@ -201,7 +202,7 @@
   </button>
 } @empty {
   <!-- Helpful empty state -->
-  <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #64748b; font-weight: 600;">
+  <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #7797c5; font-weight: 600;">
     📌 No items pinned. Go to Inventory and check "Pin to POS" on items like bags or loose fruit.
   </div>
 }
