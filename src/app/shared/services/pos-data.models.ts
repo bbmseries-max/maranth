@@ -22,6 +22,7 @@ export interface Product {
   imageUrl?: string;
   isFirstOfCategory?: boolean;
   displayCategoryName?: string;
+  isPinned?: boolean;
 }
 
 export interface Category {

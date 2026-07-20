@@ -69,6 +69,16 @@ export class PosComponent implements OnInit, AfterViewInit {
     return prods.filter(p => p && p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true');
   });
 
+  public getPinnedProducts(): Product[] {
+  // Grab the array from your Signal
+  const allProducts = this.salesService.products();
+  if (!allProducts || allProducts.length === 0) return [];
+  
+  return allProducts
+    .filter(p => p.isPinned === true && p.isActive !== false) // Only active, pinned items
+    .slice(0, 14); // 👈 Forces it to never show more than 14
+}
+
   public filteredCatalogProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const categoryId = this.selectedCategoryId();

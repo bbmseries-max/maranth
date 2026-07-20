@@ -117,7 +117,8 @@ export class InventoryComponent {
     supplierId: undefined, 
     isActive: true,
     isWeighted: false,
-    altBarcodes: []
+    altBarcodes: [],
+    isPinned?: boolean;
   };
 }
 
