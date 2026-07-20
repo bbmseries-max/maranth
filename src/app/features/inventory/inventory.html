@@ -4,6 +4,10 @@
   <header class="sky-header">
     <div class="brand-logo">🍊 MARANTH</div>
     <nav class="phone-menu">
+      <button id="sync-btn" (click)="syncInventory()" style="background: transparent; border: none; font-size: 20px; cursor: pointer; transition: transform 0.5s ease; padding: 0 10px;" 
+        title="Sync Database">
+        🔄
+      </button>
       <a routerLink="/pos" class="menu-btn">🛒 POS</a>
       <a routerLink="/inventory" class="menu-btn active">📦 INV</a>
       <a routerLink="/reports" class="menu-btn">📊 REP</a>

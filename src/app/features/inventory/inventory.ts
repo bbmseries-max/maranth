@@ -234,4 +234,34 @@ export class InventoryComponent {
     const sup = this.suppliers().find(s => s.id === supId);
     return sup ? sup.name : 'Unknown';
   }
+
+  // ==========================================
+  // CACHE BUSTING & SYNC
+  // ==========================================
+  public async syncInventory(): Promise<void> {
+    const btn = document.getElementById('sync-btn');
+    if (btn) btn.style.transform = 'rotate(180deg)'; // Little animation
+
+    try {
+      // 1. Destroy the old cache
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('maranth_products');
+        localStorage.removeItem('maranth_products_date');
+      }
+
+      // 2. Re-fetch from Firebase (Using your service's function)
+      if (this.salesService.setupDailyProductCache) {
+        await this.salesService.setupDailyProductCache();
+      }
+
+      // Optional: Give it a split second to finish loading, then reset the button
+      setTimeout(() => {
+        if (btn) btn.style.transform = 'rotate(0deg)';
+      }, 500);
+
+    } catch (error) {
+      console.error("Failed to sync:", error);
+      alert("Sync failed. Check your connection.");
+    }
+  }
 }
