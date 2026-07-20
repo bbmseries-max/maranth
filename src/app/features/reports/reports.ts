@@ -192,7 +192,7 @@ export class ReportsComponent {
     return isNaN(totalEarnings) ? 0 : totalEarnings;
   });
   
-public cashLogs = signal<CashLog[]>([]);
+
 
   public liveCashInDrawer = computed(() => {
     const today = new Date().toDateString();
@@ -278,37 +278,46 @@ public cashLogs = signal<CashLog[]>([]);
     return alerts;
   });
 
-  public addManualCash(): void {
-    this.salesService.activeModal.set({
-      type: 'prompt', title: '💵 Add Cash', message: 'Enter cash added:', value: '',
-      onConfirm: (val) => {
-        const newTotal = this.safeParseLocal(this.startingFloat() as any) + this.safeParseLocal(val as any);
-        this.startingFloat.set(newTotal);
-        if (typeof window !== 'undefined') localStorage.setItem('maranth_float', newTotal.toString());
-        this.salesService.closeModal();
-      }
-    });
+public addManualCash(): void {
+    const amountStr = window.prompt('🟢 ADD CASH\n\nEnter the amount (€):');
+    if (!amountStr) return;
+    
+    const amount = parseFloat(amountStr.replace(',', '.'));
+    if (isNaN(amount) || amount <= 0) return;
+
+    const reason = window.prompt('Enter the reason (e.g., Starting Float, Change from safe):');
+    if (!reason) return;
+
+    this.cashLogs.update(logs => [...logs, {
+      id: Date.now().toString(),
+      type: 'IN',
+      amount: amount,
+      reason: reason,
+      timestamp: new Date()
+    }]);
   }
 
   public removeManualCash(): void {
-    this.salesService.activeModal.set({
-      type: 'prompt', title: '📤 Remove Cash', message: 'Enter amount removed:', value: '',
-      onConfirm: (val) => {
-        const newTotal = this.safeParseLocal(this.supplierPayouts() as any) + this.safeParseLocal(val as any);
-        this.supplierPayouts.set(newTotal);
-        if (typeof window !== 'undefined') localStorage.setItem('maranth_payouts', newTotal.toString());
-        this.salesService.closeModal();
-      }
-    });
+    const amountStr = window.prompt('🔴 PAYOUT / REMOVE CASH\n\nEnter the amount (€):');
+    if (!amountStr) return;
+    
+    const amount = parseFloat(amountStr.replace(',', '.'));
+    if (isNaN(amount) || amount <= 0) return;
+
+    const reason = window.prompt('Enter the reason (e.g., Coca-Cola delivery):');
+    if (!reason) return;
+
+    this.cashLogs.update(logs => [...logs, {
+      id: Date.now().toString(),
+      type: 'OUT',
+      amount: amount,
+      reason: reason,
+      timestamp: new Date()
+    }]);
   }
 
   public resetDrawer(): void {
-    this.startingFloat.set(0);
-    this.supplierPayouts.set(0);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('maranth_float', '0');
-      localStorage.setItem('maranth_payouts', '0');
-    }
+    this.cashLogs.set([]);
   }
 
   // ========================================================
