@@ -73,10 +73,8 @@
 
       </div>
     </div>
-    
-    <div class="inventory-scroll-list">
 
-      <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: 20px;">
   <!-- Hidden file input -->
   <input type="file" #fileInput accept=".json" style="display: none;" (change)="salesService.importAccessMigrationData($event)" />
   
@@ -85,6 +83,10 @@
     📂 Import JSON (Update Prices & Vendors)
   </button>
 </div>
+    
+    <div class="inventory-scroll-list">
+
+      
       
       <!-- New Product Form Header (Shows if creating new) -->
       @if (editingProductId === 'NEW') {
