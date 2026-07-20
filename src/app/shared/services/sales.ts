@@ -512,4 +512,99 @@ export class SalesService {
     this.activeModal.set(null);
     setTimeout(() => this.activeModal.set(null), 10);
   }
+
+// ==========================================
+  // ACCESS TO FIREBASE: STRICT FINANCIAL UPDATE
+  // ==========================================
+  public async importAccessMigrationData(event: any): Promise<void> {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!confirm(`Ready to update wholesale prices, VAT, and suppliers from ${file.name}?`)) return;
+
+    try {
+      const fileText = await file.text();
+      const accessData = JSON.parse(fileText); 
+
+      // 1. Get all current Firebase products
+      const snapshot = await getDocs(collection(this.db, 'products'));
+      const firebaseProducts = new Map();
+      
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data['id']) { 
+          firebaseProducts.set(String(data['id']), doc.ref);
+        }
+      });
+
+      let batch = writeBatch(this.db);
+      let operationsCount = 0;
+      let updatedCount = 0;
+
+      // Helper to handle European commas (e.g., "0,47" -> 0.47)
+      const safeNumber = (val: any) => parseFloat(String(val).replace(',', '.').trim()) || 0;
+
+      // 2. Loop through your JSON file
+      for (const row of accessData) {
+        const accessId = String(row.ProductID).trim();
+
+        if (firebaseProducts.has(accessId)) {
+          const docRef = firebaseProducts.get(accessId);
+          
+          // Math calculations
+          const cost = safeNumber(row.Blerje);
+          let tax = safeNumber(row.FPA);
+          
+          // Convert Access format (1.24) to Firebase format (0.24) if needed
+          if (tax > 1) {
+            tax = tax - 1; 
+          }
+
+          const calculatedAfterTax = cost * (1 + tax);
+
+          // STRICT UPDATE: Only touching the 4 requested fields
+          batch.update(docRef, {
+            costPrice: cost,
+            purchasePrice: cost, 
+            taxRate: tax,
+            afterTaxRate: parseFloat(calculatedAfterTax.toFixed(4)),
+            supplierId: String(row.Politis).trim()
+          });
+          
+          operationsCount++;
+          updatedCount++;
+
+          // Firebase batch limit is 500
+          if (operationsCount === 500) {
+            await batch.commit();
+            batch = writeBatch(this.db);
+            operationsCount = 0;
+          }
+        }
+      }
+
+      if (operationsCount > 0) {
+        await batch.commit();
+      }
+
+      // 3. Cleanup and refresh
+      event.target.value = ''; 
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('maranth_products');
+        localStorage.removeItem('maranth_products_date');
+      }
+      
+      // If you have a function to reload your products list, call it here:
+      if (this.setupDailyProductCache) {
+         await this.setupDailyProductCache(); 
+      }
+
+      alert(`✅ Migration Complete! Updated financials and vendors for ${updatedCount} products.`);
+
+    } catch (error) {
+      console.error("Import failed:", error);
+      alert("Something went wrong. Check console for details.");
+    }
+  }
+
 }

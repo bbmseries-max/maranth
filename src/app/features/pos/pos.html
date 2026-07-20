@@ -56,6 +56,15 @@
         {{ salesService.isDarkMode() ? '☀️ Light' : '🌙 Dark' }}
       </button>
     </div>
+    <div style="display: flex; gap: 8px;">
+  <!-- The hidden file input -->
+  <input type="file" #fileInput accept=".json" style="display: none;" (change)="salesService.importAccessMigrationData($event)" />
+  
+  <!-- The button you actually click -->
+  <button class="pos-admin-btn desktop-only" (click)="fileInput.click()" style="background: #eab308; color: #422006; font-size: 14px; padding: 4px 12px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold;">
+    📂 Import JSON
+  </button>
+</div>
     
     <div style="display: flex; gap: 12px; align-items: center;">
       <div class="cashier-badge desktop-only">
