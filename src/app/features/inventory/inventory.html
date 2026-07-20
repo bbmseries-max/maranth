@@ -78,15 +78,7 @@
   <!-- Hidden file input -->
   <input type="file" #fileInput accept=".json" style="display: none;" (change)="salesService.importAccessMigrationData($event)" />
   
-  <!-- The visible button -->
-  <button (click)="fileInput.click()" style="background: #eab308; color: #422006; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
-    📂 Import JSON (Update Prices & Vendors)
-  </button>
 </div>
-
-<button (click)="salesService.cleanProductNames()" style="background: #ef4444; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-left: 10px;">
-  🧹 Clean Product Names
-</button>
     
     <div class="inventory-scroll-list">
 
