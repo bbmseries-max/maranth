@@ -416,11 +416,12 @@ export class SalesService {
   }
 
   // ⭐ THE MISSING EXACT SCANNER LOGIC
-  public scanBarcodeExact(query: string): boolean {
+public scanBarcodeExact(query: string): boolean {
     const queryLower = query.toLowerCase().trim();
     const found = this.products().find(p => 
       (p.barcode && p.barcode.toLowerCase() === queryLower) || 
-      (p.id && p.id.toString().toLowerCase() === queryLower)
+      (p.id && p.id.toString().toLowerCase() === queryLower) ||
+      (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase() === queryLower)) // <-- ADDED THIS LINE
     );
 
     if (found) {
@@ -432,7 +433,9 @@ export class SalesService {
           message: `Enter the measured weight for ${found.name}:`,
           value: '1.000',
           onConfirm: (val) => {
-            const weight = parseFloat(val);
+            // Added your safe comma swap here just to be safe like in your click handler!
+            const safeVal = String(val).replace(',', '.');
+            const weight = parseFloat(safeVal);
             if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
             this.closeModal();
             this.triggerSearchFocus();

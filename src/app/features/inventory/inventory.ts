@@ -33,6 +33,7 @@ export class InventoryComponent {
 
   // Edit states
   public editingProductId: string | null = null;
+  public newAltBarcode: string = '';
   public editForm: Partial<Product> = {};
 
   public editingCategoryId: string | null = null;
@@ -115,9 +116,49 @@ export class InventoryComponent {
     categoryId: '',
     supplierId: undefined, 
     isActive: true,
-    isWeighted: false
+    isWeighted: false,
+    altBarcodes: []
   };
 }
+
+// ==========================================
+  // MULTIPLE BARCODES LOGIC
+  // ==========================================
+
+
+  public addAltBarcode(): void {
+    const code = this.newAltBarcode.trim();
+    if (!code) return;
+
+    // Initialize array if it doesn't exist
+    if (!this.editForm.altBarcodes) {
+      this.editForm.altBarcodes = [];
+    }
+
+    // Prevent duplicates of the main barcode or existing alt barcodes
+    if (this.editForm.barcode === code) {
+      alert("This is already the main barcode!");
+      this.newAltBarcode = '';
+      return;
+    }
+    if (this.editForm.altBarcodes.includes(code)) {
+      alert("Barcode already added!");
+      this.newAltBarcode = '';
+      return;
+    }
+
+    // Add it and clear the input
+    this.editForm.altBarcodes.push(code);
+    this.newAltBarcode = '';
+  }
+
+  public removeAltBarcode(codeToRemove: string): void {
+    if (!this.editForm.altBarcodes) return;
+    
+    this.editForm.altBarcodes = this.editForm.altBarcodes.filter(
+      code => code !== codeToRemove
+    );
+  }
 
   public saveEdit(): void {
     if (!this.editForm.id || !this.editForm.name || this.editForm.price === undefined) return;

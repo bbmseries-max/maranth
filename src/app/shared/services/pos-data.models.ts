@@ -7,6 +7,7 @@ export interface Product {
   isActive?: boolean;
   expire?: string;              // <-- We will use this!
   barcode?: string;
+  altBarcodes?: string[];
   sku?: string;
   purchasePrice?: number;
   taxRate?: number;

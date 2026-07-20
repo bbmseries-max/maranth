@@ -33,6 +33,45 @@
         </div>
         <button (click)="prepareNewProduct()" style="background: #16a34a; color: white; border: none; padding: 0 16px; height: 48px; border-radius: 8px; font-weight: 700; cursor: pointer;">➕ Add</button>
       </div>
+
+      <!-- ALTERNATIVE BARCODES SECTION -->
+<div style="margin-top: 15px; padding: 10px; border: 1px dashed #ccc; border-radius: 6px;">
+  <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+    Alternative Barcodes (New Packaging, Promos)
+  </label>
+  
+  <!-- Add New Barcode -->
+  <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+    <input 
+      type="text" 
+      [(ngModel)]="newAltBarcode" 
+      placeholder="Scan or type new barcode..." 
+      style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
+      (keyup.enter)="addAltBarcode()" 
+    />
+    <button 
+      type="button" 
+      (click)="addAltBarcode()" 
+      style="background: #3b82f6; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+      + Add
+    </button>
+  </div>
+
+  <!-- Display Added Barcodes as Chips -->
+  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+    @for (code of editForm.altBarcodes; track code) {
+      <div style="background: #e2e8f0; color: #1e293b; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+        <span>{{ code }}</span>
+        <button 
+          type="button" 
+          (click)="removeAltBarcode(code)" 
+          style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 12px; padding: 0;">
+          ✕
+        </button>
+      </div>
+    }
+  </div>
+</div>
       
       <!-- BOTTOM ROW: The Ultimate Filters (Swipeable on Mobile) -->
       <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; align-items: center; width: 100%;">
@@ -74,12 +113,7 @@
       </div>
     </div>
 
-    <div style="margin-bottom: 20px;">
-  <!-- Hidden file input -->
-  <input type="file" #fileInput accept=".json" style="display: none;" (change)="salesService.importAccessMigrationData($event)" />
-  
-</div>
-    
+      
     <div class="inventory-scroll-list">
 
       
