@@ -4,6 +4,14 @@ import { FormsModule } from '@angular/forms'; // ⭐ IMPORTED FORMS MODULE
 import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 
+export interface CashLog {
+  id: string;
+  type: 'IN' | 'OUT';
+  amount: number;
+  reason: string;
+  timestamp: Date;
+}
+
 @Component({
   selector: 'app-reports',
   standalone: true,
@@ -22,6 +30,8 @@ export class ReportsComponent {
   // ========================================================
   public selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
   public selectedTxnId = signal<string | null>(null);
+
+  public cashLogs = signal<CashLog[]>([]);
 
   public filteredTransactions = computed(() => {
     const targetDate = new Date(this.selectedDate()).toDateString();
