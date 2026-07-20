@@ -279,20 +279,40 @@
           </div>
         </div>
 
-        <div class="dashboard-card cash-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        <div class="dashboard-card cash-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; display: flex; flex-direction: column; max-height: 400px;">
+          
           <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 800; color: #334155; text-transform: uppercase; margin-bottom: 16px;">
             <span>💵 Cash Drawer Control</span>
-            <button (click)="resetDrawer()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: 600; cursor: pointer;">Reset</button>
+            <button (click)="cashLogs.set([])" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: 600; cursor: pointer;">Reset</button>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #475569; margin: 12px 0 8px;"><span>Starting Float:</span><span>{{ formatMoney(startingFloat()) }}</span></div>
-          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #475569; margin-bottom: 12px;"><span>Supplier Payouts:</span><span style="color: #ef4444;">-{{ formatMoney(supplierPayouts()) }}</span></div>
-          <div style="border-top: 1px dashed #cbd5e1; margin-top: 8px; padding-top: 12px; display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; color: #0f172a;">
-            <span>Expected Cash in Till:</span><span style="font-size: 22px; color: #10b981; font-weight: 900;">{{ formatMoney(liveCashInDrawer()) }}</span>
+
+          <div style="background: #f8fafc; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; color: #0f172a; margin-bottom: 16px; border: 1px solid #e2e8f0;">
+            <span style="font-size: 13px; color: #64748b;">Expected Cash:</span>
+            <span style="font-size: 24px; color: #10b981; font-weight: 900;">{{ formatMoney(liveCashInDrawer()) }}</span>
           </div>
-          <div style="display: flex; gap: 8px; margin-top: 12px;">
-            <button (click)="addManualCash()" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #166534; color: white; font-weight: 600; font-size: 12px; cursor: pointer;">+ Add Cash</button>
-            <button (click)="removeManualCash()" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #991b1b; color: white; font-weight: 600; font-size: 12px; cursor: pointer;">- Payout</button>
+
+          <div style="flex: 1; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; background: #fafafa; margin-bottom: 12px; font-size: 12px;">
+            <div style="font-weight: bold; color: #94a3b8; text-transform: uppercase; font-size: 10px; margin-bottom: 8px; padding-left: 4px;">Today's Activity</div>
+            
+            @for (log of cashLogs(); track log.id) {
+              <div style="display: flex; justify-content: space-between; padding: 6px 4px; border-bottom: 1px solid #f1f5f9;">
+                <div>
+                  <span *ngIf="log.type === 'IN'" style="color: #16a34a; font-weight: bold;">+{{ formatMoney(log.amount) }}</span>
+                  <span *ngIf="log.type === 'OUT'" style="color: #ef4444; font-weight: bold;">-{{ formatMoney(log.amount) }}</span>
+                  <span style="color: #475569; margin-left: 8px;">{{ log.reason }}</span>
+                </div>
+                <span style="color: #94a3b8; font-size: 10px;">{{ log.timestamp | date:'HH:mm' }}</span>
+              </div>
+            } @empty {
+              <div style="text-align: center; color: #94a3b8; font-style: italic; padding: 10px 0;">No cash movements yet today.</div>
+            }
           </div>
+
+          <div style="display: flex; gap: 8px; margin-top: auto;">
+            <button (click)="addManualCash()" style="flex: 1; padding: 10px; border-radius: 6px; border: none; background: #16a34a; color: white; font-weight: 700; font-size: 13px; cursor: pointer;">+ Add Cash</button>
+            <button (click)="removeManualCash()" style="flex: 1; padding: 10px; border-radius: 6px; border: none; background: #ef4444; color: white; font-weight: 700; font-size: 13px; cursor: pointer;">- Payout</button>
+          </div>
+
         </div>
 
         <div class="dashboard-card alerts-card" [style.border-color]="systemAlerts().length > 0 ? '#fca5a5' : '#e2e8f0'" [style.background]="systemAlerts().length > 0 ? '#fef2f2' : 'white'" style="border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid;">

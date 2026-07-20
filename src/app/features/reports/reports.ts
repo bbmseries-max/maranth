@@ -192,20 +192,33 @@ export class ReportsComponent {
     return isNaN(totalEarnings) ? 0 : totalEarnings;
   });
   
-  public startingFloat = signal<number>(this.safeParseLocal('maranth_float'));
-  public supplierPayouts = signal<number>(this.safeParseLocal('maranth_payouts'));
-  
+public cashLogs = signal<CashLog[]>([]);
+
   public liveCashInDrawer = computed(() => {
     const today = new Date().toDateString();
+    
     let todaysCashSales = 0;
     const txs = this.salesService.transactions() || [];
     txs.forEach(tx => {
-      if (tx && tx.timestamp && new Date(tx.timestamp).toDateString() === today && tx.paymentMethod === 'Cash') {
-        todaysCashSales += this.safeParseLocal(tx.grandTotal as any);
+      if (tx && tx.timestamp && tx.paymentMethod) {
+        const isToday = new Date(tx.timestamp).toDateString() === today;
+        const isCash = String(tx.paymentMethod).toLowerCase() === 'cash';
+        if (isToday && isCash) {
+          todaysCashSales += (Number(tx.grandTotal) || 0);
+        }
       }
     });
-    const finalTotal = this.safeParseLocal(this.startingFloat() as any) + todaysCashSales - this.safeParseLocal(this.supplierPayouts() as any);
-    return isNaN(finalTotal) ? 0 : finalTotal;
+
+    let manualCashIn = 0;
+    let manualCashOut = 0;
+    this.cashLogs().forEach(log => {
+      if (log.type === 'IN') manualCashIn += log.amount;
+      if (log.type === 'OUT') manualCashOut += log.amount;
+    });
+
+    let finalTotal = manualCashIn + todaysCashSales - manualCashOut;
+    if (isNaN(finalTotal)) return 0;
+    return Math.round(finalTotal * 100) / 100;
   });
 
   public salesTarget = 1000; 

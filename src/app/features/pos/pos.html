@@ -194,10 +194,10 @@
       {{ prod.name | slice:0:15 }}{{ prod.name.length > 15 ? '.' : '' }}
     </span>
     
-    <!-- THE PRICE TAG -->
-    <span style="font-weight: 700; color: #16a34a; background: #dcfce7; padding: 4px 8px; border-radius: 6px; font-size: 13px; white-space: nowrap;">
-      {{ prod.price }}€
-    </span>
+<!-- THE UPGRADED PRICE TAG -->
+<span style="font-weight: 900; color: #15803d; background: #ffffff; border: 2px solid #22c55e; padding: 6px 12px; border-radius: 8px; font-size: 24px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+  {{ formatMoney(prod.price) }}
+</span>
 
   </button>
 } @empty {
