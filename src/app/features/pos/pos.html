@@ -180,26 +180,7 @@
         <!-- ========================================== -->
         <!-- PRIORITY 2: LOOSE ITEMS                    -->
         <!-- ========================================== -->
-        @if (looseProducts().length > 0 && !searchQuery()) {
-          <div class="zone-header" style="margin-top: 16px;">
-            <span class="zone-icon">🏷️</span> 
-            <div>
-              <div class="zone-title" style="color: #0b57d0;">Loose Items</div>
-              <div class="zone-subtitle">Bakery & items without barcodes</div>
-            </div>
-          </div>
-        <div class="pos-touch-grid loose-grid">
-            @for (prod of looseProducts(); track prod.id) {
-              <div class="pos-touch-btn" (click)="handleProductClick(prod)">
-                <!-- Name on top (Lines 1 & 2), 15 letters max -->
-                <span class="touch-name">{{ prod.name.length > 15 ? prod.name.substring(0, 15) + '..' : prod.name }}</span>
-                <!-- Price on bottom (Line 3) -->
-                <span class="touch-price">{{ formatMoney(prod.price) }}</span>
-              </div>
-            }
-          </div>
-        }
-
+isPinned?: boolean;
         <!-- ========================================== -->
         <!-- PRIORITY 3: STANDARD CATALOG               -->
         <!-- ========================================== -->
