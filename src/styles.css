@@ -8,8 +8,8 @@ input[type="number"],
 input[type="date"],
 select {
   background-color: #ffffff !important;
-  border: 2px solid #94a3b8 !important;         /* Keeps the top and sides clearly visible */
-  border-bottom: 4px solid black !important;    /* 👈 Your heavy black bottom border */
+  border: 2px solid #94a3b8 !important;         
+  border-bottom: 4px solid black !important;    
   border-radius: 6px;
   padding: 10px;
   font-size: 14px;
@@ -18,20 +18,26 @@ select {
   box-sizing: border-box;
   outline: none;
   transition: all 0.2s ease-in-out;
-  width: 100%;
+  /* ❌ Removed the width: 100% from here so it doesn't break your top menu! */
 }
 
-/* 2. Bright Blue Focus State (When clicked) */
+/* 2. Form-Specific Stretching (This fixes the edit forms) */
+.input-group input,
+.input-group select {
+  width: 100%; 
+}
+
+/* 3. Bright Blue Focus State (When clicked) */
 input[type="text"]:focus,
 input[type="number"]:focus,
 input[type="date"]:focus,
 select:focus {
   border-color: #3b82f6 !important;
-  border-bottom-color: #1d4ed8 !important;      /* Makes the thick bottom border a darker blue on click */
+  border-bottom-color: #1d4ed8 !important;      
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-/* 3. Universal Label Styling */
+/* 4. Universal Label Styling */
 label {
   display: block;
   font-weight: 700;
@@ -40,7 +46,7 @@ label {
   font-size: 13px;
 }
 
-/* 4. Soft Gray Background for Form Containers */
+/* 5. Soft Gray Background for Form Containers */
 .inline-edit-form {
   background-color: #f1f5f9; 
   padding: 16px;
