@@ -607,4 +607,72 @@ export class SalesService {
     }
   }
 
+  // ==========================================
+  // ONE-TIME CLEANUP: STRIP BARCODES FROM NAMES
+  // ==========================================
+  public async cleanProductNames(): Promise<void> {
+    if (!confirm('Ready to scan 3400+ products and remove barcodes from their names?')) return;
+
+    try {
+      const snapshot = await getDocs(collection(this.db, 'products'));
+      let batch = writeBatch(this.db);
+      let operationsCount = 0;
+      let cleanedCount = 0;
+
+      // This Regex looks for standalone numbers that are 8 to 14 digits long
+      const barcodeRegex = /\b\d{8,14}\b/g;
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const currentName = data['name'] || '';
+
+        // If the name contains a barcode-like number...
+        if (barcodeRegex.test(currentName)) {
+          
+          // Remove the barcode from the name and clean up extra spaces
+          const cleanName = currentName.replace(barcodeRegex, '').replace(/\s+/g, ' ').trim();
+
+          // Log it so you can see exactly what changed in your console
+          console.log(`🧹 Cleaned: "${currentName}"  -->  "${cleanName}"`);
+
+          // Update Firebase with the clean name
+          batch.update(doc.ref, { 
+            name: cleanName 
+          });
+
+          operationsCount++;
+          cleanedCount++;
+
+          // Firebase batch limit is 500
+          if (operationsCount === 500) {
+            batch.commit();
+            batch = writeBatch(this.db);
+            operationsCount = 0;
+          }
+        }
+      });
+
+      // Commit any remaining updates
+      if (operationsCount > 0) {
+        await batch.commit();
+      }
+
+      // Clear cache so the UI refreshes
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('maranth_products');
+        localStorage.removeItem('maranth_products_date');
+      }
+      
+      if (this.setupDailyProductCache) {
+         await this.setupDailyProductCache(); 
+      }
+
+      alert(`✅ Cleanup Complete! Found and fixed ${cleanedCount} messy product names.`);
+
+    } catch (error) {
+      console.error("Cleanup failed:", error);
+      alert("Something went wrong. Check console for details.");
+    }
+  }
+
 }
