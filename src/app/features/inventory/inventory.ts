@@ -118,7 +118,7 @@ export class InventoryComponent {
     isActive: true,
     isWeighted: false,
     altBarcodes: [],
-    isPinned?: boolean;
+    isPinned: false,
   };
 }
 
