@@ -1,8 +1,46 @@
 /* ========================================== */
-/* EDIT FORM VISIBILITY UPGRADES              */
+/* GLOBAL FORM STYLES (High Visibility)       */
 /* ========================================== */
 
-/* Give the form itself a soft gray background so the white inputs stand out */
+/* 1. Universal Input & Dropdown Styling */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  background-color: #ffffff !important;
+  border: 2px solid #94a3b8 !important;         /* Keeps the top and sides clearly visible */
+  border-bottom: 4px solid black !important;    /* 👈 Your heavy black bottom border */
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 600;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+}
+
+/* 2. Bright Blue Focus State (When clicked) */
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus {
+  border-color: #3b82f6 !important;
+  border-bottom-color: #1d4ed8 !important;      /* Makes the thick bottom border a darker blue on click */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* 3. Universal Label Styling */
+label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #334155;
+  font-size: 13px;
+}
+
+/* 4. Soft Gray Background for Form Containers */
 .inline-edit-form {
   background-color: #f1f5f9; 
   padding: 16px;
@@ -10,37 +48,6 @@
   border: 1px solid #e2e8f0;
 }
 
-/* Make all inputs and dropdowns strictly white with a thick, visible border */
-.inline-edit-form input,
-.inline-edit-form select {
-  background-color: #ffffff !important;
-  border: 2px solid #94a3b8 !important; /* 2px thick dark-ish gray border */
-  border-radius: 6px;
-  padding: 10px;
-  font-size: 14px;
-  color: #0f172a;
-  font-weight: 600;
-  width: 100%;
-  box-sizing: border-box;
-  outline: none;
-  transition: all 0.2s ease-in-out;
-}
-
-/* When you click inside an input, turn the border bright blue so you never lose your place */
-.inline-edit-form input:focus,
-.inline-edit-form select:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-/* Fix the labels so they are easy to read above the inputs */
-.input-group label {
-  display: block;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #334155;
-  font-size: 13px;
-}
 /* ==========================================
    🌙 MARANTH DARK THEME OVERRIDES
    ========================================== */
