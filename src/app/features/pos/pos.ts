@@ -109,6 +109,7 @@ export class PosComponent implements OnInit, AfterViewInit {
   });
 
   constructor() {
+
     effect(() => {
       const trigger = this.salesService.focusSearchTrigger();
       if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {

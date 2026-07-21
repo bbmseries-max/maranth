@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, effect } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms'; // ⭐ IMPORTED FORMS MODULE
 import { RouterLink } from '@angular/router';
@@ -31,7 +31,7 @@ export class ReportsComponent {
   public selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
   public selectedTxnId = signal<string | null>(null);
 
-  public cashLogs = signal<CashLog[]>([]);
+  public cashLogs = signal<CashLog[]>(this.loadSavedLogs());
 
   public filteredTransactions = computed(() => {
     const targetDate = new Date(this.selectedDate()).toDateString();
@@ -192,7 +192,28 @@ export class ReportsComponent {
     return isNaN(totalEarnings) ? 0 : totalEarnings;
   });
   
+constructor() {
+    effect(() => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('maranth_cash_logs', JSON.stringify(this.cashLogs()));
+      }
+    });
+  }
 
+  // 3. The Loader Helper
+  private loadSavedLogs(): CashLog[] {
+    if (typeof window === 'undefined') return [];
+    
+    const saved = localStorage.getItem('maranth_cash_logs');
+    if (!saved) return [];
+
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error parsing cash logs', e);
+      return [];
+    }
+  }
 
   public liveCashInDrawer = computed(() => {
     const today = new Date().toDateString();
