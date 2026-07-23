@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
+import { ThemeService } from '../../shared/services/theme.service';
 
 @Component({
   selector: 'app-pos',
@@ -108,7 +109,7 @@ export class PosComponent implements OnInit, AfterViewInit {
     });
   });
 
-  constructor() {
+  constructor(public themeService: ThemeService) {
 
     effect(() => {
       const trigger = this.salesService.focusSearchTrigger();
