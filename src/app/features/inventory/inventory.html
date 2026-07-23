@@ -1,46 +1,58 @@
-<div class="flex flex-col h-screen bg-slate-50 font-sans">
+<div class="flex flex-col h-screen bg-base font-sans transition-colors duration-300">
 
-  <!-- THE SKY HEADER -->
+  <!-- THE SKY HEADER (Unchanged, always stays blue) -->
   <header class="flex items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-md flex-shrink-0 z-20">
     <div class="font-black text-xl tracking-tight">🍊 MARANTH</div>
     <nav class="flex items-center gap-2 bg-blue-800/40 p-1 rounded-xl">
-      <button id="sync-btn" (click)="syncInventory()" class="text-xl px-2 hover:rotate-180 transition-transform duration-500 focus:outline-none" title="Sync Database">
-        🔄
-      </button>
+      
+      <!-- THEME SWITCHER -->
+      <div class="flex items-center bg-blue-900/50 rounded-lg p-0.5 mr-1 border border-blue-700/50">
+        <button (click)="themeService.setTheme('light')" 
+                [ngClass]="themeService.currentTheme() === 'light' ? 'bg-panel text-blue-900 shadow-sm' : 'text-white/60 hover:text-white'" 
+                class="px-2 py-1 rounded-md text-sm transition-all focus:outline-none" title="Light Mode">☀️</button>
+        <button (click)="themeService.setTheme('dim')" 
+                [ngClass]="themeService.currentTheme() === 'dim' ? 'bg-hover text-white shadow-sm' : 'text-white/60 hover:text-white'" 
+                class="px-2 py-1 rounded-md text-sm transition-all focus:outline-none" title="Dim Mode">⛅</button>
+        <button (click)="themeService.setTheme('dark')" 
+                [ngClass]="themeService.currentTheme() === 'dark' ? 'bg-base text-white shadow-sm' : 'text-white/60 hover:text-white'" 
+                class="px-2 py-1 rounded-md text-sm transition-all focus:outline-none" title="Dark Mode">🌙</button>
+      </div>
+
+      <button id="sync-btn" (click)="syncInventory()" class="text-xl px-2 hover:rotate-180 transition-transform duration-500 focus:outline-none" title="Sync Database">🔄</button>
       <a routerLink="/pos" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">🛒 POS</a>
-      <a routerLink="/inventory" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-blue-700 shadow-sm no-underline transition-all">📦 INV</a>
+      <a routerLink="/inventory" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-panel text-blue-700 shadow-sm no-underline transition-all">📦 INV</a>
       <a routerLink="/reports" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">📊 REP</a>
     </nav>
   </header>
 
   <!-- THE SUB-MENU TABS -->
-  <div class="flex overflow-x-auto bg-white border-b border-slate-200 flex-shrink-0 hide-scrollbar">
+  <div class="flex overflow-x-auto bg-panel border-b border-line flex-shrink-0 hide-scrollbar transition-colors duration-300">
     <button (click)="activeTab.set('products'); cancelAllEdits()" 
             class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
-            [ngClass]="activeTab() === 'products' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'">📦 Items</button>
+            [ngClass]="activeTab() === 'products' ? 'border-blue-600 text-blue-700' : 'border-transparent text-muted hover:text-primary'">📦 Items</button>
     <button (click)="activeTab.set('suppliers'); cancelAllEdits()" 
             class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
-            [ngClass]="activeTab() === 'suppliers' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'">🚚 Suppliers</button>
+            [ngClass]="activeTab() === 'suppliers' ? 'border-blue-600 text-blue-700' : 'border-transparent text-muted hover:text-primary'">🚚 Suppliers</button>
     <button (click)="activeTab.set('categories'); cancelAllEdits()" 
             class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
-            [ngClass]="activeTab() === 'categories' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'">📁 Categories</button>
+            [ngClass]="activeTab() === 'categories' ? 'border-blue-600 text-blue-700' : 'border-transparent text-muted hover:text-primary'">📁 Categories</button>
     <button (click)="activeTab.set('staff'); cancelAllEdits()" 
             class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
-            [ngClass]="activeTab() === 'staff' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'">👥 Staff</button>
+            [ngClass]="activeTab() === 'staff' ? 'border-blue-600 text-blue-700' : 'border-transparent text-muted hover:text-primary'">👥 Staff</button>
   </div>
 
   <!-- ========================================== -->
   <!-- TAB 1: PRODUCTS LIST -->
   <!-- ========================================== -->
   @if (activeTab() === 'products') {
-    <div class="flex flex-col gap-3 p-3 bg-slate-50 border-b border-slate-200 flex-shrink-0 z-10">
+    <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
       
       <!-- TOP ROW: Search & Add -->
       <div class="flex gap-2 items-center">
-        <div class="flex-1 flex items-center bg-white border border-slate-300 rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-shadow">
-          <span class="text-lg text-slate-400 mr-2">🔍</span>
-          <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-slate-800 placeholder-slate-400" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-          @if (searchQuery()) { <button class="text-slate-400 hover:text-red-500 font-bold focus:outline-none" (click)="searchQuery.set('')">✖</button> }
+        <div class="flex-1 flex items-center bg-panel border border-line rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+          <span class="text-lg text-muted mr-2">🔍</span>
+          <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-primary placeholder:text-muted" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+          @if (searchQuery()) { <button class="text-muted hover:text-red-500 font-bold focus:outline-none" (click)="searchQuery.set('')">✖</button> }
         </div>
         <button (click)="prepareNewProduct()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
       </div>
@@ -48,77 +60,76 @@
       <!-- BOTTOM ROW: Filters -->
       <div class="flex flex-wrap gap-3 items-center w-full py-1">
         
-        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="py-2 px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer">
+        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
           <option value="active">🟢 Active Items</option>
           <option value="inactive">🔴 Inactive Items</option>
           <option value="all">⚪ All Items</option>
         </select>
 
-        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="py-2 px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer">
+        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
           <option value="ALL">📁 All Categories</option>
           @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
         </select>
 
         <button (click)="filterLowStock.set(!filterLowStock())" 
                 class="py-2 px-4 rounded-lg font-bold text-sm transition-colors border"
-                [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'">
+                [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-panel text-primary border-line hover:bg-hover'">
           📦 Low Stock
         </button>
 
-        <div class="flex items-center bg-white border border-slate-300 rounded-lg pr-2 focus-within:border-blue-500">
-          <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-slate-600 outline-none bg-transparent" title="Filter by expiration date" />
+        <div class="flex items-center bg-panel border border-line rounded-lg pr-2 focus-within:border-blue-500 transition-colors">
+          <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-primary outline-none bg-transparent" title="Filter by expiration date" />
           @if (expireFilterDate()) { 
             <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> 
           }
         </div>
-
       </div>
     </div>
       
     <div class="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">      
       
       @if (editingProductId === 'NEW') {
-        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600">
-          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-slate-200 bg-green-50">✨ Register New Item</div>
+        <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600 transition-colors duration-300">
+          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-line bg-green-50/20">✨ Register New Item</div>
           <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
         </div>
       }
 
       @for (prod of filteredProducts(); track prod.id) {
-        <div [id]="'prod-card-' + prod.id" class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingProductId === prod.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
-          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 transition-colors" (click)="toggleEdit(prod)">
+        <div [id]="'prod-card-' + prod.id" class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingProductId === prod.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
+          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleEdit(prod)">
             <div class="flex flex-col gap-1">
-              <div class="font-bold text-slate-800">{{ prod.name }}</div>
+              <div class="font-bold text-primary">{{ prod.name }}</div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-bold px-2 py-0.5 rounded-md" [ngClass]="prod.stockQuantity <= (prod.minStockWarning || 5) ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'">📦 {{ prod.stockQuantity }}</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-md" [ngClass]="prod.stockQuantity <= (prod.minStockWarning || 5) ? 'bg-red-100 text-red-700' : 'bg-hover text-muted'">📦 {{ prod.stockQuantity }}</span>
                 <span class="text-xs font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{{ formatMoney(prod.price) }}</span>
               </div>
             </div>
-            <div class="text-lg text-slate-400">{{ editingProductId === prod.id ? '🔼' : '✏️' }}</div>
+            <div class="text-lg text-muted">{{ editingProductId === prod.id ? '🔼' : '✏️' }}</div>
           </div>
           @if (editingProductId === prod.id) {
             <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
           }
         </div>
       } @empty {
-        <div class="text-center p-10 font-bold text-slate-400 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300">No products found.</div>
+        <div class="text-center p-10 font-bold text-muted bg-hover rounded-xl border-2 border-dashed border-line">No products found.</div>
       }
     </div>
 
     <!-- Reusable Product Form Template -->
     <ng-template #productFormTemplate>
-      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-4">
+      <div class="p-4 bg-base border-t border-line flex flex-col gap-4 transition-colors duration-300">
 
         <!-- ALTERNATIVE BARCODES -->
-        <div class="p-3 border border-dashed border-slate-300 rounded-lg bg-slate-100/50">
-          <label class="block font-bold text-[13px] text-slate-700 mb-2">Alternative Barcodes (New Packaging, Promos)</label>
+        <div class="p-3 border border-dashed border-line rounded-lg bg-hover">
+          <label class="block font-bold text-[13px] text-primary mb-2">Alternative Barcodes (New Packaging, Promos)</label>
           <div class="flex gap-2 mb-3">
-            <input type="text" [(ngModel)]="newAltBarcode" placeholder="Scan or type new barcode..." class="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm outline-none focus:border-blue-500" (keyup.enter)="addAltBarcode()" />
+            <input type="text" [(ngModel)]="newAltBarcode" placeholder="Scan or type new barcode..." class="flex-1 px-3 py-2 border border-line bg-panel text-primary rounded-md text-sm outline-none focus:border-blue-500" (keyup.enter)="addAltBarcode()" />
             <button type="button" (click)="addAltBarcode()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-md font-bold text-sm transition-colors shadow-sm">+ Add</button>
           </div>
           <div class="flex flex-wrap gap-2">
             @for (code of editForm.altBarcodes; track code) {
-              <div class="bg-slate-200 text-slate-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
+              <div class="bg-panel border border-line text-primary px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
                 <span>{{ code }}</span>
                 <button type="button" (click)="removeAltBarcode(code)" class="bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] focus:outline-none">✕</button>
               </div>
@@ -128,12 +139,12 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="flex flex-col md:col-span-2">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Product Name</label>
-            <input type="text" [(ngModel)]="editForm.name" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
+            <label class="text-xs font-bold text-muted uppercase mb-1">Product Name</label>
+            <input type="text" [(ngModel)]="editForm.name" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
           </div>
           <div class="flex flex-col">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1">VAT Rate</label>
-            <select [(ngModel)]="editForm.taxRate" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold bg-white outline-none focus:border-blue-500">
+            <label class="text-xs font-bold text-muted uppercase mb-1">VAT Rate</label>
+            <select [(ngModel)]="editForm.taxRate" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-bold outline-none focus:border-blue-500">
               <option [ngValue]="0.24">24%</option>
               <option [ngValue]="0.13">13%</option>
               <option [ngValue]="0.06">6%</option>
@@ -143,40 +154,40 @@
         </div>
 
         <div class="grid grid-cols-3 gap-4">
-          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Retail Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="px-3 py-2 border-2 border-blue-400 bg-blue-50 rounded-lg text-sm font-black text-blue-900 outline-none focus:border-blue-600" /></div>
-          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
-          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Stock Qty</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="px-3 py-2 border-2 border-green-400 bg-green-50 rounded-lg text-sm font-black text-green-900 outline-none focus:border-green-600" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Retail Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="px-3 py-2 border-2 border-blue-400 bg-blue-50/20 text-primary rounded-lg text-sm font-black outline-none focus:border-blue-600" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Stock Qty</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="px-3 py-2 border-2 border-green-400 bg-green-50/20 text-primary rounded-lg text-sm font-black outline-none focus:border-green-600" /></div>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Expiration Date</label><input type="date" [(ngModel)]="editForm.expire" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono font-bold outline-none focus:border-blue-500" /></div>
-          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Low Stock Warning At</label><input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Expiration Date</label><input type="date" [(ngModel)]="editForm.expire" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-mono font-bold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Low Stock Warning At</label><input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Category</label>
-            <select [(ngModel)]="editForm.categoryId" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold bg-white outline-none focus:border-blue-500">
+            <label class="text-xs font-bold text-muted uppercase mb-1">Category</label>
+            <select [(ngModel)]="editForm.categoryId" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500">
               @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
             </select>
           </div>
           <div class="flex flex-col">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Supplier</label>
-            <select [(ngModel)]="editForm.supplierId" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold bg-white outline-none focus:border-blue-500">
+            <label class="text-xs font-bold text-muted uppercase mb-1">Supplier</label>
+            <select [(ngModel)]="editForm.supplierId" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500">
               <option [value]="undefined">-- None --</option>
               @for (sup of suppliers(); track sup.id) { <option [value]="sup.id">{{ sup.name }}</option> }
             </select>
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-4 mt-2 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-          <label class="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isWeighted" class="w-4 h-4 accent-blue-600" /> ⚖️ Scaled Item</label>
-          <label class="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isActive" class="w-4 h-4 accent-blue-600" /> 🟢 Active Status</label>
-          <label class="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isPinned" class="w-4 h-4 accent-blue-600" /> 📌 Pin to POS</label>
+        <div class="flex flex-wrap gap-4 mt-2 bg-panel p-3 rounded-lg border border-line shadow-sm transition-colors">
+          <label class="flex items-center gap-2 text-sm font-bold text-primary cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isWeighted" class="w-4 h-4 accent-blue-600" /> ⚖️ Scaled Item</label>
+          <label class="flex items-center gap-2 text-sm font-bold text-primary cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isActive" class="w-4 h-4 accent-blue-600" /> 🟢 Active Status</label>
+          <label class="flex items-center gap-2 text-sm font-bold text-primary cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isPinned" class="w-4 h-4 accent-blue-600" /> 📌 Pin to POS</label>
         </div>
 
-        <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-200">
-          <button class="px-5 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition-colors" (click)="cancelAllEdits()">Cancel</button>
+        <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-line">
+          <button class="px-5 py-2 rounded-lg font-bold text-muted hover:bg-hover transition-colors" (click)="cancelAllEdits()">Cancel</button>
           <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveEdit()">💾 Save</button>
         </div>
       </div>
@@ -187,27 +198,27 @@
   <!-- TAB 2: SUPPLIERS -->
   <!-- ========================================== -->
   @if (activeTab() === 'suppliers') {
-    <div class="flex justify-between items-center p-4 bg-slate-50 border-b border-slate-200 z-10">
-      <h3 class="m-0 text-slate-900 font-black text-lg">🚚 Supplier Directory</h3>
+    <div class="flex justify-between items-center p-4 bg-base border-b border-line z-10 transition-colors duration-300">
+      <h3 class="m-0 text-primary font-black text-lg">🚚 Supplier Directory</h3>
       <button (click)="prepareNewSupplier()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
     </div>
     
     <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
       @if (editingSupplierId === 'NEW') {
-        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600">
-          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-slate-200 bg-green-50">✨ New Supplier Profile</div>
+        <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600 transition-colors duration-300">
+          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-line bg-green-50/20">✨ New Supplier Profile</div>
           <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
         </div>
       }
 
       @for (sup of suppliers(); track sup.id) {
-        <div class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingSupplierId === sup.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
-          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 transition-colors" (click)="toggleSupplierEdit(sup)">
+        <div class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingSupplierId === sup.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
+          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleSupplierEdit(sup)">
             <div class="flex flex-col gap-1">
-              <div class="font-bold text-slate-800">{{ sup.name }}</div>
-              <div class="text-xs font-semibold text-slate-500">{{ sup.contact ? '👤 ' + sup.contact : 'No Contact' }} • 📞 {{ sup.phone || 'N/A' }}</div>
+              <div class="font-bold text-primary">{{ sup.name }}</div>
+              <div class="text-xs font-semibold text-muted">{{ sup.contact ? '👤 ' + sup.contact : 'No Contact' }} • 📞 {{ sup.phone || 'N/A' }}</div>
             </div>
-            <div class="text-lg text-slate-400">{{ editingSupplierId === sup.id ? '🔼' : '✏️' }}</div>
+            <div class="text-lg text-muted">{{ editingSupplierId === sup.id ? '🔼' : '✏️' }}</div>
           </div>
           @if (editingSupplierId === sup.id) {
             <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
@@ -217,21 +228,21 @@
     </div>
 
     <ng-template #supplierFormTemplate>
-      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-4">
+      <div class="p-4 bg-base border-t border-line flex flex-col gap-4 transition-colors duration-300">
         <div class="flex flex-col">
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1">Company Name</label>
-          <input type="text" [(ngModel)]="supplierForm.name" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
+          <label class="text-xs font-bold text-muted uppercase mb-1">Company Name</label>
+          <input type="text" [(ngModel)]="supplierForm.name" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Contact Person</label><input type="text" [(ngModel)]="supplierForm.contact" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
-          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Phone</label><input type="text" [(ngModel)]="supplierForm.phone" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Contact Person</label><input type="text" [(ngModel)]="supplierForm.contact" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Phone</label><input type="text" [(ngModel)]="supplierForm.phone" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
         </div>
         <div class="flex flex-col">
-          <label class="text-xs font-bold text-slate-500 uppercase mb-1">Notes</label>
-          <input type="text" [(ngModel)]="supplierForm.notes" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
+          <label class="text-xs font-bold text-muted uppercase mb-1">Notes</label>
+          <input type="text" [(ngModel)]="supplierForm.notes" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
         </div>
-        <div class="flex justify-end gap-3 mt-2 pt-4 border-t border-slate-200">
-          <button class="px-5 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition-colors" (click)="cancelAllEdits()">Cancel</button>
+        <div class="flex justify-end gap-3 mt-2 pt-4 border-t border-line">
+          <button class="px-5 py-2 rounded-lg font-bold text-muted hover:bg-hover transition-colors" (click)="cancelAllEdits()">Cancel</button>
           <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveSupplierChanges()">💾 Save Supplier</button>
         </div>
       </div>
@@ -242,27 +253,27 @@
   <!-- TAB 3: CATEGORIES -->
   <!-- ========================================== -->
   @if (activeTab() === 'categories') {
-    <div class="flex justify-between items-center p-4 bg-slate-50 border-b border-slate-200 z-10">
-      <h3 class="m-0 text-slate-900 font-black text-lg">📁 Categories Matrix</h3>
+    <div class="flex justify-between items-center p-4 bg-base border-b border-line z-10 transition-colors duration-300">
+      <h3 class="m-0 text-primary font-black text-lg">📁 Categories Matrix</h3>
       <button (click)="prepareNewCategory()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
     </div>
     
     <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
       @if (editingCategoryId === 'NEW') {
-        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600">
-          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-slate-200 bg-green-50">✨ New Category</div>
+        <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600 transition-colors duration-300">
+          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-line bg-green-50/20">✨ New Category</div>
           <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
         </div>
       }
 
       @for (cat of categories(); track cat.id) {
-        <div class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingCategoryId === cat.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
-          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 transition-colors" (click)="toggleCategoryEdit(cat)">
+        <div class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingCategoryId === cat.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
+          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleCategoryEdit(cat)">
             <div class="flex flex-col gap-1">
-              <div class="font-bold text-slate-800">{{ cat.name }}</div>
-              <div class="text-xs font-mono font-semibold text-slate-400">ID: {{ cat.id }}</div>
+              <div class="font-bold text-primary">{{ cat.name }}</div>
+              <div class="text-xs font-mono font-semibold text-muted">ID: {{ cat.id }}</div>
             </div>
-            <div class="text-lg text-slate-400">{{ editingCategoryId === cat.id ? '🔼' : '✏️' }}</div>
+            <div class="text-lg text-muted">{{ editingCategoryId === cat.id ? '🔼' : '✏️' }}</div>
           </div>
           @if (editingCategoryId === cat.id) {
             <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
@@ -272,19 +283,19 @@
     </div>
 
     <ng-template #categoryFormTemplate>
-      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-4">
+      <div class="p-4 bg-base border-t border-line flex flex-col gap-4 transition-colors duration-300">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Category ID</label>
-            <input type="text" [(ngModel)]="categoryForm.id" [disabled]="editingCategoryId !== 'NEW'" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono font-semibold outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400" />
+            <label class="text-xs font-bold text-muted uppercase mb-1">Category ID</label>
+            <input type="text" [(ngModel)]="categoryForm.id" [disabled]="editingCategoryId !== 'NEW'" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-mono font-semibold outline-none focus:border-blue-500 disabled:bg-hover disabled:text-muted" />
           </div>
           <div class="flex flex-col">
-            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Display Name</label>
-            <input type="text" [(ngModel)]="categoryForm.name" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
+            <label class="text-xs font-bold text-muted uppercase mb-1">Display Name</label>
+            <input type="text" [(ngModel)]="categoryForm.name" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
           </div>
         </div>
-        <div class="flex justify-end gap-3 mt-2 pt-4 border-t border-slate-200">
-          <button class="px-5 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition-colors" (click)="cancelAllEdits()">Cancel</button>
+        <div class="flex justify-end gap-3 mt-2 pt-4 border-t border-line">
+          <button class="px-5 py-2 rounded-lg font-bold text-muted hover:bg-hover transition-colors" (click)="cancelAllEdits()">Cancel</button>
           <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveCategoryChanges()">💾 Save Category</button>
         </div>
       </div>
@@ -295,39 +306,38 @@
   <!-- TAB 4: STAFF APPROVALS -->
   <!-- ========================================== -->
   @if (activeTab() === 'staff') {
-    <div class="flex-1 overflow-y-auto p-4">
-      <div class="max-w-[480px] mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden mt-6">
+    <div class="flex-1 min-h-0 overflow-y-auto p-4 transition-colors duration-300">
+      <div class="max-w-[480px] mx-auto bg-panel rounded-2xl shadow-lg border border-line overflow-hidden mt-6">
         
-        <div class="p-6 border-b border-slate-200 bg-slate-50 text-center">
-          <h3 class="m-0 text-slate-900 font-black text-xl">👥 Staff Approvals</h3>
-          <p class="mt-1 mb-0 text-sm font-semibold text-slate-500">Authorize or revoke POS access.</p>
+        <div class="p-6 border-b border-line bg-base text-center">
+          <h3 class="m-0 text-primary font-black text-xl">👥 Staff Approvals</h3>
+          <p class="mt-1 mb-0 text-sm font-semibold text-muted">Authorize or revoke POS access.</p>
         </div>
         
-        <div class="p-4 bg-slate-100 flex flex-col gap-2">
+        <div class="p-4 bg-hover flex flex-col gap-2">
           @for (user of salesService.registeredCashiers(); track user.username) {
-            <div class="flex justify-between items-center p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+            <div class="flex justify-between items-center p-4 bg-panel border border-line rounded-xl shadow-sm">
               
               <div class="flex flex-col">
-                <div class="text-base font-black text-slate-800">{{ user.username }}</div>
+                <div class="text-base font-black text-primary">{{ user.username }}</div>
                 <div class="text-[11px] font-bold mt-1.5 px-2 py-1 rounded-md inline-block w-max"
-                     [ngClass]="user.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'">
+                     [ngClass]="user.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-hover text-muted'">
                   {{ user.role === 'admin' ? '🛡️ Admin' : '👤 Cashier' }}
                 </div>
               </div>
               
               <button (click)="salesService.toggleCashierApproval(user.username, !user.isApproved)"
                       class="px-4 py-2 rounded-lg font-bold border-none cursor-pointer transition-all w-[110px] shadow-sm active:scale-95"
-                      [ngClass]="user.isApproved ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-600'">
+                      [ngClass]="user.isApproved ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-line hover:brightness-95 text-primary'">
                 {{ user.isApproved ? '✅ Active' : '❌ Blocked' }}
               </button>
               
             </div>
           } @empty {
-            <div class="text-center p-8 text-slate-400 font-bold bg-white rounded-xl border border-dashed border-slate-300">No users registered yet.</div>
+            <div class="text-center p-8 text-muted font-bold bg-panel rounded-xl border border-dashed border-line">No users registered yet.</div>
           }
         </div>
       </div>
     </div>
   }
-
 </div>

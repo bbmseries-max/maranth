@@ -2,6 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Product, Category, Supplier } from '../../shared/services/pos-data.models';
 import { SalesService } from '../../shared/services/sales';
+import { ThemeService } from '../../shared/services/theme.service';
 
 @Injectable({
   providedIn: 'root'

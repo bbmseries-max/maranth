@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product, Category, Supplier } from '../../shared/services/pos-data.models';
+import { ThemeService } from '../../shared/services/theme.service';
 
 @Component({
   selector: 'app-inventory',
@@ -41,6 +42,8 @@ export class InventoryComponent {
 
   public editingSupplierId: string | null = null;
   public supplierForm: Partial<Supplier> = {};
+
+  constructor(public themeService: ThemeService, /* ... your other services ... */) {}
 
   // ==========================================
   // PRODUCTS LOGIC
