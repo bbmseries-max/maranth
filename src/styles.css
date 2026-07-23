@@ -1,4 +1,9 @@
-/* ========================================== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* ====0====================================== */
 /* GLOBAL FORM STYLES (High Visibility)       */
 /* ========================================== */
 
@@ -18,7 +23,7 @@ select {
   box-sizing: border-box;
   outline: none;
   transition: all 0.2s ease-in-out;
-  /* ❌ Removed the width: 100% from here so it doesn't break your top menu! */
+  /* ❌ Removed the width: 100% from here +so it doesn't break your top menu! */
 }
 
 /* 2. Form-Specific Stretching (This fixes the edit forms) */

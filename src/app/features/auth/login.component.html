@@ -1,62 +1,92 @@
-<div class="login-viewport">
+<!-- Viewport and background styling -->
+<div class="h-screen w-screen flex items-center justify-center bg-[radial-gradient(circle_at_50%_-20%,_#1e293b,_#0f172a)] bg-slate-900 font-sans box-border p-5">
   
-  <div class="login-card">
+  <!-- The floating glass-like login card -->
+  <!-- Note: Added standard Tailwind fade/transform classes to mimic the slideUpFade animation -->
+  <div class="bg-white w-full max-w-[420px] rounded-[24px] p-10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.1)] flex flex-col">
     
-    <div class="brand-section">
-      <div class="logo-circle">🍊</div>
-      <h1 class="brand-title">MARANTH</h1>
-      <p class="brand-subtitle">Secure Terminal Access</p>
+    <!-- Branding and typography -->
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-4 inline-block bg-slate-50 w-20 h-20 leading-[80px] rounded-full shadow-inner">🍊</div>
+      <h1 class="m-0 text-[28px] font-extrabold text-slate-900 tracking-tight">MARANTH</h1>
+      <p class="mt-2 text-sm font-semibold text-slate-500 uppercase tracking-wider">Secure Terminal Access</p>
     </div>
     
-    <form class="login-form" (ngSubmit)="onLogin()">
+    <form class="flex flex-col" (ngSubmit)="onLogin()">
       
-      <div class="app-form-group">
-        <label class="app-form-label">Cashier ID / Username</label>
-        <div class="input-with-icon">
-          <span class="input-icon">👤</span>
-          <input type="text" class="app-input custom-login-input" [ngModel]="username()" (ngModelChange)="username.set($event)" name="username" placeholder="e.g. admin" autocomplete="off" autofocus>
+      <!-- Username Group -->
+      <div class="flex flex-col">
+        <label class="block text-sm font-bold text-slate-700 mb-2">Cashier ID / Username</label>
+        <div class="relative flex items-center">
+          <span class="absolute left-3.5 text-base text-slate-400 pointer-events-none">👤</span>
+          <input type="text" 
+                 class="w-full pl-10 h-12 text-[15px] rounded-xl border border-slate-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white text-slate-900" 
+                 [ngModel]="username()" 
+                 (ngModelChange)="username.set($event)" 
+                 name="username" 
+                 placeholder="e.g. admin" 
+                 autocomplete="off" 
+                 autofocus>
         </div>
       </div>
       
-      <div class="app-form-group" style="margin-top: 16px;">
-        <label class="app-form-label">Authorization PIN</label>
-        <div class="input-with-icon">
-          <span class="input-icon">🔒</span>
-          <input type="password" class="app-input custom-login-input" [ngModel]="password()" (ngModelChange)="password.set($event)" name="password" placeholder="••••">
+      <!-- Password Group -->
+      <div class="flex flex-col mt-4">
+        <label class="block text-sm font-bold text-slate-700 mb-2">Authorization PIN</label>
+        <div class="relative flex items-center">
+          <span class="absolute left-3.5 text-base text-slate-400 pointer-events-none">🔒</span>
+          <input type="password" 
+                 class="w-full pl-10 h-12 text-[15px] rounded-xl border border-slate-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all bg-white text-slate-900" 
+                 [ngModel]="password()" 
+                 (ngModelChange)="password.set($event)" 
+                 name="password" 
+                 placeholder="••••">
         </div>
       </div>
       
-      <button type="submit" class="app-btn app-btn-primary login-btn" style="margin-top: 32px;">
+      <!-- Action Button -->
+      <button type="submit" class="w-full mt-8 h-[52px] text-base rounded-xl font-bold bg-blue-600 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-700 active:scale-95 transition-all">
         Unlock Register ➔
       </button>
 
       <!-- Link to Register Screen -->
-      <div style="margin-top: 20px; text-align: center;">
-        <a routerLink="/register" style="color: #3b82f6; font-size: 14px; font-weight: 600; text-decoration: none;">
+      <div class="mt-5 text-center">
+        <a routerLink="/register" class="text-blue-500 text-sm font-semibold no-underline hover:text-blue-600 transition-colors">
           Need a Cashier ID? Register here.
         </a>
       </div>
 
     </form>
 
-    <div class="footer-note">
+    <!-- Footer Note -->
+    <div class="mt-6 text-center text-xs font-medium text-slate-400">
       POS System v2.0 • Authorized Personnel Only
     </div>
 
   </div>
 
+  <!-- Modal Overlay (Translated to Tailwind) -->
   @if (salesService.activeModal(); as modal) {
-    <div class="pos-modal-overlay is-active" style="z-index: 99999;">
-      <div class="pos-modal-window">
-        <div class="pos-modal-header" [class.warning-header]="modal.type === 'warning'">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[99999]">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-fade-in-up">
+        
+        <div class="p-4 font-bold text-lg border-b border-slate-200" 
+             [class.bg-red-50]="modal.type === 'warning'"
+             [class.text-red-600]="modal.type === 'warning'">
           {{ modal.title }}
         </div>
-        <div class="pos-modal-body">
-          <p style="margin: 0;">{{ modal.message }}</p>
+        
+        <div class="p-6 text-slate-600 text-base">
+          <p class="m-0">{{ modal.message }}</p>
         </div>
-        <div class="pos-modal-footer">
-          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">Dismiss</button>
+        
+        <div class="p-4 border-t border-slate-200 flex justify-end bg-slate-50">
+          <button class="px-5 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 active:scale-95 transition-all shadow-md" 
+                  (click)="salesService.closeModal()">
+            Dismiss
+          </button>
         </div>
+
       </div>
     </div>
   }
