@@ -199,7 +199,7 @@
       }
 
       @for (sup of suppliers(); track sup.id) {
-        <div class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all" [ngClass]="editingSupplierId === sup.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
+        <div class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingSupplierId === sup.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
           <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 transition-colors" (click)="toggleSupplierEdit(sup)">
             <div class="flex flex-col gap-1">
               <div class="font-bold text-slate-800">{{ sup.name }}</div>
@@ -254,7 +254,7 @@
       }
 
       @for (cat of categories(); track cat.id) {
-        <div class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all" [ngClass]="editingCategoryId === cat.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
+        <div class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingCategoryId === cat.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
           <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 transition-colors" (click)="toggleCategoryEdit(cat)">
             <div class="flex flex-col gap-1">
               <div class="font-bold text-slate-800">{{ cat.name }}</div>
