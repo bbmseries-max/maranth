@@ -46,27 +46,28 @@
       </div>
       
       <!-- BOTTOM ROW: Filters -->
-      <div class="flex gap-2 overflow-x-auto py-2 items-center w-full hide-scrollbar">
+      <!-- BOTTOM ROW: Filters -->
+      <div class="flex flex-wrap gap-3 items-center w-full py-1">
         
-        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="h-[38px] px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 flex-shrink-0 cursor-pointer">
+        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="py-2 px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer">
           <option value="active">🟢 Active Items</option>
           <option value="inactive">🔴 Inactive Items</option>
           <option value="all">⚪ All Items</option>
         </select>
 
-        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="h-[38px] px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 flex-shrink-0 cursor-pointer">
+        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="py-2 px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer">
           <option value="ALL">📁 All Categories</option>
           @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
         </select>
 
         <button (click)="filterLowStock.set(!filterLowStock())" 
-                class="h-[38px] px-4 rounded-lg font-bold text-sm transition-colors flex-shrink-0 border"
+                class="py-2 px-4 rounded-lg font-bold text-sm transition-colors border"
                 [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'">
           📦 Low Stock
         </button>
 
-        <div class="flex items-center bg-white border border-slate-300 rounded-lg pr-2 h-[38px] flex-shrink-0 focus-within:border-blue-500">
-          <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="h-full px-3 border-none rounded-lg font-semibold text-sm text-slate-600 outline-none bg-transparent" title="Filter by expiration date" />
+        <div class="flex items-center bg-white border border-slate-300 rounded-lg pr-2 focus-within:border-blue-500">
+          <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-slate-600 outline-none bg-transparent" title="Filter by expiration date" />
           @if (expireFilterDate()) { 
             <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> 
           }
