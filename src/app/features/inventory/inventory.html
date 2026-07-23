@@ -1,167 +1,137 @@
-<div class="field-app-container">
+<div class="flex flex-col h-screen bg-slate-50 font-sans">
 
   <!-- THE SKY HEADER -->
-  <header class="sky-header">
-    <div class="brand-logo">🍊 MARANTH</div>
-    <nav class="phone-menu">
-      <button id="sync-btn" (click)="syncInventory()" style="background: transparent; border: none; font-size: 20px; cursor: pointer; transition: transform 0.5s ease; padding: 0 10px;" 
-        title="Sync Database">
+  <header class="flex items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-md flex-shrink-0 z-20">
+    <div class="font-black text-xl tracking-tight">🍊 MARANTH</div>
+    <nav class="flex items-center gap-2 bg-blue-800/40 p-1 rounded-xl">
+      <button id="sync-btn" (click)="syncInventory()" class="text-xl px-2 hover:rotate-180 transition-transform duration-500 focus:outline-none" title="Sync Database">
         🔄
       </button>
-      <a routerLink="/pos" class="menu-btn">🛒 POS</a>
-      <a routerLink="/inventory" class="menu-btn active">📦 INV</a>
-      <a routerLink="/reports" class="menu-btn">📊 REP</a>
+      <a routerLink="/pos" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">🛒 POS</a>
+      <a routerLink="/inventory" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-blue-700 shadow-sm no-underline transition-all">📦 INV</a>
+      <a routerLink="/reports" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">📊 REP</a>
     </nav>
   </header>
 
   <!-- THE SUB-MENU TABS -->
-  <div class="field-tab-bar">
-    <button class="field-tab-btn" [class.active]="activeTab() === 'products'" (click)="activeTab.set('products'); cancelAllEdits()">📦 Items</button>
-    <button class="field-tab-btn" [class.active]="activeTab() === 'suppliers'" (click)="activeTab.set('suppliers'); cancelAllEdits()">🚚 Suppliers</button>
-    <button class="field-tab-btn" [class.active]="activeTab() === 'categories'" (click)="activeTab.set('categories'); cancelAllEdits()">📁 Categories</button>
-    <button class="field-tab-btn" [class.active]="activeTab() === 'staff'" (click)="activeTab.set('staff'); cancelAllEdits()">👥 Staff</button>
+  <div class="flex overflow-x-auto bg-white border-b border-slate-200 flex-shrink-0 hide-scrollbar">
+    <button (click)="activeTab.set('products'); cancelAllEdits()" 
+            class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
+            [ngClass]="activeTab() === 'products' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'">📦 Items</button>
+    <button (click)="activeTab.set('suppliers'); cancelAllEdits()" 
+            class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
+            [ngClass]="activeTab() === 'suppliers' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'">🚚 Suppliers</button>
+    <button (click)="activeTab.set('categories'); cancelAllEdits()" 
+            class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
+            [ngClass]="activeTab() === 'categories' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'">📁 Categories</button>
+    <button (click)="activeTab.set('staff'); cancelAllEdits()" 
+            class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
+            [ngClass]="activeTab() === 'staff' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'">👥 Staff</button>
   </div>
 
-<!-- ========================================== -->
+  <!-- ========================================== -->
   <!-- TAB 1: PRODUCTS LIST -->
   <!-- ========================================== -->
   @if (activeTab() === 'products') {
-    <div class="sticky-search-area" style="display: flex; flex-direction: column; gap: 12px; padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+    <div class="flex flex-col gap-3 p-3 bg-slate-50 border-b border-slate-200 flex-shrink-0 z-10">
       
-      <!-- TOP ROW: Search & Add (KEEP THIS!) -->
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <div class="search-input-wrapper" style="flex: 1;">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="field-search-input" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-          @if (searchQuery()) { <button class="clear-btn" (click)="searchQuery.set('')">✖</button> }
+      <!-- TOP ROW: Search & Add -->
+      <div class="flex gap-2 items-center">
+        <div class="flex-1 flex items-center bg-white border border-slate-300 rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-shadow">
+          <span class="text-lg text-slate-400 mr-2">🔍</span>
+          <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-slate-800 placeholder-slate-400" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+          @if (searchQuery()) { <button class="text-slate-400 hover:text-red-500 font-bold focus:outline-none" (click)="searchQuery.set('')">✖</button> }
         </div>
-        <button (click)="prepareNewProduct()" style="background: #16a34a; color: white; border: none; padding: 0 16px; height: 48px; border-radius: 8px; font-weight: 700; cursor: pointer;">➕ Add</button>
+        <button (click)="prepareNewProduct()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
       </div>
       
-      <!-- BOTTOM ROW: The Ultimate Filters -->
-      <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; align-items: center; width: 100%;">
-        
-        <!-- Status Dropdown -->
-        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" style="padding: 0 12px; height: 38px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-weight: 600; outline: none; flex-shrink: 0;">
+      <!-- BOTTOM ROW: Filters -->
+      <div class="flex gap-2 overflow-x-auto pb-1 items-center w-full hide-scrollbar">
+        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="h-[38px] px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 flex-shrink-0">
           <option value="active">🟢 Active Items</option>
           <option value="inactive">🔴 Inactive Items</option>
           <option value="all">⚪ All Items</option>
         </select>
 
-        <!-- Category Dropdown -->
-        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" style="padding: 0 12px; height: 38px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-weight: 600; outline: none; flex-shrink: 0; max-width: 150px;">
+        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="h-[38px] px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 flex-shrink-0 max-w-[150px]">
           <option value="ALL">📁 All Categories</option>
           @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
         </select>
 
-        <!-- Low Stock Toggle -->
         <button (click)="filterLowStock.set(!filterLowStock())" 
-                [style.background]="filterLowStock() ? '#f59e0b' : 'white'"
-                [style.color]="filterLowStock() ? 'white' : '#475569'"
-                [style.border]="filterLowStock() ? '1px solid #f59e0b' : '1px solid #cbd5e1'"
-                style="height: 38px; padding: 0 16px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; flex-shrink: 0;">
+                class="h-[38px] px-4 rounded-lg font-bold text-sm transition-colors flex-shrink-0 border"
+                [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'">
           📦 Low Stock
         </button>
 
-        <!-- Expiration Date Filter -->
-        <div style="display: flex; align-items: center; background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding-right: 8px; height: 38px; flex-shrink: 0;">
-          <input type="date" 
-                 [ngModel]="expireFilterDate()" 
-                 (ngModelChange)="expireFilterDate.set($event)" 
-                 style="padding: 0 12px; height: 36px; border: none; border-radius: 8px; font-weight: 600; outline: none; background: transparent; color: #475569;" 
-                 title="Filter by expiration date" />
+        <div class="flex items-center bg-white border border-slate-300 rounded-lg pr-2 h-[38px] flex-shrink-0 focus-within:border-blue-500">
+          <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="h-full px-3 border-none rounded-lg font-semibold text-sm text-slate-600 outline-none bg-transparent" title="Filter by expiration date" />
           @if (expireFilterDate()) { 
-            <button (click)="expireFilterDate.set('')" style="background: none; border: none; cursor: pointer; color: #ef4444; font-weight: bold; font-size: 16px;">✖</button> 
+            <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> 
           }
         </div>
-
       </div>
     </div>
       
-    <div class="inventory-scroll-list">      
+    <div class="flex-1 overflow-y-auto p-3 flex flex-col gap-3">      
       
-      <!-- New Product Form Header (Shows if creating new) -->
       @if (editingProductId === 'NEW') {
-        <div class="prod-card is-editing" style="border-top: 4px solid #16a34a;">
-          <div style="padding: 16px; font-weight: 800; color: #16a34a; border-bottom: 1px dashed #e2e8f0;">✨ Register New Item</div>
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600">
+          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-slate-200 bg-green-50">✨ Register New Item</div>
           <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
         </div>
       }
 
       @for (prod of filteredProducts(); track prod.id) {
-        <div class="prod-card" [id]="'prod-card-' + prod.id" [class.is-editing]="editingProductId === prod.id">
-          <div class="prod-summary" (click)="toggleEdit(prod)">
-            <div class="prod-info-group">
-              <div class="prod-name">{{ prod.name }}</div>
-              <div class="prod-badges">
-                <span class="stock-badge" [class.low-stock]="prod.stockQuantity <= (prod.minStockWarning || 5)">📦 {{ prod.stockQuantity }}</span>
-                <span class="price-badge">{{ formatMoney(prod.price) }}</span>
+        <div [id]="'prod-card-' + prod.id" class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all" [ngClass]="editingProductId === prod.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
+          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 transition-colors" (click)="toggleEdit(prod)">
+            <div class="flex flex-col gap-1">
+              <div class="font-bold text-slate-800">{{ prod.name }}</div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold px-2 py-0.5 rounded-md" [ngClass]="prod.stockQuantity <= (prod.minStockWarning || 5) ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'">📦 {{ prod.stockQuantity }}</span>
+                <span class="text-xs font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{{ formatMoney(prod.price) }}</span>
               </div>
             </div>
-            <div class="edit-chevron">{{ editingProductId === prod.id ? '🔼' : '✏️' }}</div>
+            <div class="text-lg text-slate-400">{{ editingProductId === prod.id ? '🔼' : '✏️' }}</div>
           </div>
           @if (editingProductId === prod.id) {
             <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
           }
-          
         </div>
       } @empty {
-        <div class="empty-state">No products found.</div>
+        <div class="text-center p-10 font-bold text-slate-400 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300">No products found.</div>
       }
     </div>
 
-   <!-- Reusable Product Form Template (Keeps HTML clean) -->
+    <!-- Reusable Product Form Template -->
     <ng-template #productFormTemplate>
-      <div class="inline-edit-form">
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-4">
 
-        <!-- ALTERNATIVE BARCODES SECTION (All in one place) -->
-        <div style="margin-bottom: 15px; padding: 10px; border: 1px dashed #ccc; border-radius: 6px; background: #f8fafc;">
-          <label style="font-weight: bold; display: block; margin-bottom: 5px; font-size: 13px; color: #334155;">
-            Alternative Barcodes (New Packaging, Promos)
-          </label>
-          
-          <!-- Add New Barcode -->
-          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input 
-              type="text" 
-              [(ngModel)]="newAltBarcode" 
-              placeholder="Scan or type new barcode..." 
-              style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
-              (keyup.enter)="addAltBarcode()" 
-            />
-            <button 
-              type="button" 
-              (click)="addAltBarcode()" 
-              style="background: #3b82f6; color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-              + Add
-            </button>
+        <!-- ALTERNATIVE BARCODES -->
+        <div class="p-3 border border-dashed border-slate-300 rounded-lg bg-slate-100/50">
+          <label class="block font-bold text-[13px] text-slate-700 mb-2">Alternative Barcodes (New Packaging, Promos)</label>
+          <div class="flex gap-2 mb-3">
+            <input type="text" [(ngModel)]="newAltBarcode" placeholder="Scan or type new barcode..." class="flex-1 px-3 py-2 border border-slate-300 rounded-md text-sm outline-none focus:border-blue-500" (keyup.enter)="addAltBarcode()" />
+            <button type="button" (click)="addAltBarcode()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-md font-bold text-sm transition-colors shadow-sm">+ Add</button>
           </div>
-
-          <!-- Display Added Barcodes as Chips -->
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <div class="flex flex-wrap gap-2">
             @for (code of editForm.altBarcodes; track code) {
-              <div style="background: #e2e8f0; color: #1e293b; padding: 5px 10px; border-radius: 15px; font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+              <div class="bg-slate-200 text-slate-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
                 <span>{{ code }}</span>
-                <button 
-                  type="button" 
-                  (click)="removeAltBarcode(code)" 
-                  style="background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 12px; padding: 0;">
-                  ✕
-                </button>
+                <button type="button" (click)="removeAltBarcode(code)" class="bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] focus:outline-none">✕</button>
               </div>
             }
           </div>
         </div>
 
-        <!-- ROW 2: Name & VAT Dropdown -->
-        <div class="edit-grid" style="grid-template-columns: 2fr 1fr;">
-          <div class="input-group">
-            <label>Product Name</label>
-            <input type="text" [(ngModel)]="editForm.name" />
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="flex flex-col md:col-span-2">
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Product Name</label>
+            <input type="text" [(ngModel)]="editForm.name" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
           </div>
-          <div class="input-group">
-            <label>VAT Rate</label>
-            <select [(ngModel)]="editForm.taxRate" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; font-weight: bold;">
+          <div class="flex flex-col">
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1">VAT Rate</label>
+            <select [(ngModel)]="editForm.taxRate" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-bold bg-white outline-none focus:border-blue-500">
               <option [ngValue]="0.24">24%</option>
               <option [ngValue]="0.13">13%</option>
               <option [ngValue]="0.06">6%</option>
@@ -170,58 +140,42 @@
           </div>
         </div>
 
-        <!-- ROW 3: Financials & Stock -->
-        <div class="edit-grid triple">
-          <div class="input-group"><label>Retail Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="highlight-input" /></div>
-          <div class="input-group"><label>Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" /></div>
-          <div class="input-group"><label>Stock Qty</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="highlight-input" /></div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Retail Price (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.price" class="px-3 py-2 border-2 border-blue-400 bg-blue-50 rounded-lg text-sm font-black text-blue-900 outline-none focus:border-blue-600" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Cost (€)</label><input type="number" step="0.01" [(ngModel)]="editForm.costPrice" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Stock Qty</label><input type="number" [(ngModel)]="editForm.stockQuantity" class="px-3 py-2 border-2 border-green-400 bg-green-50 rounded-lg text-sm font-black text-green-900 outline-none focus:border-green-600" /></div>
         </div>
         
-        <!-- ROW 4: Expiration & Min Stock -->
-        <div class="edit-grid">
-          <div class="input-group">
-            <label>Expiration Date</label>
-            <input type="date" [(ngModel)]="editForm.expire" style="font-family: monospace; font-weight: bold;" />
-          </div>
-          <div class="input-group">
-            <label>Low Stock Warning At</label>
-            <input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" />
-          </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Expiration Date</label><input type="date" [(ngModel)]="editForm.expire" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono font-bold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Low Stock Warning At</label><input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
         </div>
 
-        <!-- ROW 5: Category & Supplier -->
-        <div class="edit-grid">
-          <div class="input-group">
-            <label>Category</label>
-            <select [(ngModel)]="editForm.categoryId" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white;">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col">
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Category</label>
+            <select [(ngModel)]="editForm.categoryId" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold bg-white outline-none focus:border-blue-500">
               @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
             </select>
           </div>
-          <div class="input-group">
-            <label>Supplier</label>
-            <select [(ngModel)]="editForm.supplierId" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white;">
+          <div class="flex flex-col">
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Supplier</label>
+            <select [(ngModel)]="editForm.supplierId" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold bg-white outline-none focus:border-blue-500">
               <option [value]="undefined">-- None --</option>
               @for (sup of suppliers(); track sup.id) { <option [value]="sup.id">{{ sup.name }}</option> }
             </select>
           </div>
         </div>
 
-        <!-- ROW 6: Toggles -->
-        <div style="display: flex; gap: 16px; margin-top: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; flex-wrap: wrap;">
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
-            <input type="checkbox" [(ngModel)]="editForm.isWeighted" style="width: 18px; height: 18px;" /> ⚖️ Scaled Item
-          </label>
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
-            <input type="checkbox" [(ngModel)]="editForm.isActive" style="width: 18px; height: 18px;" /> 🟢 Active Status
-          </label>
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #334155; cursor: pointer;">
-            <input type="checkbox" [(ngModel)]="editForm.isPinned" style="width: 18px; height: 18px;" /> 📌 Pin to POS
-          </label>
+        <div class="flex flex-wrap gap-4 mt-2 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isWeighted" class="w-4 h-4 accent-blue-600" /> ⚖️ Scaled Item</label>
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isActive" class="w-4 h-4 accent-blue-600" /> 🟢 Active Status</label>
+          <label class="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer"><input type="checkbox" [(ngModel)]="editForm.isPinned" class="w-4 h-4 accent-blue-600" /> 📌 Pin to POS</label>
         </div>
 
-        <div class="form-actions" style="margin-top: 24px;">
-          <button class="btn-cancel" (click)="cancelAllEdits()">Cancel</button>
-          <button class="btn-save" (click)="saveEdit()">💾 Save</button>
+        <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-200">
+          <button class="px-5 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition-colors" (click)="cancelAllEdits()">Cancel</button>
+          <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveEdit()">💾 Save</button>
         </div>
       </div>
     </ng-template>
@@ -231,27 +185,27 @@
   <!-- TAB 2: SUPPLIERS -->
   <!-- ========================================== -->
   @if (activeTab() === 'suppliers') {
-    <div class="sticky-search-area" style="display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0; color: #0f172a;">🚚 Supplier Directory</h3>
-      <button (click)="prepareNewSupplier()" style="background: #16a34a; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700;">➕ Add</button>
+    <div class="flex justify-between items-center p-4 bg-slate-50 border-b border-slate-200 z-10">
+      <h3 class="m-0 text-slate-900 font-black text-lg">🚚 Supplier Directory</h3>
+      <button (click)="prepareNewSupplier()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
     </div>
     
-    <div class="inventory-scroll-list">
+    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
       @if (editingSupplierId === 'NEW') {
-        <div class="prod-card is-editing" style="border-top: 4px solid #16a34a;">
-          <div style="padding: 16px; font-weight: 800; color: #16a34a; border-bottom: 1px dashed #e2e8f0;">✨ New Supplier Profile</div>
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600">
+          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-slate-200 bg-green-50">✨ New Supplier Profile</div>
           <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
         </div>
       }
 
       @for (sup of suppliers(); track sup.id) {
-        <div class="prod-card" [class.is-editing]="editingSupplierId === sup.id">
-          <div class="prod-summary" (click)="toggleSupplierEdit(sup)">
-            <div class="prod-info-group">
-              <div class="prod-name">{{ sup.name }}</div>
-              <div style="font-size: 12px; color: #64748b;">{{ sup.contact ? '👤 ' + sup.contact : 'No Contact' }} • 📞 {{ sup.phone || 'N/A' }}</div>
+        <div class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all" [ngClass]="editingSupplierId === sup.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
+          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 transition-colors" (click)="toggleSupplierEdit(sup)">
+            <div class="flex flex-col gap-1">
+              <div class="font-bold text-slate-800">{{ sup.name }}</div>
+              <div class="text-xs font-semibold text-slate-500">{{ sup.contact ? '👤 ' + sup.contact : 'No Contact' }} • 📞 {{ sup.phone || 'N/A' }}</div>
             </div>
-            <div class="edit-chevron">{{ editingSupplierId === sup.id ? '🔼' : '✏️' }}</div>
+            <div class="text-lg text-slate-400">{{ editingSupplierId === sup.id ? '🔼' : '✏️' }}</div>
           </div>
           @if (editingSupplierId === sup.id) {
             <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
@@ -261,20 +215,22 @@
     </div>
 
     <ng-template #supplierFormTemplate>
-      <div class="inline-edit-form">
-        <div class="edit-grid" style="grid-template-columns: 1fr;">
-          <div class="input-group"><label>Company Name</label><input type="text" [(ngModel)]="supplierForm.name" /></div>
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-4">
+        <div class="flex flex-col">
+          <label class="text-xs font-bold text-slate-500 uppercase mb-1">Company Name</label>
+          <input type="text" [(ngModel)]="supplierForm.name" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
         </div>
-        <div class="edit-grid">
-          <div class="input-group"><label>Contact Person</label><input type="text" [(ngModel)]="supplierForm.contact" /></div>
-          <div class="input-group"><label>Phone</label><input type="text" [(ngModel)]="supplierForm.phone" /></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Contact Person</label><input type="text" [(ngModel)]="supplierForm.contact" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-slate-500 uppercase mb-1">Phone</label><input type="text" [(ngModel)]="supplierForm.phone" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
         </div>
-        <div class="edit-grid" style="grid-template-columns: 1fr;">
-          <div class="input-group"><label>Notes</label><input type="text" [(ngModel)]="supplierForm.notes" /></div>
+        <div class="flex flex-col">
+          <label class="text-xs font-bold text-slate-500 uppercase mb-1">Notes</label>
+          <input type="text" [(ngModel)]="supplierForm.notes" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
         </div>
-        <div class="form-actions">
-          <button class="btn-cancel" (click)="cancelAllEdits()">Cancel</button>
-          <button class="btn-save" (click)="saveSupplierChanges()">💾 Save Supplier</button>
+        <div class="flex justify-end gap-3 mt-2 pt-4 border-t border-slate-200">
+          <button class="px-5 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition-colors" (click)="cancelAllEdits()">Cancel</button>
+          <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveSupplierChanges()">💾 Save Supplier</button>
         </div>
       </div>
     </ng-template>
@@ -284,27 +240,27 @@
   <!-- TAB 3: CATEGORIES -->
   <!-- ========================================== -->
   @if (activeTab() === 'categories') {
-    <div class="sticky-search-area" style="display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0; color: #0f172a;">📁 Categories Matrix</h3>
-      <button (click)="prepareNewCategory()" style="background: #16a34a; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 700;">➕ Add</button>
+    <div class="flex justify-between items-center p-4 bg-slate-50 border-b border-slate-200 z-10">
+      <h3 class="m-0 text-slate-900 font-black text-lg">📁 Categories Matrix</h3>
+      <button (click)="prepareNewCategory()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
     </div>
     
-    <div class="inventory-scroll-list">
+    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
       @if (editingCategoryId === 'NEW') {
-        <div class="prod-card is-editing" style="border-top: 4px solid #16a34a;">
-          <div style="padding: 16px; font-weight: 800; color: #16a34a; border-bottom: 1px dashed #e2e8f0;">✨ New Category</div>
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600">
+          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-slate-200 bg-green-50">✨ New Category</div>
           <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
         </div>
       }
 
       @for (cat of categories(); track cat.id) {
-        <div class="prod-card" [class.is-editing]="editingCategoryId === cat.id">
-          <div class="prod-summary" (click)="toggleCategoryEdit(cat)">
-            <div class="prod-info-group">
-              <div class="prod-name">{{ cat.name }}</div>
-              <div style="font-size: 11px; font-family: monospace; color: #64748b;">ID: {{ cat.id }}</div>
+        <div class="bg-white border rounded-xl overflow-hidden shadow-sm transition-all" [ngClass]="editingCategoryId === cat.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'">
+          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-50 transition-colors" (click)="toggleCategoryEdit(cat)">
+            <div class="flex flex-col gap-1">
+              <div class="font-bold text-slate-800">{{ cat.name }}</div>
+              <div class="text-xs font-mono font-semibold text-slate-400">ID: {{ cat.id }}</div>
             </div>
-            <div class="edit-chevron">{{ editingCategoryId === cat.id ? '🔼' : '✏️' }}</div>
+            <div class="text-lg text-slate-400">{{ editingCategoryId === cat.id ? '🔼' : '✏️' }}</div>
           </div>
           @if (editingCategoryId === cat.id) {
             <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
@@ -314,56 +270,60 @@
     </div>
 
     <ng-template #categoryFormTemplate>
-      <div class="inline-edit-form">
-        <div class="edit-grid">
-          <div class="input-group"><label>Category ID</label><input type="text" [(ngModel)]="categoryForm.id" [disabled]="editingCategoryId !== 'NEW'" /></div>
-          <div class="input-group"><label>Display Name</label><input type="text" [(ngModel)]="categoryForm.name" /></div>
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col">
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Category ID</label>
+            <input type="text" [(ngModel)]="categoryForm.id" [disabled]="editingCategoryId !== 'NEW'" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono font-semibold outline-none focus:border-blue-500 disabled:bg-slate-100 disabled:text-slate-400" />
+          </div>
+          <div class="flex flex-col">
+            <label class="text-xs font-bold text-slate-500 uppercase mb-1">Display Name</label>
+            <input type="text" [(ngModel)]="categoryForm.name" class="px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
+          </div>
         </div>
-        <div class="form-actions">
-          <button class="btn-cancel" (click)="cancelAllEdits()">Cancel</button>
-          <button class="btn-save" (click)="saveCategoryChanges()">💾 Save Category</button>
+        <div class="flex justify-end gap-3 mt-2 pt-4 border-t border-slate-200">
+          <button class="px-5 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition-colors" (click)="cancelAllEdits()">Cancel</button>
+          <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveCategoryChanges()">💾 Save Category</button>
         </div>
       </div>
     </ng-template>
   }
 
- <!-- ========================================== -->
-  <!-- TAB 4: STAFF APPROVALS (Beautified) -->
+  <!-- ========================================== -->
+  <!-- TAB 4: STAFF APPROVALS -->
   <!-- ========================================== -->
   @if (activeTab() === 'staff') {
-    <div style="max-width: 480px; margin: 40px auto; background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden;">
-      
-      <div style="padding: 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; text-align: center;">
-        <h3 style="margin: 0; color: #0f172a; font-size: 18px;">👥 Staff Approvals</h3>
-        <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Authorize or revoke POS access.</p>
-      </div>
-      
-      <div style="padding: 16px; background: #f1f5f9;">
-        @for (user of salesService.registeredCashiers(); track user.username) {
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-            
-            <div class="prod-info-group">
-              <div style="font-size: 16px; font-weight: 800; color: #1e293b;">
-                {{ user.username }}
+    <div class="flex-1 overflow-y-auto p-4">
+      <div class="max-w-[480px] mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden mt-6">
+        
+        <div class="p-6 border-b border-slate-200 bg-slate-50 text-center">
+          <h3 class="m-0 text-slate-900 font-black text-xl">👥 Staff Approvals</h3>
+          <p class="mt-1 mb-0 text-sm font-semibold text-slate-500">Authorize or revoke POS access.</p>
+        </div>
+        
+        <div class="p-4 bg-slate-100 flex flex-col gap-2">
+          @for (user of salesService.registeredCashiers(); track user.username) {
+            <div class="flex justify-between items-center p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+              
+              <div class="flex flex-col">
+                <div class="text-base font-black text-slate-800">{{ user.username }}</div>
+                <div class="text-[11px] font-bold mt-1.5 px-2 py-1 rounded-md inline-block w-max"
+                     [ngClass]="user.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'">
+                  {{ user.role === 'admin' ? '🛡️ Admin' : '👤 Cashier' }}
+                </div>
               </div>
-              <div style="font-size: 11px; font-weight: 700; margin-top: 6px; padding: 4px 8px; border-radius: 6px; display: inline-block;" 
-                   [style.background]="user.role === 'admin' ? '#fef3c7' : '#f1f5f9'"
-                   [style.color]="user.role === 'admin' ? '#b45309' : '#475569'">
-                {{ user.role === 'admin' ? '🛡️ Admin' : '👤 Cashier' }}
-              </div>
+              
+              <button (click)="salesService.toggleCashierApproval(user.username, !user.isApproved)"
+                      class="px-4 py-2 rounded-lg font-bold border-none cursor-pointer transition-all w-[110px] shadow-sm active:scale-95"
+                      [ngClass]="user.isApproved ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-600'">
+                {{ user.isApproved ? '✅ Active' : '❌ Blocked' }}
+              </button>
+              
             </div>
-            
-            <button (click)="salesService.toggleCashierApproval(user.username, !user.isApproved)"
-                    [style.background]="user.isApproved ? '#16a34a' : '#e2e8f0'"
-                    [style.color]="user.isApproved ? 'white' : '#64748b'"
-                    style="padding: 8px 16px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease; width: 100px;">
-              {{ user.isApproved ? '✅ Active' : '❌ Blocked' }}
-            </button>
-            
-          </div>
-        } @empty {
-          <div style="text-align: center; padding: 32px; color: #94a3b8; font-weight: 600;">No users registered yet.</div>
-        }
+          } @empty {
+            <div class="text-center p-8 text-slate-400 font-bold bg-white rounded-xl border border-dashed border-slate-300">No users registered yet.</div>
+          }
+        </div>
       </div>
     </div>
   }

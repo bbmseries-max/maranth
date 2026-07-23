@@ -1,25 +1,31 @@
 <!-- ========================================== -->
-<!-- MODALS (Keep exactly as they were)         -->
+<!-- MODALS -->
 <!-- ========================================== -->
 @if (salesService.activeModal(); as modal) {
-  <div class="pos-modal-overlay is-active" style="z-index: 99999;">
-    <div class="pos-modal-window">
-      <div class="pos-modal-header" [class.warning-header]="modal.type === 'warning'" [class.success-header]="modal.type === 'success'">
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-fade-in-up">
+      <div class="p-4 font-bold text-lg border-b" 
+           [class.bg-orange-50]="modal.type === 'warning'" [class.text-orange-700]="modal.type === 'warning'" [class.border-orange-200]="modal.type === 'warning'"
+           [class.bg-green-50]="modal.type === 'success'" [class.text-green-700]="modal.type === 'success'" [class.border-green-200]="modal.type === 'success'"
+           [class.bg-slate-50]="modal.type === 'prompt'" [class.text-slate-800]="modal.type === 'prompt'" [class.border-slate-200]="modal.type === 'prompt'">
         {{ modal.title }}
       </div>
-      <div class="pos-modal-body" style="white-space: pre-line;">
-        <p style="margin-top: 0;">{{ modal.message }}</p>
+      <div class="p-6 text-slate-700 whitespace-pre-line bg-white">
+        <p class="mt-0 mb-2 font-medium">{{ modal.message }}</p>
         @if (modal.type === 'prompt') {
-          <input #weightInput [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" class="pos-modal-input" [value]="modal.value" (input)="modal.value = weightInput.value" (keyup.enter)="modal.onConfirm(modal.value)" [attr.step]="modal.title?.includes('Date') ? null : '0.001'" autofocus />
+          <input #weightInput [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" 
+                 class="w-full mt-3 px-4 py-3 border border-slate-300 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                 [value]="modal.value" (input)="modal.value = weightInput.value" (keyup.enter)="modal.onConfirm(modal.value)" 
+                 [attr.step]="modal.title?.includes('Date') ? null : '0.001'" autofocus />
         }
       </div>
-      <div class="pos-modal-footer">
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
         @if (modal.type === 'prompt') {
-          <button class="pos-modal-btn pos-modal-btn-cancel" (click)="salesService.closeModal()">Cancel</button>
-          <button class="pos-modal-btn pos-modal-btn-confirm" (click)="modal.onConfirm(modal.value)">Confirm</button>
+          <button class="px-5 py-2.5 font-bold rounded-xl text-slate-600 hover:bg-slate-200 active:scale-95 transition-all" (click)="salesService.closeModal()">Cancel</button>
+          <button class="px-5 py-2.5 font-bold rounded-xl bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95 transition-all" (click)="modal.onConfirm(modal.value)">Confirm</button>
         }
         @if (modal.type === 'warning' || modal.type === 'success') {
-          <button class="pos-modal-btn pos-modal-btn-danger" (click)="salesService.closeModal()">Dismiss</button>
+          <button class="px-5 py-2.5 font-bold rounded-xl bg-red-600 text-white shadow-md hover:bg-red-700 active:scale-95 transition-all" (click)="salesService.closeModal()">Dismiss</button>
         }
       </div>
     </div>
@@ -27,222 +33,243 @@
 }
 
 @if (editingProduct(); as prod) {
-  <div class="pos-modal-overlay is-active" style="z-index: 99998;">
-    <div class="pos-modal-window" style="max-width: 500px;">
-      <div class="pos-modal-header" style="background: #f0fdf4; border-bottom: 1px solid #bbf7d0; color: #166534;">✏️ Quick Edit: {{ prod.name }}</div>
-      <div class="pos-modal-body" style="background: #ffffff;">
-        <div class="pos-quick-edit-grid">
-          <div><label class="pos-label">Retail Price (€)</label><input type="number" step="0.01" class="pos-input" [(ngModel)]="editForm.price" style="border-color: #16a34a; background: #f0fdf4;" /></div>
-          <div><label class="pos-label">Current Stock</label><input type="number" class="pos-input" [(ngModel)]="editForm.stockQuantity" /></div>
-          <div><label class="pos-label">Expiration Date</label><input type="date" class="pos-input" [(ngModel)]="editForm.expire" /></div>
-          <div><label class="pos-label">Barcode String</label><input type="text" class="pos-input" [(ngModel)]="editForm.barcode" /></div>
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99998] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col animate-fade-in-up">
+      <div class="p-4 font-bold text-lg bg-green-50 border-b border-green-200 text-green-800">
+        ✏️ Quick Edit: {{ prod.name }}
+      </div>
+      <div class="p-6 bg-white">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Retail Price (€)</label>
+            <input type="number" step="0.01" class="px-3 py-2 rounded-lg border-2 border-green-500 bg-green-50 text-green-900 font-bold focus:outline-none focus:ring-2 focus:ring-green-600" [(ngModel)]="editForm.price" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Stock</label>
+            <input type="number" class="px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.stockQuantity" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Expiration Date</label>
+            <input type="date" class="px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.expire" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Barcode String</label>
+            <input type="text" class="px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.barcode" />
+          </div>
         </div>
       </div>
-      <div class="pos-modal-footer">
-        <button class="pos-modal-btn pos-modal-btn-cancel" (click)="closeQuickEdit()">Cancel</button>
-        <button class="pos-modal-btn pos-modal-btn-confirm" style="background: #16a34a;" (click)="saveQuickEdit()">💾 Save Changes</button>
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+        <button class="px-5 py-2.5 font-bold rounded-xl text-slate-600 hover:bg-slate-200 active:scale-95 transition-all" (click)="closeQuickEdit()">Cancel</button>
+        <button class="px-5 py-2.5 font-bold rounded-xl bg-green-600 text-white shadow-md hover:bg-green-700 active:scale-95 transition-all" (click)="saveQuickEdit()">💾 Save Changes</button>
       </div>
     </div>
   </div>
 }
 
-<div class="pos-container">
+<div class="h-screen flex flex-col bg-slate-100 font-sans">
   
-  <!-- 1. THE SKY HEADER (Unified with Inventory app) -->
-  <header class="sky-header">
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <div class="brand-logo">🍊 MARANTH</div>
-     <button class="pos-admin-btn desktop-only" (click)="salesService.toggleTheme()" style="font-size: 16px; padding: 4px 12px; cursor: pointer;">
+  <!-- 1. THE SKY HEADER -->
+  <header class="flex items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-md flex-shrink-0 z-20">
+    <div class="flex items-center gap-3">
+      <div class="font-black text-xl tracking-tight">🍊 MARANTH</div>
+      <button class="hidden md:block text-sm font-bold bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors" (click)="salesService.toggleTheme()">
         {{ salesService.isDarkMode() ? '☀️ Light' : '🌙 Dark' }}
       </button>
     </div>
-    <div style="display: flex; gap: 12px; align-items: center;">
-      <div class="cashier-badge desktop-only">
+    <div class="flex items-center gap-3">
+      <div class="hidden md:block bg-blue-800/40 px-3 py-1.5 rounded-lg text-sm font-semibold">
         👤 {{ salesService.currentCashier() || 'Unknown' }} | {{ salesService.currentRole() || 'CASHIER' }}
       </div>
-      <nav class="phone-menu">
-        <a routerLink="/pos" class="menu-btn active">🛒 POS</a>
-        <a routerLink="/inventory" class="menu-btn">📦 INV</a>
-        <a routerLink="/reports" class="menu-btn">📊 REP</a>
+      <nav class="flex items-center gap-1 bg-blue-800/40 p-1 rounded-xl">
+        <a routerLink="/pos" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-blue-700 shadow-sm no-underline transition-all">🛒 POS</a>
+        <a routerLink="/inventory" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">📦 INV</a>
+        <a routerLink="/reports" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">📊 REP</a>
       </nav>
-      <button (click)="onLogout()" class="logout-btn" title="Log Out" style="display: flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; padding: 4px; outline: none;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <!-- The Red Circle Wrapper -->
+      <button (click)="onLogout()" class="p-1.5 rounded-lg hover:bg-red-500/20 text-red-100 transition-colors focus:outline-none" title="Log Out">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
-          <!-- The Small Centered Arrow -->
           <line x1="9" y1="12" x2="16" y2="12"></line>
           <polyline points="13 9 16 12 13 15"></polyline>
         </svg>
-      </button>>
+      </button>
     </div>
   </header>
 
-  <div class="pos-main-layout">
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
     
-    <aside class="pos-sidebar-panel">
+    <aside class="w-full md:w-[280px] bg-slate-900 text-white flex-shrink-0 flex flex-col border-r border-slate-800 z-10 transition-all">
       
-      <!-- 2. THE 3 QUICK ACTION BUTTONS (Sleek row, pulled OUT of the collapsible menu!) -->
-      <div class="quick-action-row">
-        <button class="action-btn btn-refund" [class.is-active-refund]="salesService.isRefundMode()" (click)="salesService.isRefundMode.set(!salesService.isRefundMode()); salesService.triggerSearchFocus()">
-          <span class="action-icon">↩️</span>
+      <!-- 2. THE 3 QUICK ACTION BUTTONS -->
+      <div class="flex gap-2 p-3 bg-slate-950">
+        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold transition-colors shadow-sm"
+                [ngClass]="salesService.isRefundMode() ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                (click)="salesService.isRefundMode.set(!salesService.isRefundMode()); salesService.triggerSearchFocus()">
+          <span class="text-base mb-0.5">↩️</span>
           <span>Refund</span>
         </button>
         
-        <button class="action-btn btn-clear" (click)="salesService.clearBasket()" [disabled]="salesService.basket().length === 0">
-          <span class="action-icon">🗑️</span>
+        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+                (click)="salesService.clearBasket()" [disabled]="salesService.basket().length === 0">
+          <span class="text-base mb-0.5">🗑️</span>
           <span>Clear</span>
         </button>
         
         @if (!salesService.suspendedBasket()) {
-          <button class="action-btn btn-suspend" (click)="salesService.suspendOrder()" [disabled]="salesService.basket().length === 0">
-            <span class="action-icon">⏸️</span>
+          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  (click)="salesService.suspendOrder()" [disabled]="salesService.basket().length === 0">
+            <span class="text-base mb-0.5">⏸️</span>
             <span>Suspend</span>
           </button>
         } @else {
-          <button class="action-btn btn-recall" (click)="salesService.recallOrder()">
-            <span class="action-icon">🔄</span>
+          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 transition-colors shadow-sm"
+                  (click)="salesService.recallOrder()">
+            <span class="text-base mb-0.5">🔄</span>
             <span>Recall (1)</span>
           </button>
         }
       </div>
 
       <!-- 3. MOBILE CATEGORY TOGGLE -->
-       <div class="sidebar-mobile-toggle" (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <!-- The Hamburger / Close Icon -->
-          <span style="font-size: 22px; line-height: 1;">
-            {{ isSidebarMobileOpen() ? '✕' : '☰' }}
-          </span>
-          <span style="font-weight: 700; font-size: 15px;">Menu & Categories</span>
+      <div class="md:hidden p-3 bg-slate-800 border-y border-slate-700 cursor-pointer flex items-center justify-between"
+           (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
+        <div class="flex items-center gap-3">
+          <span class="text-xl font-bold w-6 text-center">{{ isSidebarMobileOpen() ? '✕' : '☰' }}</span>
+          <span class="font-bold text-[15px]">Menu & Categories</span>
         </div>
       </div>
 
       <!-- 4. COLLAPSIBLE CATEGORIES CONTENT -->
-      <div class="sidebar-collapsible-content" [class.expanded]="isSidebarMobileOpen()">
+      <div class="flex-col p-4 overflow-y-auto" [ngClass]="isSidebarMobileOpen() ? 'flex' : 'hidden md:flex'">
         
-        <div class="panel-title" style="margin-bottom: 12px; color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase;">Catalog Filters</div>
-        <div style="display: flex; flex-direction: column; gap: 6px; padding-right: 2px;">
-          <button (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" [style.background]="selectedCategoryId() === 'ALL' ? '#3b82f6' : '#334155'" [style.color]="selectedCategoryId() === 'ALL' ? '#ffffff' : '#f8fafc'" class="cat-filter-btn">
+        <div class="mb-3 text-xs font-extrabold text-slate-500 uppercase tracking-wider">Catalog Filters</div>
+        <div class="flex flex-col gap-1.5 pr-1">
+          <button (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
+                  class="text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm"
+                  [ngClass]="selectedCategoryId() === 'ALL' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'">
             🌐 Show All Items
           </button>
           @for (cat of salesService.categories(); track cat.id) {
-            <button (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" [style.background]="selectedCategoryId() === cat.id ? '#3b82f6' : '#1e293b'" [style.color]="selectedCategoryId() === cat.id ? '#ffffff' : '#cbd5e1'" class="cat-filter-btn">
+            <button (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
+                    class="text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm"
+                    [ngClass]="selectedCategoryId() === cat.id ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'">
               📁 {{ cat.name }}
             </button>
           }
         </div>
 
-        <div style="background: #1e293b; border-radius: 8px; padding: 12px; border: 1px solid #334155; margin-top: 16px;">
-          <div class="panel-title" style="margin-bottom: 8px; color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase;">⚡ Quick Misc Charge</div>
-          <div style="display: flex; gap: 8px;">
-            <input type="number" class="pos-input" style="flex: 1; padding: 8px; font-size: 14px;" placeholder="€0.00" [value]="miscAmount()" (input)="miscAmount.set($any($event.target).value)" (keyup.enter)="addMiscCharge()">
-            <button class="app-btn" style="background: #3b82f6; color: white; padding: 8px 12px; font-weight: bold; border-radius: 6px;" (click)="addMiscCharge()">Add</button>
+        <div class="mt-6 p-3 bg-slate-800 rounded-xl border border-slate-700">
+          <div class="mb-2 text-[11px] font-black text-slate-400 uppercase tracking-wider">⚡ Quick Misc Charge</div>
+          <div class="flex gap-2">
+            <input type="number" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="€0.00" [value]="miscAmount()" (input)="miscAmount.set($any($event.target).value)" (keyup.enter)="addMiscCharge()">
+            <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-colors shadow-sm" (click)="addMiscCharge()">Add</button>
           </div>
         </div>
 
       </div>
     </aside>
 
- <section class="main-catalog-panel">
+    <section class="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
+      
       <!-- Pinned Search Bar -->
-      <div class="search-action-bar" style="background: #ffffff; padding: 12px 16px; border-bottom: 1px solid #e2e8f0; flex: 0 0 auto;">
-        <div class="search-input-wrapper" style="display: flex; align-items: center; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 0 12px; height: 44px;">
-          <span style="font-size: 16px; color: #94a3b8; margin-right: 8px;">🔍</span>
-          <input #searchInput type="text" placeholder="Scan barcode or type name..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (keydown.enter)="onSearchEnter($event)" style="border: none; background: transparent; outline: none; width: 100%; font-size: 15px; font-weight: 600; color: #1e293b;" autocomplete="off" autofocus />
+      <div class="bg-white p-3 border-b border-slate-200 flex-shrink-0 shadow-sm z-10">
+        <div class="flex items-center bg-slate-100 border-2 border-slate-300 rounded-xl px-3 h-12 focus-within:border-blue-500 focus-within:bg-white transition-colors">
+          <span class="text-xl text-slate-400 mr-2">🔍</span>
+          <input #searchInput type="text" placeholder="Scan barcode or type name..." 
+                 [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (keydown.enter)="onSearchEnter($event)" 
+                 class="w-full bg-transparent border-none outline-none text-[15px] font-bold text-slate-800 placeholder:font-semibold placeholder:text-slate-400" autocomplete="off" autofocus />
         </div>
       </div>
 
-      <div class="catalog-scroll-viewport">
+      <div class="flex-1 overflow-y-auto p-4 md:p-5">
         
         <!-- ========================================== -->
-        <!-- PRIORITY 1: SCALED ITEMS (Always Top)      -->
+        <!-- PRIORITY 1: SCALED ITEMS (Always Top) -->
         <!-- ========================================== -->
         @if (weightedProducts().length > 0 && !searchQuery()) {
-          <div class="zone-header">
-            <span class="zone-icon">⚖️</span> 
+          <div class="flex items-center gap-3 mb-4 mt-2">
+            <span class="text-2xl bg-white p-2 rounded-xl shadow-sm border border-slate-100">⚖️</span> 
             <div>
-              <div class="zone-title" style="color: #166534;">Weighing Station</div>
-              <div class="zone-subtitle">Scaled items require weight input</div>
+              <div class="font-black text-lg text-green-800">Weighing Station</div>
+              <div class="text-xs font-bold text-slate-500">Scaled items require weight input</div>
             </div>
           </div>
-         
-          <div class="pos-touch-grid scaled-grid">
+          
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
             @for (prod of weightedProducts(); track prod.id) {
-              <div class="pos-touch-btn" (click)="handleProductClick(prod)">
-                <span class="touch-price">{{ formatMoney(prod.price) }}/kg</span>
-                <!-- Bumps long names down to 12 chars -->
-                <span class="touch-name">{{ prod.name.length > 12 ? prod.name.substring(0, 12) + '..' : prod.name }}</span>
+              <div class="bg-white border-2 border-green-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:bg-green-50 active:scale-95 transition-all h-24" (click)="handleProductClick(prod)">
+                <span class="text-green-700 font-black text-xl mb-1">{{ formatMoney(prod.price) }}<span class="text-sm font-bold">/kg</span></span>
+                <span class="text-slate-800 font-bold text-sm leading-tight text-center">{{ prod.name.length > 12 ? prod.name.substring(0, 12) + '..' : prod.name }}</span>
               </div>
             }
           </div>
         }
 
         <!-- ========================================== -->
-        <!-- PRIORITY 2: LOOSE ITEMS                    -->
+        <!-- PRIORITY 2: LOOSE ITEMS (Quick Tap) -->
         <!-- ========================================== -->
-<!-- QUICK TAP / PINNED PRODUCTS GRID -->
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 15px;">
-  
-@for (prod of getPinnedProducts(); track prod.id) {
-  <!-- The Quick Tap Button -->
-  <button 
-    (click)="handleProductClick(prod)" 
-    style="background: rgba(186, 230, 253, 0.5); border: 2px solid #bae6fd; border-radius: 12px; padding: 15px 10px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; min-height: 105px;">
-    
-    <!-- THE PRODUCT NAME SPAN -->
-    <span style="font-weight: 800; font-size: 14px; color: #1e293b; text-align: center; line-height: 1.2; text-transform: uppercase; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;">
-      {{ prod.name | slice:0:15 }}{{ prod.name.length > 15 ? '.' : '' }}
-    </span>
-    
-<!-- THE UPGRADED PRICE TAG -->
-<span style="font-weight: 900; color: #15803d; background: #ffffff; border: 2px solid #22c55e; padding: 6px 12px; border-radius: 8px; font-size: 24px; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-  {{ formatMoney(prod.price) }}
-</span>
-
-  </button>
-} @empty {
-  <!-- Helpful empty state -->
-  <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #7797c5; font-weight: 600;">
-    📌 No items pinned. Go to Inventory and check "Pin to POS" on items like bags or loose fruit.
-  </div>
-}
-
-</div>
-        <!-- ========================================== -->
-        <!-- PRIORITY 3: STANDARD CATALOG               -->
-        <!-- ========================================== -->
-        <div class="zone-header" style="margin-top: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
-          <div class="zone-title" style="color: #475569;">{{ searchQuery() ? 'Search Results' : '📦 Standard Catalog (Max 30)' }}</div>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3 mb-8">
+          @for (prod of getPinnedProducts(); track prod.id) {
+            <button (click)="handleProductClick(prod)" 
+                    class="bg-sky-100/70 border-2 border-sky-300 rounded-2xl p-3 flex flex-col items-center justify-between gap-2 min-h-[105px] shadow-sm hover:shadow-md hover:bg-sky-200/80 hover:border-sky-400 transition-all cursor-pointer active:scale-95">
+              <span class="font-extrabold text-[13px] text-slate-800 text-center leading-tight uppercase line-clamp-2 break-words">
+                {{ prod.name | slice:0:15 }}{{ prod.name.length > 15 ? '.' : '' }}
+              </span>
+              <span class="font-black text-green-700 bg-white border-2 border-green-500 px-3 py-1.5 rounded-xl text-xl whitespace-nowrap shadow-sm">
+                {{ formatMoney(prod.price) }}
+              </span>
+            </button>
+          } @empty {
+            <div class="col-span-full text-center p-6 bg-sky-50 rounded-2xl border-2 border-dashed border-sky-200 text-sky-700 font-bold text-sm">
+              📌 No items pinned. Go to Inventory and check "Pin to POS" on items like bags or loose fruit.
+            </div>
+          }
         </div>
 
-        <div class="grid-layout-scroll" style="padding-top: 12px;">
+        <!-- ========================================== -->
+        <!-- PRIORITY 3: STANDARD CATALOG -->
+        <!-- ========================================== -->
+        <div class="flex items-center gap-3 mb-4 border-b-2 border-slate-200 pb-3">
+          <div class="font-black text-lg text-slate-700">{{ searchQuery() ? 'Search Results' : '📦 Standard Catalog (Max 30)' }}</div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           @for (prod of filteredCatalogProducts(); track prod.id; let idx = $index) {
-            
-            <div class="product-item-card" (click)="handleProductClick(prod)">
-              <div class="prod-name-row">
-                <span class="prod-name">{{ prod.name }}</span>
-                <div style="display: flex; gap: 4px; align-items: center;">
-                  @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { <span class="weight-icon" title="Scaled Item">⚖️</span> }
-                  <button class="quick-edit-btn" title="Quick Edit" (click)="openQuickEdit(prod, $event)">✏️</button>
+            <div class="bg-white border border-slate-200 rounded-xl p-3 flex flex-col gap-2 cursor-pointer shadow-sm hover:shadow-md hover:border-blue-400 active:scale-95 transition-all min-h-[110px]" (click)="handleProductClick(prod)">
+              <div class="flex justify-between items-start gap-2">
+                <span class="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{{ prod.name }}</span>
+                <div class="flex gap-1 items-center flex-shrink-0">
+                  @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { <span class="text-sm bg-slate-100 p-1 rounded-md" title="Scaled Item">⚖️</span> }
+                  <button class="text-sm p-1 rounded-md hover:bg-slate-100 transition-colors" title="Quick Edit" (click)="openQuickEdit(prod, $event)">✏️</button>
                 </div>
               </div>
 
               @let liveProduct = salesService.products().find(p => p.id === prod.id) || prod;
               @let expStatus = getExpireStatus(liveProduct.expire);
               
-              <div class="prod-expire-row" [class]="'exp-' + expStatus">
-                @if (liveProduct.expire) { 📅 Exp: {{ liveProduct.expire | date:'dd/MM/yyyy' }} } @else { <span style="opacity: 0.6;">📅 No Exp Date</span> }
+              <!-- Using ngClass here to respect your custom getExpireStatus return values, but styling them with Tailwind -->
+              <div class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide self-start mt-1"
+                   [ngClass]="{
+                     'bg-red-100 text-red-700': expStatus === 'danger',
+                     'bg-orange-100 text-orange-700': expStatus === 'warning',
+                     'bg-green-100 text-green-700': expStatus === 'safe',
+                     'bg-slate-100 text-slate-500': expStatus === 'none'
+                   }">
+                @if (liveProduct.expire) { 📅 Exp: {{ liveProduct.expire | date:'dd/MM/yyyy' }} } @else { 📅 No Exp Date }
               </div>
 
               @let liveStock = liveProduct.stockQuantity;
               
-              <div class="prod-bottom-row">
-                <div class="prod-stock-badge" [class.low-stock]="liveStock <= 5">📦 {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}</div>
-                <div class="prod-price">{{ formatMoney(prod.price) }}</div>
+              <div class="flex justify-between items-end mt-auto pt-2 border-t border-slate-100">
+                <div class="text-[11px] font-black px-2 py-1 rounded-lg" [ngClass]="liveStock <= 5 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'">
+                  📦 {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
+                </div>
+                <div class="text-[15px] font-black text-blue-700">{{ formatMoney(prod.price) }}</div>
               </div>
             </div>
           } @empty {
-            <div class="empty-msg" style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #64748b;">⚠️ No items match your search.</div>
+            <div class="col-span-full p-10 text-center font-bold text-slate-500 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300">
+              ⚠️ No items match your search.
+            </div>
           }
         </div>
 
@@ -250,24 +277,29 @@
     </section>
 
     <!-- FLOATING BASKET CHECKOUT PANEL -->
-    <section class="checkout-basket-panel" [class.mobile-open]="isMobileBasketOpen()">
-      <button class="mobile-close-basket-btn" (click)="isMobileBasketOpen.set(false)">⬇️ Swipe down to hide checkout ⬇️</button>
-      <app-shopping-basket style="flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; height: 100%;"></app-shopping-basket>
+    <section class="fixed md:static inset-0 z-40 bg-white flex flex-col w-full md:w-96 md:border-l border-slate-200 transform transition-transform duration-300 shadow-2xl md:shadow-none"
+             [ngClass]="isMobileBasketOpen() ? 'translate-y-0' : 'translate-y-full md:translate-y-0'">
+      <button class="md:hidden bg-slate-100 text-slate-500 font-black py-4 text-center border-b border-slate-200 active:bg-slate-200 transition-colors uppercase tracking-widest text-xs" 
+              (click)="isMobileBasketOpen.set(false)">
+        ⬇️ Swipe down to hide checkout ⬇️
+      </button>
+      <app-shopping-basket class="flex-1 flex flex-col overflow-hidden h-full"></app-shopping-basket>
     </section>
 
   </div> 
 
   <!-- MOBILE BASKET FAB BUTTON -->
   @if (salesService.basket().length > 0) {
-    <div class="mobile-basket-fab" (click)="isMobileBasketOpen.set(true)">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 20px;">🛒</span>
-        <span style="background: #ffffff; color: #0b57d0; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 800;">
+    <div class="md:hidden fixed bottom-5 left-5 right-5 bg-blue-600 text-white rounded-2xl shadow-xl shadow-blue-900/30 p-4 flex justify-between items-center z-30 cursor-pointer active:scale-95 transition-transform" 
+         (click)="isMobileBasketOpen.set(true)">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl drop-shadow-md">🛒</span>
+        <span class="bg-white text-blue-700 px-3 py-1 rounded-xl text-sm font-black shadow-inner">
           {{ salesService.totalItems() }} items
         </span>
       </div>
-      <span>View Checkout ➔</span>
-      <span style="font-size: 18px;">{{ formatMoney(salesService.grandTotal()) }}</span>
+      <span class="font-bold text-sm text-blue-200">View Checkout ➔</span>
+      <span class="text-xl font-black drop-shadow-md">{{ formatMoney(salesService.grandTotal()) }}</span>
     </div>
   }
 

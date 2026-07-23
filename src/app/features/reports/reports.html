@@ -1,131 +1,141 @@
-<div class="reports-container">
+<div class="flex flex-col h-screen bg-slate-50 font-sans">
   
   <!-- HEADER -->
-  <header class="pos-header no-print" style="flex-wrap: wrap;">
-    <div class="header-left" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-      <span class="brand-logo" style="color: white; font-weight: 800; font-size: 18px; margin-left: 8px;">🍊 MARANTH</span>
-      <span class="system-tag mobile-hide" style="background: #334155; color: #94a3b8; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 8px; font-weight: 600;">Manager Dashboard</span>
+  <header class="flex flex-wrap items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-md flex-shrink-0 z-20 no-print">
+    <div class="flex items-center flex-wrap gap-2">
+      <span class="font-black text-lg ml-2 tracking-tight">🍊 MARANTH</span>
+      <span class="hidden md:inline-block bg-slate-800/50 text-slate-300 px-2 py-0.5 rounded text-[11px] ml-2 font-bold uppercase tracking-wider">Manager Dashboard</span>
     </div>
-    <div class="header-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-      <a routerLink="/pos" class="header-btn" style="background: #0ea5e9;">🛒 Back to Register</a>
-      <a routerLink="/inventory" class="header-btn btn-inventory mobile-hide">📦 Inventory</a>
+    <div class="flex items-center flex-wrap gap-2">
+      <a routerLink="/pos" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-sky-500 text-white hover:bg-sky-600 shadow-sm no-underline transition-all">🛒 Back to Register</a>
+      <a routerLink="/inventory" class="hidden md:block px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">📦 Inventory</a>
     </div>
   </header>
 
   <!-- TAB NAVIGATION -->
-  <div class="tab-navigation-bar no-print">
-    <button class="nav-tab-btn" [class.is-active]="activeTab() === 'zreport'" (click)="activeTab.set('zreport')">
+  <div class="flex overflow-x-auto bg-white border-b border-slate-200 flex-shrink-0 hide-scrollbar no-print">
+    <button class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
+            [ngClass]="activeTab() === 'zreport' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'" 
+            (click)="activeTab.set('zreport')">
       🧾 Z-Report & Sales Ledger
     </button>
-    <button class="nav-tab-btn" [class.is-active]="activeTab() === 'analytics'" (click)="activeTab.set('analytics')">
+    <button class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
+            [ngClass]="activeTab() === 'analytics' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'" 
+            (click)="activeTab.set('analytics')">
       📈 Sales Analytics
     </button>
-    <button class="nav-tab-btn" [class.is-active]="activeTab() === 'dashboard'" (click)="activeTab.set('dashboard')">
+    <button class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
+            [ngClass]="activeTab() === 'dashboard' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'" 
+            (click)="activeTab.set('dashboard')">
       ⚙️ Live Dashboard Widgets
     </button>
   </div>
 
   <!-- REPORTS WRAPPER -->
-  <div class="reports-dashboard-wrapper" style="padding: 24px; font-family: system-ui, sans-serif; background: #f8fafc; height: calc(100vh - 110px); overflow-y: auto;">
+  <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50">
     
     <!-- ================== TAB 1: Z-REPORT & SALES LEDGER ================== -->
     @if (activeTab() === 'zreport') {
       
       <!-- Date Picker & Print Header -->
-      <div class="dashboard-header no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+      <div class="flex justify-between items-center flex-wrap gap-4 mb-6 no-print">
         <div>
-          <h1 style="margin: 0; font-size: 24px; color: #0f172a; font-weight: 800;">End of Day Z-Report & Ledger</h1>
-          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 14px;">Select a date to audit sales and calculate margins.</p>
+          <h1 class="m-0 text-2xl text-slate-900 font-extrabold tracking-tight">End of Day Z-Report & Ledger</h1>
+          <p class="m-0 mt-1 text-sm text-slate-500 font-medium">Select a date to audit sales and calculate margins.</p>
         </div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-          <input type="date" class="calendar-input" [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)" style="padding: 8px; border: 2px solid #cbd5e1; border-radius: 6px; font-weight: bold;"/>
+        <div class="flex items-center gap-3">
+          <input type="date" class="px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-700 outline-none focus:border-blue-500 bg-white" 
+                 [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)" />
         </div>
       </div>
 
-      <!-- Top Metrics Row Grid (from old template) -->
-      <div class="metrics-row-grid z-report-print-area" style="display: flex; gap: 20px; margin-bottom: 24px;">
-        <div class="kpi-card" style="flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #3b82f6;">
-          <div style="font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Gross Revenue</div>
-          <div style="font-size: 28px; font-weight: 700; color: #1e293b; margin-top: 4px;">{{ formatMoney(totalRevenue()) }}</div>
+      <!-- Top Metrics Row Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6 z-report-print-area">
+        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-l-blue-500 flex flex-col">
+          <div class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Gross Revenue</div>
+          <div class="text-3xl font-black text-slate-800 mt-1">{{ formatMoney(totalRevenue()) }}</div>
         </div>
-        <div class="kpi-card" style="flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #10b981;">
-          <div style="font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Cash Drawer Total</div>
-          <div style="font-size: 28px; font-weight: 700; color: #0f766e; margin-top: 4px;">{{ formatMoney(cashRevenue()) }}</div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-l-emerald-500 flex flex-col">
+          <div class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Cash Drawer Total</div>
+          <div class="text-3xl font-black text-emerald-700 mt-1">{{ formatMoney(cashRevenue()) }}</div>
         </div>
-        <div class="kpi-card" style="flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #8b5cf6;">
-          <div style="font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Card Settlements</div>
-          <div style="font-size: 28px; font-weight: 700; color: #6d28d9; margin-top: 4px;">{{ formatMoney(cardRevenue()) }}</div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-l-violet-500 flex flex-col">
+          <div class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Card Settlements</div>
+          <div class="text-3xl font-black text-violet-700 mt-1">{{ formatMoney(cardRevenue()) }}</div>
         </div>
-        <div class="kpi-card no-print" style="flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-left: 5px solid #f59e0b;">
-          <div style="font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase;">Estimated Profit</div>
-          <div style="font-size: 28px; font-weight: 700; color: #b45309; margin-top: 4px;">{{ formatMoney(zReportStats().totalProfit) }}</div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-l-amber-500 flex flex-col no-print">
+          <div class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Estimated Profit</div>
+          <div class="text-3xl font-black text-amber-700 mt-1">{{ formatMoney(zReportStats().totalProfit) }}</div>
         </div>
       </div>
 
       <!-- Z-Report & Product Leaderboard Split -->
-      <div class="analytics-split-row z-report-print-area" style="display: flex; gap: 24px; margin-bottom: 24px; align-items: flex-start;">
+      <div class="flex flex-col lg:flex-row gap-6 mb-6 z-report-print-area items-start">
+        
         <!-- Z-Report Details -->
-        <div class="z-report-card" style="flex: 1; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-top: 4px solid #0f172a;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div class="flex-1 w-full bg-white p-6 rounded-xl shadow-sm border-t-4 border-t-slate-900">
+          <div class="flex justify-between items-center mb-5">
             <div>
-              <h3 style="margin: 0; color: #0f172a; font-size: 16px;">📋 Terminal Z-Report</h3>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">End-of-day financial reconciliation audits</p>
+              <h3 class="m-0 text-lg font-black text-slate-900">📋 Terminal Z-Report</h3>
+              <p class="m-0 mt-1 text-xs font-semibold text-slate-500">End-of-day financial reconciliation audits</p>
             </div>
-            <button class="no-print" (click)="printZReport()" style="background: #0f172a; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+            <button class="no-print bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors active:scale-95 shadow-sm focus:outline-none" 
+                    (click)="printZReport()">
               🖨️ Print Z-Report
             </button>
           </div>
-          <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: #334155;">
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-              <span style="color: #64748b;">Gross Taxable Sales:</span>
-              <span style="font-weight: 600;">{{ formatMoney(totalRevenue()) }}</span>
+          <div class="flex flex-col gap-2.5 text-sm text-slate-700">
+            <div class="flex justify-between items-center py-2 border-b border-slate-100">
+              <span class="text-slate-500 font-semibold">Gross Taxable Sales:</span>
+              <span class="font-black text-slate-900">{{ formatMoney(totalRevenue()) }}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-              <span style="color: #64748b;">Tax pool liability (24% VAT):</span>
-              <span style="font-weight: 600; color: #b45309;">{{ formatMoney(totalRevenue() * 0.1935) }}</span>
+            <div class="flex justify-between items-center py-2 border-b border-slate-100">
+              <span class="text-slate-500 font-semibold">Tax pool liability (24% VAT):</span>
+              <span class="font-black text-amber-700">{{ formatMoney(totalRevenue() * 0.1935) }}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9;">
-              <span style="color: #64748b;">Net Sales (Excl. VAT):</span>
-              <span style="font-weight: 600;">{{ formatMoney(totalRevenue() * 0.8065) }}</span>
+            <div class="flex justify-between items-center py-2 border-b border-slate-100">
+              <span class="text-slate-500 font-semibold">Net Sales (Excl. VAT):</span>
+              <span class="font-black text-slate-900">{{ formatMoney(totalRevenue() * 0.8065) }}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; margin-top: 4px; background: #f8fafc; padding: 10px; border-radius: 8px;">
-              <span style="font-weight: bold; color: #1e293b;">Total Drawer Cash drops:</span>
-              <span style="font-weight: bold; color: #0f766e;">{{ formatMoney(cashRevenue()) }}</span>
+            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg mt-2 border border-slate-100">
+              <span class="font-black text-slate-800">Total Drawer Cash drops:</span>
+              <span class="font-black text-emerald-700 text-lg">{{ formatMoney(cashRevenue()) }}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; background: #f8fafc; padding: 10px; border-radius: 8px;">
-              <span style="font-weight: bold; color: #1e293b;">Total Electronic Settlements:</span>
-              <span style="font-weight: bold; color: #6d28d9;">{{ formatMoney(cardRevenue()) }}</span>
+            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
+              <span class="font-black text-slate-800">Total Electronic Settlements:</span>
+              <span class="font-black text-violet-700 text-lg">{{ formatMoney(cardRevenue()) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Product Leaderboard -->
-        <div class="product-leaderboard-card no-print" style="flex: 1.5; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-          <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 16px;">🏆 Product Velocity</h3>
-          <div style="max-height: 250px; overflow-y: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-              <thead>
-                <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 11px;">
-                  <th style="padding: 8px 4px;">Item Name</th>
-                  <th style="padding: 8px 4px; text-align: center;">Units Moved</th>
-                  <th style="padding: 8px 4px; text-align: right;">Gross Revenue</th>
-                  <th style="padding: 8px 4px; text-align: right;">Stock Balance</th>
+        <div class="lg:flex-[1.5] w-full bg-white p-6 rounded-xl shadow-sm no-print">
+          <h3 class="m-0 mb-4 text-lg font-black text-slate-900">🏆 Product Velocity</h3>
+          <div class="max-h-[250px] overflow-y-auto pr-2">
+            <table class="w-full border-collapse text-left text-sm">
+              <thead class="sticky top-0 bg-white z-10 shadow-[0_2px_0_0_#f1f5f9]">
+                <tr class="text-xs text-slate-500 font-extrabold uppercase tracking-wider">
+                  <th class="py-3 px-2">Item Name</th>
+                  <th class="py-3 px-2 text-center">Units Moved</th>
+                  <th class="py-3 px-2 text-right">Gross Revenue</th>
+                  <th class="py-3 px-2 text-right">Stock Balance</th>
                 </tr>
               </thead>
               <tbody>
                 @for (item of topSellingProducts(); track item.id) {
-                  <tr style="border-bottom: 1px solid #f1f5f9; color: #334155;">
-                    <td style="padding: 10px 4px; font-weight: 500;">{{ item.name }}</td>
-                    <td style="padding: 10px 4px; text-align: center; font-weight: bold; color: #1e293b;">{{ item.unitsSold }}</td>
-                    <td style="padding: 10px 4px; text-align: right; color: #2563eb; font-weight: 600;">{{ formatMoney(item.totalRevenue) }}</td>
-                    <td style="padding: 10px 4px; text-align: right;">
-                      <span [style.background]="item.stockQuantity <= 5 ? '#fef2f2' : '#f0fdf4'" [style.color]="item.stockQuantity <= 5 ? '#991b1b' : '#166534'" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+                  <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td class="py-2.5 px-2 font-bold text-slate-700">{{ item.name }}</td>
+                    <td class="py-2.5 px-2 text-center font-black text-slate-900">{{ item.unitsSold }}</td>
+                    <td class="py-2.5 px-2 text-right font-black text-blue-700">{{ formatMoney(item.totalRevenue) }}</td>
+                    <td class="py-2.5 px-2 text-right">
+                      <span class="text-[11px] px-2 py-0.5 rounded-md font-bold whitespace-nowrap"
+                            [ngClass]="item.stockQuantity <= 5 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800'">
                         {{ item.stockQuantity }} left {{ item.stockQuantity <= 5 ? '⚠️' : '✓' }}
                       </span>
                     </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 32px 0;">No sales data available.</td></tr>
+                  <tr><td colspan="4" class="text-center text-slate-400 font-bold py-10">No sales data available.</td></tr>
                 }
               </tbody>
             </table>
@@ -134,79 +144,80 @@
       </div>
 
       <!-- Main Ledger & Auditor Split Layout -->
-      <div class="main-split-layout no-print" style="display: flex; gap: 24px; align-items: flex-start;">
+      <div class="flex flex-col lg:flex-row gap-6 items-start no-print">
+        
         <!-- Journal Ledger Table -->
-        <div class="ledger-table-container" style="flex: 1.5; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="margin: 0; color: #0f172a; font-size: 16px;">Journal Ledger Archive ({{ totalSalesCount() }} Tickets)</h3>
-            <button (click)="clearAllLedgerData()" style="background: transparent; color: #ef4444; border: 1px solid #fee2e2; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+        <div class="lg:flex-[1.5] w-full bg-white rounded-xl shadow-sm p-5 md:p-6 overflow-x-auto">
+          <div class="flex justify-between items-center mb-5">
+            <h3 class="m-0 text-lg font-black text-slate-900">Journal Ledger Archive ({{ totalSalesCount() }} Tickets)</h3>
+            <button class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors active:scale-95 focus:outline-none" 
+                    (click)="clearAllLedgerData()">
               ⚠️ Clear Ledger
             </button>
           </div>
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-  <thead>
-    <tr style="border-bottom: 2px solid #f1f5f9; color: #64748b; font-weight: 600;">
-      <th style="padding: 12px 8px;">Ticket ID</th>
-      <th style="padding: 12px 8px;">Time</th>
-      <th style="padding: 12px 8px;">Cashier</th>
-      <th style="padding: 12px 8px;">Payment</th>
-      <th style="padding: 12px 8px; text-align: right;">Amount</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (tx of filteredTransactions(); track tx.id) {
-      <tr (click)="selectTxn(tx.id)" [style.background]="selectedTxnId() === tx.id ? '#f0fdf4' : 'transparent'" style="border-bottom: 1px solid #f1f5f9; color: #334155; cursor: pointer;">
-        <td style="padding: 12px 8px; font-weight: 600; color: #2563eb;">{{ tx.id.slice(-8) }}</td>
-        
-        <!-- Beautifully formatted Time -->
-        <td style="padding: 12px 8px;">{{ tx.timestamp | date:'HH:mm' }}</td>
-        
-        <!-- Safely checks all possible Cashier fields -->
-        <td style="padding: 12px 8px; font-weight: 500;">
-          {{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}
-        </td>
-        
-        <td style="padding: 12px 8px;">
-          <span [style.background]="tx.paymentMethod === 'Cash' ? '#ccfbf1' : '#e0e7ff'" [style.color]="tx.paymentMethod === 'Cash' ? '#115e59' : '#3730a3'" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
-            {{ tx.paymentMethod }}
-          </span>
-        </td>
-        <td style="padding: 12px 8px; text-align: right; font-weight: 700;">{{ formatMoney(tx.grandTotal) }}</td>
-      </tr>
-    } @empty {
-      <tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 48px 0;">No receipts found.</td></tr>
-    }
-  </tbody>
-</table>
+          <table class="w-full border-collapse text-left text-sm whitespace-nowrap">
+            <thead>
+              <tr class="border-b-2 border-slate-100 text-slate-500 font-extrabold text-xs uppercase tracking-wider">
+                <th class="py-3 px-2">Ticket ID</th>
+                <th class="py-3 px-2">Time</th>
+                <th class="py-3 px-2">Cashier</th>
+                <th class="py-3 px-2">Payment</th>
+                <th class="py-3 px-2 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (tx of filteredTransactions(); track tx.id) {
+                <tr class="border-b border-slate-100 cursor-pointer transition-colors"
+                    [ngClass]="selectedTxnId() === tx.id ? 'bg-green-50/70' : 'hover:bg-slate-50'"
+                    (click)="selectTxn(tx.id)">
+                  <td class="py-3 px-2 font-mono font-bold text-blue-600">{{ tx.id.slice(-8) }}</td>
+                  <td class="py-3 px-2 font-semibold text-slate-600">{{ tx.timestamp | date:'HH:mm' }}</td>
+                  <td class="py-3 px-2 font-bold text-slate-700">{{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}</td>
+                  <td class="py-3 px-2">
+                    <span class="text-[11px] px-2 py-0.5 rounded-md font-bold"
+                          [ngClass]="tx.paymentMethod === 'Cash' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'">
+                      {{ tx.paymentMethod }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-2 text-right font-black text-slate-900">{{ formatMoney(tx.grandTotal) }}</td>
+                </tr>
+              } @empty {
+                <tr><td colspan="5" class="text-center text-slate-400 font-bold py-12">No receipts found.</td></tr>
+              }
+            </tbody>
+          </table>
         </div>
 
         <!-- Sticky Itemized Auditor -->
-        <div class="receipt-inspector-panel" style="flex: 1; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 20px; border: 1px dashed #cbd5e1; min-height: 300px; position: sticky; top: 0px; max-height: calc(100vh - 160px); overflow-y: auto;">
-          <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">Itemized Ticket Auditor</h3>
+        <div class="flex-1 w-full bg-white rounded-xl shadow-sm p-5 md:p-6 border border-dashed border-slate-300 min-h-[300px] lg:sticky lg:top-0 max-h-[calc(100vh-160px)] overflow-y-auto">
+          <h3 class="m-0 mb-4 text-base font-black text-slate-900 border-b border-slate-100 pb-3">Itemized Ticket Auditor</h3>
+          
           @if (selectedTxnDetails(); as tx) {
-            <div style="background: #fafafa; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px;">
-              <div style="display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 12px;">
-                <span>Ref: <strong>{{ tx.id }}</strong></span>
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+              <div class="flex justify-between items-center text-[13px] font-semibold text-slate-500 mb-4 pb-3 border-b border-dashed border-slate-300">
+                <span>Ref: <strong class="text-slate-800">{{ tx.id }}</strong></span>
                 <span>{{ tx.timestamp | date:'HH:mm' }}</span>
-                <span>Cashier: <strong>{{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}</strong></span>
+                <span>By: <strong class="text-slate-800">{{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}</strong></span>
               </div>
-              <div style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 8px; margin-bottom: 12px;">
+              
+              <div class="flex flex-col gap-2 mb-4 pb-3 border-b border-dashed border-slate-300">
                 @for (item of tx.items; track item.product.id) {
-                  <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 6px; color: #334155;">
-                    <span>{{ item.product.name }} (x{{ item.quantity }})</span>
-                    <span style="font-weight: 500;">{{ formatMoney(item.product.price * item.quantity) }}</span>
+                  <div class="flex justify-between text-sm text-slate-700">
+                    <span class="font-bold">{{ item.product.name }} <span class="text-slate-400">(x{{ item.quantity }})</span></span>
+                    <span class="font-black">{{ formatMoney(item.product.price * item.quantity) }}</span>
                   </div>
                 }
               </div>
-              <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #64748b; text-align: right;">
+              
+              <div class="flex flex-col gap-1 text-[13px] font-semibold text-slate-500 text-right">
                 <div>Computed VAT (24%): {{ formatMoney(tx.taxAmount || 0) }}</div>
-                <div style="font-size: 16px; font-weight: bold; color: #0f172a; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px;">
-                  Paid Total: <span style="color: #10b981;">{{ formatMoney(tx.grandTotal) }}</span>
+                <div class="text-base font-black text-slate-900 mt-2 pt-2 border-t border-slate-200">
+                  Paid Total: <span class="text-emerald-600">{{ formatMoney(tx.grandTotal) }}</span>
                 </div>
               </div>
             </div>
           } @else {
-            <div style="text-align: center; color: #94a3b8; padding-top: 80px; font-size: 14px; line-height: 1.5;">
+            <div class="text-center text-slate-400 font-bold py-20 px-4 text-sm leading-relaxed">
               Select any closed ticket from the archive log to audit line item metrics.
             </div>
           }
@@ -214,39 +225,46 @@
       </div>
     }
 
-  <!-- ================== TAB 2: ANALYTICS ================== -->
+    <!-- ================== TAB 2: ANALYTICS ================== -->
     @if (activeTab() === 'analytics') {
-      <div class="heatmap-card" style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px;">
-        <div style="margin-bottom: 20px;">
-          <h3 style="margin: 0; color: #0f172a; font-size: 16px;">⏰ Hourly Performance Heatmap</h3>
-          <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Identify peak velocity sales windows.</p>
+      <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+        <div class="mb-6">
+          <h3 class="m-0 text-lg font-black text-slate-900">⏰ Hourly Performance Heatmap</h3>
+          <p class="m-0 mt-1 text-sm font-semibold text-slate-500">Identify peak velocity sales windows.</p>
         </div>
 
-        <!-- ⭐ NEW: Scroll wrapper so only the chart swipes, not the title! -->
-        <div class="heatmap-scroll-wrapper">
-          <div style="display: grid; grid-template-columns: repeat(24, 1fr); gap: 6px; align-items: end; min-height: 140px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 8px; min-width: 600px;">
+        <div class="overflow-x-auto hide-scrollbar pb-2">
+          <div class="grid grid-cols-[repeat(24,1fr)] gap-1.5 items-end min-h-[140px] border-b-2 border-slate-200 pb-2 mb-2 min-w-[600px]">
             @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
-              <div [title]="slot.hourLabel + '\nRevenue: ' + formatMoney(slot.revenue) + '\nTickets: ' + slot.ticketCount" style="display: flex; flex-direction: column; justify-content: flex-end; height: 100%; cursor: pointer;">
-                <div [style.height.%]="slot.intensityPercentage" [style.background]="getHeatmapBg(slot.intensityPercentage)" style="border-radius: 4px 4px 0 0; transition: all 0.2s ease; width: 100%; min-height: 4px;"></div>
+              <div [title]="slot.hourLabel + '\nRevenue: ' + formatMoney(slot.revenue) + '\nTickets: ' + slot.ticketCount" 
+                   class="flex flex-col justify-end h-full cursor-pointer group">
+                <div [style.height.%]="slot.intensityPercentage" 
+                     [style.background]="getHeatmapBg(slot.intensityPercentage)" 
+                     class="rounded-t-md transition-all duration-300 w-full min-h-[4px] group-hover:opacity-80"></div>
               </div>
             }
           </div>
-          <div style="display: grid; grid-template-columns: repeat(24, 1fr); gap: 6px; text-align: center; font-size: 10px; font-weight: 600; color: #94a3b8; min-width: 600px;">
+          <div class="grid grid-cols-[repeat(24,1fr)] gap-1.5 text-center text-[10px] font-extrabold text-slate-400 min-w-[600px]">
             @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
               <div>{{ slot.hour % 2 === 0 ? slot.hour : '' }}</div>
             }
           </div>
         </div>
 
-        <div style="margin-top: 24px; border-top: 1px dashed #e2e8f0; padding-top: 16px;">
-          <h4 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: #475569;">High-Velocity Windows</h4>
-          <!-- ⭐ NEW: Added a class here to control mobile stacking -->
-          <div class="velocity-windows-grid">
+        <div class="mt-8 pt-6 border-t border-dashed border-slate-200">
+          <h4 class="m-0 mb-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">High-Velocity Windows</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
               @if (slot.ticketCount > 0) {
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                  <div><span style="font-weight: 700; color: #1e293b; font-size: 13px;">{{ slot.hourLabel }}</span><div style="font-size: 11px; color: #64748b;">{{ slot.ticketCount }} sales</div></div>
-                  <div style="text-align: right;"><span style="font-weight: 700; color: #2563eb; font-size: 13px;">{{ formatMoney(slot.revenue) }}</span><div style="font-size: 11px; color: #0f766e;">Avg: {{ formatMoney(slot.averageTicketSize) }}</div></div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg flex justify-between items-center shadow-sm">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="font-black text-slate-800 text-sm">{{ slot.hourLabel }}</span>
+                    <span class="font-bold text-slate-500 text-[11px]">{{ slot.ticketCount }} sales</span>
+                  </div>
+                  <div class="flex flex-col items-end gap-0.5">
+                    <span class="font-black text-blue-700 text-sm">{{ formatMoney(slot.revenue) }}</span>
+                    <span class="font-bold text-emerald-700 text-[11px]">Avg: {{ formatMoney(slot.averageTicketSize) }}</span>
+                  </div>
                 </div>
               }
             }
@@ -257,71 +275,70 @@
 
     <!-- ================== TAB 3: LIVE DASHBOARD ================== -->
     @if (activeTab() === 'dashboard') {
-      <div class="dashboard-header no-print">
-        <h1 style="margin: 0; font-size: 24px; color: #0f172a; font-weight: 800;">Live Dashboard Widgets</h1>
+      <div class="mb-6 no-print">
+        <h1 class="m-0 text-2xl text-slate-900 font-extrabold tracking-tight">Live Dashboard Widgets</h1>
       </div>
-      <div class="widgets-grid no-print" style="margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 no-print">
         
         <!-- NEW NET EARNINGS (PROFIT) WIDGET -->
-        <div class="dashboard-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-top: 16px;">
-          <div style="font-size: 14px; font-weight: 800; color: #334155; text-transform: uppercase; margin-bottom: 4px;">📈 Today's Net Earnings</div>
-          <div style="font-size: 11px; color: #64748b; margin-bottom: 16px; font-weight: 600;">
-            Sum of (Retail Price - Wholesale Cost)
-          </div>
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-col justify-center">
+          <div class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">📈 Today's Net Earnings</div>
+          <div class="text-xs font-bold text-slate-500 mb-5">Sum of (Retail Price - Wholesale Cost)</div>
           
-          <div style="display: flex; align-items: baseline; gap: 12px;">
-            <div style="font-size: 36px; font-weight: 900; color: #16a34a;">
-              {{ formatMoney(todayProfit()) }}
-            </div>
-            <div style="font-size: 13px; font-weight: 700; color: #10b981; background: #dcfce7; padding: 4px 8px; border-radius: 6px;">
-              Pure Profit
-            </div>
+          <div class="flex items-baseline gap-3">
+            <div class="text-4xl font-black text-green-600 tracking-tight">{{ formatMoney(todayProfit()) }}</div>
+            <div class="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md">Pure Profit</div>
           </div>
         </div>
 
-        <div class="dashboard-card cash-card" style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; display: flex; flex-direction: column; max-height: 400px;">
-          
-          <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 800; color: #334155; text-transform: uppercase; margin-bottom: 16px;">
-            <span>💵 Cash Drawer Control</span>
-            <button (click)="cashLogs.set([])" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 4px 8px; font-size: 11px; border-radius: 4px; font-weight: 600; cursor: pointer;">Reset</button>
+        <!-- CASH DRAWER WIDGET -->
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-col h-[400px]">
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-sm font-black text-slate-700 uppercase tracking-wider">💵 Cash Drawer Control</span>
+            <button class="bg-transparent hover:bg-red-50 text-red-500 border border-red-500 px-2 py-1 text-[11px] rounded font-bold transition-colors focus:outline-none" 
+                    (click)="cashLogs.set([])">Reset</button>
           </div>
 
-          <div style="background: #f8fafc; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; color: #0f172a; margin-bottom: 16px; border: 1px solid #e2e8f0;">
-            <span style="font-size: 13px; color: #64748b;">Expected Cash:</span>
-            <span style="font-size: 24px; color: #10b981; font-weight: 900;">{{ formatMoney(liveCashInDrawer()) }}</span>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-baseline mb-4">
+            <span class="text-sm font-bold text-slate-500">Expected Cash:</span>
+            <span class="text-3xl font-black text-emerald-600 tracking-tight">{{ formatMoney(liveCashInDrawer()) }}</span>
           </div>
 
-          <div style="flex: 1; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; background: #fafafa; margin-bottom: 12px; font-size: 12px;">
-            <div style="font-weight: bold; color: #94a3b8; text-transform: uppercase; font-size: 10px; margin-bottom: 8px; padding-left: 4px;">Today's Activity</div>
-            
+          <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl p-2 bg-white mb-4 pr-1">
+            <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 ml-1">Today's Activity</div>
             @for (log of cashLogs(); track log.id) {
-              <div style="display: flex; justify-content: space-between; padding: 6px 4px; border-bottom: 1px solid #f1f5f9;">
-                <div>
-                  <span *ngIf="log.type === 'IN'" style="color: #16a34a; font-weight: bold;">+{{ formatMoney(log.amount) }}</span>
-                  <span *ngIf="log.type === 'OUT'" style="color: #ef4444; font-weight: bold;">-{{ formatMoney(log.amount) }}</span>
-                  <span style="color: #475569; margin-left: 8px;">{{ log.reason }}</span>
+              <div class="flex justify-between items-center p-1.5 border-b border-slate-50 text-xs">
+                <div class="flex items-center gap-2">
+                  <span *ngIf="log.type === 'IN'" class="text-green-600 font-black">+{{ formatMoney(log.amount) }}</span>
+                  <span *ngIf="log.type === 'OUT'" class="text-red-500 font-black">-{{ formatMoney(log.amount) }}</span>
+                  <span class="text-slate-600 font-bold">{{ log.reason }}</span>
                 </div>
-                <span style="color: #94a3b8; font-size: 10px;">{{ log.timestamp | date:'HH:mm' }}</span>
+                <span class="text-[10px] font-bold text-slate-400">{{ log.timestamp | date:'HH:mm' }}</span>
               </div>
             } @empty {
-              <div style="text-align: center; color: #94a3b8; font-style: italic; padding: 10px 0;">No cash movements yet today.</div>
+              <div class="text-center text-slate-400 font-bold italic py-4 text-xs">No cash movements yet today.</div>
             }
           </div>
 
-          <div style="display: flex; gap: 8px; margin-top: auto;">
-            <button (click)="addManualCash()" style="flex: 1; padding: 10px; border-radius: 6px; border: none; background: #16a34a; color: white; font-weight: 700; font-size: 13px; cursor: pointer;">+ Add Cash</button>
-            <button (click)="removeManualCash()" style="flex: 1; padding: 10px; border-radius: 6px; border: none; background: #ef4444; color: white; font-weight: 700; font-size: 13px; cursor: pointer;">- Payout</button>
+          <div class="flex gap-2 mt-auto">
+            <button class="flex-1 py-2.5 rounded-lg border-none bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors active:scale-95 shadow-sm" (click)="addManualCash()">+ Add Cash</button>
+            <button class="flex-1 py-2.5 rounded-lg border-none bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors active:scale-95 shadow-sm" (click)="removeManualCash()">- Payout</button>
           </div>
-
         </div>
 
-        <div class="dashboard-card alerts-card" [style.border-color]="systemAlerts().length > 0 ? '#fca5a5' : '#e2e8f0'" [style.background]="systemAlerts().length > 0 ? '#fef2f2' : 'white'" style="border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid;">
-          <div class="card-title" [style.color]="systemAlerts().length > 0 ? '#991b1b' : '#166534'" style="font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 16px;">
+        <!-- ALERTS WIDGET -->
+        <div class="bg-white rounded-xl p-5 shadow-sm border flex flex-col"
+             [ngClass]="systemAlerts().length > 0 ? 'border-red-300 bg-red-50/50' : 'border-slate-200'">
+          <div class="text-sm font-black uppercase tracking-wider mb-4"
+               [ngClass]="systemAlerts().length > 0 ? 'text-red-800' : 'text-green-800'">
             {{ systemAlerts().length > 0 ? '⚠️ System Alerts (' + systemAlerts().length + ')' : '✅ System Healthy' }}
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto;">
+          
+          <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
             @for (alert of systemAlerts(); track alert.msg) {
-              <div [style.background]="alert.type === 'danger' ? '#fee2e2' : '#fef08a'" [style.color]="alert.type === 'danger' ? '#991b1b' : '#854d0e'" [style.border-color]="alert.type === 'danger' ? '#fecaca' : '#fde047'" style="font-size: 12px; font-weight: 600; padding: 8px; border-radius: 6px; border: 1px solid;">
+              <div class="text-xs font-bold p-2.5 rounded-lg border"
+                   [ngClass]="alert.type === 'danger' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'">
                 {{ alert.msg }}
               </div>
             }
@@ -330,30 +347,34 @@
 
       </div>
     }
-
   </div>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL (Shared styling with POS) -->
 @if (salesService.activeModal(); as modal) {
-  <div class="pos-modal-overlay is-active" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 99999;">
-    <div class="pos-modal-window" style="background: white; border-radius: 12px; width: 90%; max-width: 400px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
-      <div class="pos-modal-header" [style.background]="modal.type === 'warning' ? '#fef2f2' : (modal.type === 'success' ? '#f0fdf4' : '#f1f5f9')" [style.color]="modal.type === 'warning' ? '#991b1b' : (modal.type === 'success' ? '#166534' : '#0f172a')" style="padding: 16px; font-weight: 800; font-size: 16px; border-bottom: 1px solid #e2e8f0;">
+  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-fade-in-up">
+      <div class="p-4 font-bold text-lg border-b" 
+           [class.bg-red-50]="modal.type === 'warning'" [class.text-red-800]="modal.type === 'warning'" [class.border-red-200]="modal.type === 'warning'"
+           [class.bg-green-50]="modal.type === 'success'" [class.text-green-800]="modal.type === 'success'" [class.border-green-200]="modal.type === 'success'"
+           [class.bg-slate-50]="modal.type === 'prompt'" [class.text-slate-900]="modal.type === 'prompt'" [class.border-slate-200]="modal.type === 'prompt'">
         {{ modal.title }}
       </div>
-      <div class="pos-modal-body" style="padding: 20px; color: #334155; font-size: 14px; line-height: 1.5; white-space: pre-line;">
-        <p style="margin-top: 0;">{{ modal.message }}</p>
+      <div class="p-5 text-slate-700 whitespace-pre-line bg-white text-sm font-medium">
+        <p class="m-0">{{ modal.message }}</p>
         @if (modal.type === 'prompt') {
-          <input #promptInput type="number" class="pos-modal-input" [value]="modal.value" (input)="modal.value = promptInput.value" (keyup.enter)="modal.onConfirm(modal.value)" step="0.01" autofocus style="width: 100%; padding: 10px; margin-top: 12px; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 16px; font-weight: bold; box-sizing: border-box;" />
+          <input #promptInput type="number" step="0.01" 
+                 class="w-full mt-3 px-4 py-3 border-2 border-slate-300 rounded-xl text-lg font-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800" 
+                 [value]="modal.value" (input)="modal.value = promptInput.value" (keyup.enter)="modal.onConfirm(modal.value)" autofocus />
         }
       </div>
-      <div class="pos-modal-footer" style="padding: 16px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px;">
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
         @if (modal.type === 'prompt') {
-          <button (click)="salesService.closeModal()" style="padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; background: #e2e8f0; color: #475569;">Cancel</button>
-          <button (click)="modal.onConfirm(modal.value)" style="padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; background: #0b57d0; color: white;">Confirm</button>
+          <button class="px-5 py-2.5 font-bold rounded-xl text-slate-600 bg-slate-200 hover:bg-slate-300 active:scale-95 transition-all" (click)="salesService.closeModal()">Cancel</button>
+          <button class="px-5 py-2.5 font-bold rounded-xl bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95 transition-all" (click)="modal.onConfirm(modal.value)">Confirm</button>
         }
         @if (modal.type === 'warning' || modal.type === 'success') {
-          <button (click)="salesService.closeModal()" style="padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; background: #ef4444; color: white;">Dismiss</button>
+          <button class="px-5 py-2.5 font-bold rounded-xl bg-red-500 text-white shadow-md hover:bg-red-600 active:scale-95 transition-all" (click)="salesService.closeModal()">Dismiss</button>
         }
       </div>
     </div>

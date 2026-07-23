@@ -1,46 +1,54 @@
-
-
-<div class="forecast-container" style="background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 900px; display: flex; flex-direction: column; overflow: hidden;">
+<div class="bg-white rounded-xl shadow-xl w-full max-w-[900px] flex flex-col overflow-hidden font-sans">
   
-  <div class="forecast-header" style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-    <h2 style="margin: 0; color: #0f172a; font-size: 16px;">📅 5-Month Expiration Control Window</h2>
-    <button class="close-btn" (click)="closeForecast()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #64748b;">X</button>
+  <!-- Header -->
+  <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+    <h2 class="m-0 text-slate-900 text-base font-bold">📅 5-Month Expiration Control Window</h2>
+    <button class="bg-transparent border-none text-lg cursor-pointer text-slate-500 hover:text-slate-700 transition-colors focus:outline-none" (click)="closeForecast()">
+      ✕
+    </button>
   </div>
 
   <!-- Date Inputs pre-filled by the backend -->
-  <div class="filter-controls" style="padding: 12px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; display: flex; gap: 16px; align-items: center; font-size: 13px;">
-    <label style="font-weight: 600; color: #475569;">From: <input type="date" [(ngModel)]="startDate" style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; margin-left: 4px; font-family: inherit;"></label>
-    <label style="font-weight: 600; color: #475569;">To: <input type="date" [(ngModel)]="endDate" style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; margin-left: 4px; font-family: inherit;"></label>
+  <div class="px-5 py-3 bg-slate-100 border-b border-slate-200 flex gap-4 items-center text-sm">
+    <label class="font-semibold text-slate-600 flex items-center">
+      From: 
+      <input type="date" [(ngModel)]="startDate" class="ml-2 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-sans text-slate-800 bg-white">
+    </label>
+    <label class="font-semibold text-slate-600 flex items-center">
+      To: 
+      <input type="date" [(ngModel)]="endDate" class="ml-2 px-2 py-1 border border-slate-300 rounded focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-sans text-slate-800 bg-white">
+    </label>
   </div>
 
   <!-- The Interactive Grid -->
-  <div class="modal-table-wrapper" style="overflow-y: auto; padding: 20px; max-height: 60vh;">
-    <table class="forecast-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-      <thead style="background: #f1f5f9; color: #475569; font-weight: 600; position: sticky; top: 0; z-index: 10;">
-        <tr style="border-bottom: 1px solid #e2e8f0;">
-          <th style="padding: 10px;">Barcode</th>
-          <th style="padding: 10px;">Product Name</th>
-          <th style="padding: 10px; text-align: center;">Current Stock</th>
-          <th style="padding: 10px;">Expiration Date</th>
-          <th style="padding: 10px; text-align: center;">Status</th>
+  <div class="overflow-y-auto p-5 max-h-[60vh]">
+    <table class="w-full border-collapse text-left text-sm">
+      <thead class="bg-slate-100 text-slate-600 font-semibold sticky top-0 z-10 shadow-sm">
+        <tr class="border-b border-slate-200">
+          <th class="p-2.5">Barcode</th>
+          <th class="p-2.5">Product Name</th>
+          <th class="p-2.5 text-center">Current Stock</th>
+          <th class="p-2.5">Expiration Date</th>
+          <th class="p-2.5 text-center">Status</th>
         </tr>
       </thead>
       <tbody>
         @for (item of filteredProducts; track item.id) {
-          <tr (dblclick)="openQuickDateEdit(item)" style="border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.1s;">
-            <td style="padding: 10px; font-family: monospace; font-weight: bold; color: #64748b;">{{ item.id }}</td>
-            <td style="padding: 10px; color: #1e293b;"><strong>{{ item.name }}</strong></td>
-            <td style="padding: 10px; text-align: center; font-weight: 600;">{{ item.stockQuantity }} pcs</td>
-            <td style="padding: 10px; color: #0f172a;" class="clickable-date">✏️ {{ item.expire || 'Not Tracked' }}</td>
-            <td style="padding: 10px; text-align: center;">
-              <span [class]="getStatusClass(item.expire)" style="font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+          <tr (dblclick)="openQuickDateEdit(item)" class="border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors">
+            <td class="p-2.5 font-mono font-bold text-slate-500">{{ item.id }}</td>
+            <td class="p-2.5 text-slate-800 font-bold">{{ item.name }}</td>
+            <td class="p-2.5 text-center font-semibold text-slate-700">{{ item.stockQuantity }} pcs</td>
+            <td class="p-2.5 text-slate-900">✏️ {{ item.expire || 'Not Tracked' }}</td>
+            <td class="p-2.5 text-center">
+              <!-- Note: Your getStatusClass() should return text and background colors (e.g., 'bg-red-100 text-red-700') -->
+              <span [class]="getStatusClass(item.expire)" class="text-[11px] px-1.5 py-0.5 rounded text-center font-bold inline-block">
                 {{ getStatusText(item.expire) }}
               </span>
             </td>
           </tr>
         } @empty {
           <tr>
-            <td colspan="5" style="text-align: center; color: #94a3b8; padding: 40px 0;">
+            <td colspan="5" class="text-center text-slate-400 py-10 font-medium">
               No products found expiring within this 5-month window.
             </td>
           </tr>

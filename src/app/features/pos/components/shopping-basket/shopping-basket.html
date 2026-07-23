@@ -1,49 +1,61 @@
-<div class="basket-container">
+<div class="flex flex-col h-full bg-slate-50 font-sans">
   
-  <div class="basket-header">
-    <div class="header-left">
-      <span class="material-icons basket-icon">shopping_cart</span>
-      <span class="basket-title">Active checkout basket</span>
+  <!-- Basket Header -->
+  <div class="flex justify-between items-center px-4 py-3 bg-white border-b border-slate-200 flex-shrink-0 z-10 shadow-sm">
+    <div class="flex items-center gap-2 text-slate-800">
+      <span class="text-xl">🛒</span>
+      <span class="font-black text-sm uppercase tracking-wider">Active Checkout</span>
     </div>
-    <span class="items-badge">{{ salesService.totalItems() }} items</span>
+    <span class="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-md text-xs font-bold">
+      {{ salesService.totalItems() }} items
+    </span>
   </div>
 
-  <div class="basket-items-viewport" #scrollViewport>
+  <!-- Scrollable Items Viewport -->
+  <div class="flex-1 overflow-y-auto p-3" #scrollViewport>
     @if (salesService.basket().length === 0) {
-      <div class="empty-state">
-        <span class="material-icons empty-icon">shopping_cart_checkout</span>
-        <p class="empty-text">Your checkout basket is currently empty.</p>
-        <span class="empty-hint">Add catalog products to build transaction totals</span>
+      <div class="flex flex-col items-center justify-center h-full text-center p-6 text-slate-400">
+        <span class="text-5xl mb-3 opacity-50">🛒</span>
+        <p class="font-bold text-slate-500 mb-1">Your checkout basket is empty.</p>
+        <span class="text-xs font-semibold">Add catalog products to build transaction totals</span>
       </div>
     } @else {
-      <div class="item-list">
+      <div class="flex flex-col gap-2">
         @for (item of salesService.basket(); track item.product.id) {
-          <div class="basket-item-row" 
-               [class.weighted-item]="item.product.isWeighted"
-               [class.is-flashing]="salesService.highlightedItemId() === item.product.id">
+          <div class="flex justify-between items-center p-3 bg-white border rounded-xl shadow-sm transition-colors"
+               [ngClass]="{
+                 'border-slate-200': !item.product.isWeighted && salesService.highlightedItemId() !== item.product.id,
+                 'border-l-4 border-l-blue-500 border-slate-200': item.product.isWeighted,
+                 'bg-blue-50 border-blue-400': salesService.highlightedItemId() === item.product.id
+               }">
             
-            <div class="item-details">
-              <span class="item-name">
-                @if (item.isRefund) { <span class="refund-badge">REFUND</span> }
+            <!-- Item Info -->
+            <div class="flex flex-col flex-1 min-w-0 pr-2">
+              <span class="text-sm font-bold text-slate-800 truncate">
+                @if (item.isRefund) { <span class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[10px] font-black mr-1 uppercase align-middle">Refund</span> }
                 {{ item.product.name }}
               </span>
-              <span class="item-unit-price">
+              <span class="text-xs text-slate-500 font-semibold mt-0.5">
                 {{ formatMoney(item.product.price) }} / {{ item.product.isWeighted ? 'kg' : 'pc' }}
               </span>
             </div>
 
-            <div class="quantity-controls">
-              <button type="button" class="btn-qty" (click)="salesService.removeFromBasket(item.product, item.isRefund)">➖</button>
+            <!-- Quantity Controls -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg flex-shrink-0">
+              <button type="button" class="w-7 h-7 flex items-center justify-center bg-white rounded shadow-sm text-slate-600 hover:bg-slate-50 font-bold active:scale-95 transition-transform focus:outline-none" 
+                      (click)="salesService.removeFromBasket(item.product, item.isRefund)">➖</button>
               
-              <span class="qty-display">
+              <span class="text-xs font-bold w-12 text-center text-slate-800">
                 {{ item.product.isWeighted ? item.quantity + ' kg' : item.quantity + ' pcs' }}
               </span>
               
-              <button type="button" class="btn-qty" (click)="salesService.addToBasket(item.product, item.isRefund)">➕</button>
+              <button type="button" class="w-7 h-7 flex items-center justify-center bg-white rounded shadow-sm text-slate-600 hover:bg-slate-50 font-bold active:scale-95 transition-transform focus:outline-none" 
+                      (click)="salesService.addToBasket(item.product, item.isRefund)">➕</button>
             </div>
 
-            <div class="price-section">
-              <span class="line-total" [class.negative-price]="item.isRefund">
+            <!-- Line Total -->
+            <div class="flex flex-col items-end ml-3 min-w-[70px] flex-shrink-0">
+              <span class="text-[15px] font-black" [ngClass]="item.isRefund ? 'text-red-600' : 'text-slate-800'">
                 {{ formatMoney(item.isRefund ? -(item.product.price * item.quantity) : (item.product.price * item.quantity)) }}
               </span>
             </div>
@@ -54,31 +66,51 @@
     }
   </div>
 
-  <div class="basket-summary-footer">
+  <!-- Basket Summary Footer -->
+  <div class="bg-white border-t border-slate-200 p-4 flex flex-col gap-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-10 flex-shrink-0">
     
     @if (salesService.basket().length > 0) {
-      <div class="summary-matrix">
-        <div class="summary-row">
-          <span class="summary-label">Net Subtotal</span>
-          <span class="summary-value">{{ formatMoney(salesService.netSubtotal()) }}</span>
+      <div class="flex flex-col gap-2">
+        <div class="flex justify-between items-center text-sm font-semibold text-slate-500">
+          <span>Net Subtotal</span>
+          <span>{{ formatMoney(salesService.netSubtotal()) }}</span>
         </div>
-        <div class="summary-row">
-          <span class="summary-label">Included VAT</span>
-          <span class="summary-value">{{ formatMoney(salesService.taxAmount()) }}</span>
+        <div class="flex justify-between items-center text-sm font-semibold text-slate-500">
+          <span>Included VAT</span>
+          <span>{{ formatMoney(salesService.taxAmount()) }}</span>
         </div>
-        <div class="summary-divider"></div>
-        <div class="summary-row total-row">
-          <span class="grand-total-label">Grand Total</span>
-          <span class="grand-total-value">{{ formatMoney(salesService.grandTotal()) }}</span>
+        <div class="h-px bg-slate-200 my-1"></div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-black uppercase text-slate-800 tracking-wider">Grand Total</span>
+          <span class="text-2xl font-black text-blue-700">{{ formatMoney(salesService.grandTotal()) }}</span>
         </div>
       </div>
     }
 
-    <div class="payment-method-panel">
-      <div class="payment-button-group">
-        <button type="button" class="btn-payment" (click)="salesService.processPayment('Cash')" [disabled]="salesService.basket().length === 0">💵 Cash</button>
-        <button type="button" class="btn-payment" (click)="salesService.processPayment('Card')" [disabled]="salesService.basket().length === 0">💳 Card</button>
-        <button type="button" class="btn-payment" (click)="salesService.processPayment('Debit')" [disabled]="salesService.basket().length === 0">🏦 Deb</button>
+    <!-- Payment Buttons -->
+    <div>
+      <div class="grid grid-cols-3 gap-2">
+        <button type="button" 
+                (click)="salesService.processPayment('Cash')" 
+                [disabled]="salesService.basket().length === 0"
+                class="py-3 px-1 rounded-xl font-bold text-sm text-white bg-green-500 hover:bg-green-600 active:scale-95 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex flex-col items-center justify-center gap-1">
+          <span class="text-lg leading-none">💵</span>
+          <span>Cash</span>
+        </button>
+        <button type="button" 
+                (click)="salesService.processPayment('Card')" 
+                [disabled]="salesService.basket().length === 0"
+                class="py-3 px-1 rounded-xl font-bold text-sm text-white bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex flex-col items-center justify-center gap-1">
+          <span class="text-lg leading-none">💳</span>
+          <span>Card</span>
+        </button>
+        <button type="button" 
+                (click)="salesService.processPayment('Debit')" 
+                [disabled]="salesService.basket().length === 0"
+                class="py-3 px-1 rounded-xl font-bold text-sm text-white bg-amber-500 hover:bg-amber-600 active:scale-95 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex flex-col items-center justify-center gap-1">
+          <span class="text-lg leading-none">🏦</span>
+          <span>Debt</span>
+        </button>
       </div>
     </div>
 
