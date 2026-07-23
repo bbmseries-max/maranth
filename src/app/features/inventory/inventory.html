@@ -46,14 +46,15 @@
       </div>
       
       <!-- BOTTOM ROW: Filters -->
-      <div class="flex gap-2 overflow-x-auto pb-1 items-center w-full hide-scrollbar">
-        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="h-[38px] px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 flex-shrink-0">
+      <div class="flex gap-2 overflow-x-auto py-2 items-center w-full hide-scrollbar">
+        
+        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="h-[38px] px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 flex-shrink-0 cursor-pointer">
           <option value="active">🟢 Active Items</option>
           <option value="inactive">🔴 Inactive Items</option>
           <option value="all">⚪ All Items</option>
         </select>
 
-        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="h-[38px] px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 flex-shrink-0 max-w-[150px]">
+        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="h-[38px] px-3 border border-slate-300 rounded-lg bg-white font-semibold text-sm outline-none focus:border-blue-500 flex-shrink-0 cursor-pointer">
           <option value="ALL">📁 All Categories</option>
           @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
         </select>
@@ -70,6 +71,7 @@
             <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> 
           }
         </div>
+
       </div>
     </div>
       
