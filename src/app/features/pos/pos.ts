@@ -32,6 +32,24 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.triggerSearchFocus();
   }
 
+   public getProductDisplay(name: string): { icon: string, text: string } {
+    if (!name) return { icon: '⚖️', text: 'Unknown' };
+    
+    const cleanName = name.trim();
+    // This checks if the first character is a normal letter/number (English or Greek)
+    const startsWithLetter = /^[a-zA-Z0-9\u0370-\u03FF]/.test(cleanName);
+    
+    if (startsWithLetter) {
+      // If no emoji was typed, return a default scale icon and the full name!
+      return { icon: '⚖️', text: cleanName }; 
+    } else {
+      // If there IS an emoji, safely extract it and separate the text
+      const icon = Array.from(cleanName)[0];
+      const text = cleanName.slice(icon.length).trim();
+      return { icon, text };
+    }
+  }
+
   public showWeightedShelf = signal<boolean>(false);
   public showLooseShelf = signal<boolean>(false);
   public isSidebarMobileOpen = signal<boolean>(false); 
@@ -292,24 +310,6 @@ public handleProductClick(prod: Product): void {
       
       // ⭐ Keeps the cursor in the search box after you click, so you can keep typing or scanning!
       this.salesService.triggerSearchFocus(); 
-    }
-  }
-
-  public getProductDisplay(name: string): { icon: string, text: string } {
-    if (!name) return { icon: '⚖️', text: 'Unknown' };
-    
-    const cleanName = name.trim();
-    // This checks if the first character is a normal letter/number (English or Greek)
-    const startsWithLetter = /^[a-zA-Z0-9\u0370-\u03FF]/.test(cleanName);
-    
-    if (startsWithLetter) {
-      // If no emoji was typed, return a default scale icon and the full name!
-      return { icon: '⚖️', text: cleanName }; 
-    } else {
-      // If there IS an emoji, safely extract it and separate the text
-      const icon = Array.from(cleanName)[0];
-      const text = cleanName.slice(icon.length).trim();
-      return { icon, text };
     }
   }
 }
