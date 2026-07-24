@@ -113,6 +113,29 @@ export class PosComponent implements OnInit, AfterViewInit {
 
   constructor(public themeService: ThemeService) {
 
+      // ✅ The upgraded focus effect
+    effect(() => {
+      // Read the signal so the effect knows to track it
+      const triggerTick = this.salesService.focusSearchTrigger();
+      
+      if (triggerTick > 0) {
+        setTimeout(() => {
+          
+          // 1. Force the browser to drop focus from the +/- buttons (or any other button)
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+
+          // 2. Snap focus directly to the search bar
+          if (this.searchInput && this.searchInput.nativeElement) {
+            this.searchInput.nativeElement.focus();
+            this.searchInput.nativeElement.select(); 
+          }
+          
+        }, 50);
+      }
+    });
+
     effect(() => {
       // Read the signal so the effect knows to track it
       const triggerTick = this.salesService.focusSearchTrigger();
