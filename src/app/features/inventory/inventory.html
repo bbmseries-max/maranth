@@ -352,42 +352,87 @@
     }
   }
 
-  <!-- ========================================== -->
-  <!-- TAB 4: STAFF APPROVALS -->
+ <!-- ========================================== -->
+  <!-- TAB 4: STAFF MANAGEMENT -->
   <!-- ========================================== -->
   @if (activeTab() === 'staff') {
-    <div class="flex-1 min-h-0 overflow-y-auto p-4 transition-colors duration-300">
-      <div class="max-w-[480px] mx-auto bg-panel rounded-2xl shadow-lg border border-line overflow-hidden mt-6">
-        
-        <div class="p-6 border-b border-line bg-base text-center">
-          <h3 class="m-0 text-primary font-black text-xl">👥 Staff Approvals</h3>
-          <p class="mt-1 mb-0 text-sm font-semibold text-muted">Authorize or revoke POS access.</p>
-        </div>
-        
-        <div class="p-4 bg-hover flex flex-col gap-2">
-          @for (user of salesService.registeredCashiers(); track user.username) {
-            <div class="flex justify-between items-center p-4 bg-panel border border-line rounded-xl shadow-sm">
-              
-              <div class="flex flex-col">
-                <div class="text-base font-black text-primary">{{ user.username }}</div>
-                <div class="text-[11px] font-bold mt-1.5 px-2 py-1 rounded-md inline-block w-max"
-                     [ngClass]="user.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-hover text-muted'">
-                  {{ user.role === 'admin' ? '🛡️ Admin' : '👤 Cashier' }}
-                </div>
-              </div>
-              
-              <button (click)="salesService.toggleCashierApproval(user.username, !user.isApproved)"
-                      class="px-4 py-2 rounded-lg font-bold border-none cursor-pointer transition-all w-[110px] shadow-sm active:scale-95"
-                      [ngClass]="user.isApproved ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-line hover:brightness-95 text-primary'">
-                {{ user.isApproved ? '✅ Active' : '❌ Blocked' }}
-              </button>
-              
-            </div>
-          } @empty {
-            <div class="text-center p-8 text-muted font-bold bg-panel rounded-xl border border-dashed border-line">No users registered yet.</div>
-          }
-        </div>
+    
+    <!-- 1. HEADER ROW -->
+    <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
+      <div class="flex justify-between items-center h-12 px-2">
+        <h2 class="text-xl font-black text-primary m-0 flex items-center gap-2">👥 Team Management</h2>
+        <button (click)="prepareNewStaff()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add Staff</button>
       </div>
     </div>
+    
+    <!-- 2. MAIN STAFF LIST -->
+    <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
+      @for (staff of salesService.registeredCashiers(); track staff.username) {
+        <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm transition-all shrink-0 flex justify-between items-center p-4 hover:bg-hover">
+          
+          <!-- Staff Info & Badges -->
+          <div class="flex flex-col gap-1.5">
+            <div class="font-bold text-primary text-lg flex items-center gap-2">
+              {{ staff.username }}
+              <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded-md border"
+                    [ngClass]="staff.role === 'admin' ? 'bg-purple-500/10 text-purple-600 border-purple-500/30' : 'bg-blue-500/10 text-blue-600 border-blue-500/30'">
+                {{ staff.role }}
+              </span>
+            </div>
+            <div class="text-xs font-semibold text-muted tracking-widest">PIN: ••••</div>
+          </div>
+
+          <!-- Instant Approval Toggle -->
+          <button (click)="salesService.toggleCashierApproval(staff.username, !staff.isApproved)"
+                  class="px-4 py-2 rounded-lg text-xs font-bold transition-all border shadow-sm active:scale-95 focus:outline-none"
+                  [ngClass]="staff.isApproved
+                    ? 'bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/20'
+                    : 'bg-red-500/10 border-red-500/30 text-red-600 hover:bg-red-500/20'">
+            {{ staff.isApproved ? '🟢 Active Access' : '🔴 Revoked' }}
+          </button>
+        </div>
+      } @empty {
+        <div class="text-center p-10 font-bold text-muted bg-hover rounded-xl border-2 border-dashed border-line">No staff members registered.</div>
+      }
+    </div>
+
+    <!-- 3. ✨ NEW STAFF MODAL ✨ -->
+    @if (editingStaffId() === 'NEW') {
+      <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div class="bg-base border border-line rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+          
+          <div class="flex justify-between items-center p-4 border-b border-line bg-panel">
+            <h2 class="text-xl font-black text-green-600 m-0">✨ Register New User</h2>
+            <button (click)="editingStaffId.set(null)" class="text-muted hover:text-red-500 hover:bg-red-500/10 w-8 h-8 flex items-center justify-center rounded-lg text-lg font-bold transition-colors focus:outline-none">✖</button>
+          </div>
+          
+          <div class="p-5 flex flex-col gap-5">
+            <div class="flex flex-col">
+              <label class="text-xs font-bold text-muted uppercase mb-1">Username</label>
+              <input type="text" [(ngModel)]="staffForm.username" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" placeholder="e.g. maria_cashier" />
+            </div>
+            
+            <div class="flex flex-col">
+              <label class="text-xs font-bold text-muted uppercase mb-1">Secure PIN</label>
+              <input type="password" [(ngModel)]="staffForm.pin" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-lg tracking-widest font-mono font-bold outline-none focus:border-blue-500" placeholder="••••" />
+            </div>
+
+            <div class="flex flex-col">
+              <label class="text-xs font-bold text-muted uppercase mb-1">Account Role</label>
+              <select [(ngModel)]="staffForm.role" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500">
+                <option value="cashier">Standard Cashier (POS Only)</option>
+                <option value="admin">Store Admin (Full Access)</option>
+              </select>
+            </div>
+            
+            <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-line">
+              <button class="px-5 py-2 rounded-lg font-bold text-muted hover:bg-hover transition-colors" (click)="editingStaffId.set(null)">Cancel</button>
+              <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveNewStaff()">💾 Create User</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    }
   }
 </div>

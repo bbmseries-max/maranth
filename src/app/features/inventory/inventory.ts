@@ -19,6 +19,10 @@ export class InventoryComponent {
   // ⭐ TAB CONTROLLER
   public activeTab = signal<string>('products');
 
+  //STAFF 
+  public editingStaffId = signal<string | null>(null);
+  public staffForm = { username: '', pin: '', role: 'cashier' as 'admin' | 'cashier' };
+
   // Search logic for products tab
   public searchQuery = signal<string>('');
   
@@ -226,12 +230,39 @@ export class InventoryComponent {
   }
 
   // ==========================================
+  // STAFF MANAGEMENT STATE
+  // ==========================================
+  
+  public prepareNewStaff(): void {
+    this.staffForm = { username: '', pin: '', role: 'cashier' };
+    this.editingStaffId.set('NEW');
+  }
+
+  public saveNewStaff(): void {
+    if (!this.staffForm.username || !this.staffForm.pin) return;
+
+    const success = this.salesService.registerNewCashier(
+      this.staffForm.username,
+      this.staffForm.pin,
+      this.staffForm.role
+    );
+
+    if (!success) {
+      alert('A user with that username already exists!');
+      return;
+    }
+    
+    this.editingStaffId.set(null); // Close the modal
+  }
+
+  // ==========================================
   // HELPERS
   // ==========================================
   public cancelAllEdits(): void {
     this.editingProductId = null;
     this.editingCategoryId = null;
     this.editingSupplierId = null;
+    this.editingStaffId.set(null);
   }
 
   public formatMoney(amount: any): string {
