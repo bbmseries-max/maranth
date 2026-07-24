@@ -297,6 +297,7 @@ export class SalesService {
             onConfirm: () => {
               this.closeModal();
               this.triggerSearchFocus();
+              this.triggerSearchFocus();
             }
           });
           return; 
@@ -397,7 +398,7 @@ export class SalesService {
         this.closeModal();
         this.triggerSearchFocus();
       }
-    }, 2000);
+    }, 1500);
   }
 
   public suspendOrder(): void {

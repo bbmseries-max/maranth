@@ -173,7 +173,7 @@ export class PosComponent implements OnInit, AfterViewInit {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays <= 0) return 'danger'; 
-    if (diffDays <= 14) return 'warning'; 
+    if (diffDays <= 6) return 'warning'; 
     return 'safe'; 
   }
 
