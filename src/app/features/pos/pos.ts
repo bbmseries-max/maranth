@@ -114,16 +114,6 @@ export class PosComponent implements OnInit, AfterViewInit {
   constructor(public themeService: ThemeService) {
 
     effect(() => {
-      const trigger = this.salesService.focusSearchTrigger();
-      if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {
-        setTimeout(() => {
-          this.searchQuery.set(''); 
-          this.searchInput.nativeElement.focus();
-        }, 50);
-      }
-    });
-
-    effect(() => {
       // Read the signal so the effect knows to track it
       const triggerTick = this.salesService.focusSearchTrigger();
       
