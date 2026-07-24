@@ -106,6 +106,10 @@ export class InventoryComponent {
   }
 
   public prepareNewProduct(): void {
+    console.log("Add button was clicked! Setting up new product...");
+    if (this.searchQuery()) {
+      this.searchQuery.set('');
+    }
   this.editingProductId = 'NEW';
   this.editForm = { 
     id: 'PROD-' + Date.now().toString().slice(-6),
@@ -123,6 +127,9 @@ export class InventoryComponent {
     altBarcodes: [],
     isPinned: false,
   };
+  setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
 }
 
 // ==========================================
