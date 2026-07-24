@@ -46,18 +46,20 @@
   <!-- ========================================== -->
   @if (activeTab() === 'products') {
     
-    <!-- Reusable Product Form Template (Now safely at the top!) -->
+    <!-- 1. REUSABLE FORM (Includes Null-Safeguards so old items don't crash) -->
     <ng-template #productFormTemplate>
       <div class="p-4 bg-base border-t border-line flex flex-col gap-4 transition-colors duration-300">
+        
         <!-- ALTERNATIVE BARCODES -->
         <div class="p-3 border border-dashed border-line rounded-lg bg-hover">
-          <label class="block font-bold text-[13px] text-primary mb-2">Alternative Barcodes (New Packaging, Promos)</label>
+          <label class="block font-bold text-[13px] text-primary mb-2">Alternative Barcodes</label>
           <div class="flex gap-2 mb-3">
             <input type="text" [(ngModel)]="newAltBarcode" placeholder="Scan or type new barcode..." class="flex-1 px-3 py-2 border border-line bg-panel text-primary rounded-md text-sm outline-none focus:border-blue-500" (keyup.enter)="addAltBarcode()" />
             <button type="button" (click)="addAltBarcode()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-md font-bold text-sm transition-colors shadow-sm">+ Add</button>
           </div>
           <div class="flex flex-wrap gap-2">
-            @for (code of editForm.altBarcodes; track code) {
+            <!-- Safeguard: (editForm.altBarcodes || []) -->
+            @for (code of (editForm.altBarcodes || []); track $index) {
               <div class="bg-panel border border-line text-primary px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
                 <span>{{ code }}</span>
                 <button type="button" (click)="removeAltBarcode(code)" class="bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] focus:outline-none">✕</button>
@@ -90,7 +92,7 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Expiration Date</label><input type="date" [(ngModel)]="editForm.expire" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-mono font-bold outline-none focus:border-blue-500" /></div>
-          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Low Stock Warning At</label><input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Low Stock Warning At</label><input type="number" [(ngModel)]="editForm.minStockWarning" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -122,8 +124,8 @@
       </div>
     </ng-template>
 
+    <!-- 2. SEARCH AND FILTERS ROW -->
     <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
-      <!-- TOP ROW: Search & Add -->
       <div class="flex gap-2 items-center">
         <div class="flex-1 flex items-center bg-panel border border-line rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
           <span class="text-lg text-muted mr-2">🔍</span>
@@ -133,7 +135,6 @@
         <button (click)="prepareNewProduct()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
       </div>
       
-      <!-- BOTTOM ROW: Filters -->
       <div class="flex flex-wrap gap-3 items-center w-full py-1">
         <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
           <option value="active">🟢 Active Items</option>
@@ -151,23 +152,39 @@
         </button>
         <div class="flex items-center bg-panel border border-line rounded-lg pr-2 focus-within:border-blue-500 transition-colors">
           <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-primary outline-none bg-transparent" title="Filter by expiration date" />
-          @if (expireFilterDate()) { 
-            <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> 
-          }
+          @if (expireFilterDate()) { <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> }
         </div>
       </div>
     </div>
+      
+    <!-- 3. MAIN PRODUCT LIST -->
+    <div class="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">      
+      @for (prod of filteredProducts(); track prod.id) {
+        <div [id]="'prod-card-' + prod.id" class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingProductId === prod.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
+          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleEdit(prod)">
+            <div class="flex flex-col gap-1">
+              <div class="font-bold text-primary">{{ prod.name }}</div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold px-2 py-0.5 rounded-md" [ngClass]="prod.stockQuantity <= (prod.minStockWarning || 5) ? 'bg-red-100 text-red-700' : 'bg-hover text-muted'">📦 {{ prod.stockQuantity }}</span>
+                <span class="text-xs font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{{ formatMoney(prod.price) }}</span>
+              </div>
+            </div>
+            <div class="text-lg text-muted">{{ editingProductId === prod.id ? '🔼' : '✏️' }}</div>
+          </div>
+          @if (editingProductId === prod.id) {
+            <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
+          }
+        </div>
+      } @empty {
+        <div class="text-center p-10 font-bold text-muted bg-hover rounded-xl border-2 border-dashed border-line">No products found.</div>
+      }
+    </div>
 
-    <!-- ========================================== -->
-    <!-- ✨ NEW PRODUCT MODAL ✨ -->
-    <!-- ========================================== -->
+    <!-- 4. ✨ THE NEW MODAL ✨ -->
     @if (editingProductId === 'NEW') {
       <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
         
-        <!-- Modal Container -->
         <div class="bg-base border border-line rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-          
-          <!-- Header -->
           <div class="flex justify-between items-center p-4 border-b border-line bg-panel">
             <h2 class="text-xl font-black text-green-600 m-0">✨ Register New Item</h2>
             <button (click)="cancelAllEdits()" class="text-muted hover:text-red-500 hover:bg-red-500/10 w-8 h-8 flex items-center justify-center rounded-lg text-lg font-bold transition-colors focus:outline-none">
@@ -175,14 +192,14 @@
             </button>
           </div>
 
-          <!-- Body (Scrollable area that injects your existing form) -->
           <div class="flex-1 overflow-y-auto">
              <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
           </div>
-          
         </div>
+
       </div>
     }
+
   }
 
   <!-- ========================================== -->
