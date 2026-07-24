@@ -213,14 +213,13 @@
             @for (prod of weightedProducts(); track prod.id) {
               <div class="bg-panel border-2 border-green-500 rounded-xl p-2 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:bg-green-50 active:scale-95 transition-all h-28 group focus:outline-none" (click)="handleProductClick(prod)">
                 
-                <!-- 1. The massive Emoji extracted from the first character -->
-                <span class="text-3xl group-hover:scale-110 transition-transform duration-300">
-                  {{ prod.name.charAt(0) }}
+               <span class="text-3xl group-hover:scale-110 transition-transform duration-300">
+                  {{ getProductDisplay(prod.name).icon }}
                 </span>
                 
-                <!-- 2. The Text Name (without the emoji), keeping your exact 12-char cutoff -->
+                <!-- 2. The Smart Text (Safely cut to 12 characters) -->
                 <span class="text-primary font-bold text-[13px] leading-tight uppercase text-center mt-1">
-                  {{ prod.name.substring(1).trim().length > 12 ? prod.name.substring(1).trim().substring(0, 12) + '..' : prod.name.substring(1).trim() }}
+                  {{ getProductDisplay(prod.name).text.length > 12 ? getProductDisplay(prod.name).text.substring(0, 12) + '..' : getProductDisplay(prod.name).text }}
                 </span>
 
                 <!-- 3. Your awesome green price layout (scaled down slightly to fit) -->
@@ -240,14 +239,12 @@
           @for (prod of getPinnedProducts(); track prod.id) {
             <button (click)="handleProductClick(prod)" 
                     class="bg-sky-100/70 border-2 border-sky-300 rounded-2xl p-3 flex flex-col items-center justify-between gap-2 min-h-[105px] shadow-sm hover:shadow-md hover:bg-sky-200/80 hover:border-sky-400 transition-all cursor-pointer active:scale-95">
-              <span class="text-3xl group-hover:scale-110 transition-transform duration-300">
-                  {{ getProductDisplay(prod.name).icon }}
-                </span>
-                
-                <!-- 2. The Smart Text (Safely cut to 12 characters) -->
-                <span class="text-primary font-bold text-[13px] leading-tight uppercase text-center mt-1">
-                  {{ getProductDisplay(prod.name).text.length > 12 ? getProductDisplay(prod.name).text.substring(0, 12) + '..' : getProductDisplay(prod.name).text }}
-                </span>
+              <span class="font-extrabold text-[13px] text-primary text-center leading-tight uppercase line-clamp-2 break-words">
+                {{ prod.name | slice:0:15 }}{{ prod.name.length > 15 ? '.' : '' }}
+              </span>
+              <span class="font-black text-green-700 bg-panel border-2 border-green-500 px-3 py-1.5 rounded-xl text-xl whitespace-nowrap shadow-sm">
+                {{ formatMoney(prod.price) }}
+              </span>
             </button>
           } @empty {
             <div class="col-span-full text-center p-6 bg-sky-50 rounded-2xl border-2 border-dashed border-sky-200 text-sky-700 font-bold text-sm">
