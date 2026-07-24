@@ -25,6 +25,13 @@ export class PosComponent implements OnInit, AfterViewInit {
   public searchQuery = signal<string>('');
   public selectedCategoryId = signal<string>('ALL');
 
+  // 👇 PASTE THIS MISSING FUNCTION RIGHT HERE 👇
+  public selectCategory(categoryId: string): void {
+    this.selectedCategoryId.set(categoryId);
+    this.searchQuery.set('');
+    this.salesService.triggerSearchFocus();
+  }
+
   public showWeightedShelf = signal<boolean>(false);
   public showLooseShelf = signal<boolean>(false);
   public isSidebarMobileOpen = signal<boolean>(false); 
