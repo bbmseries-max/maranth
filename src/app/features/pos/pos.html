@@ -106,66 +106,75 @@
   <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
     
     <aside class="w-full md:w-[280px] bg-slate-900 text-white flex-shrink-0 flex flex-col border-r border-slate-800 z-10 transition-all">
-
-  <!-- 1. THE ACTION BUTTONS (Restored vibrant colors) -->
-  <div class="grid grid-cols-3 gap-2 p-3 border-b border-slate-800 shadow-sm">
-    <button class="bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-bold shadow-md active:scale-95 transition-all text-[13px] tracking-wide">
-      Clear
-    </button>
-    <button class="bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg font-bold shadow-md active:scale-95 transition-all text-[13px] tracking-wide">
-      Suspend
-    </button>
-    <button class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold shadow-md active:scale-95 transition-all text-[13px] tracking-wide">
-      Refund
-    </button>
-  </div>
-
-  <!-- 2. TOGGLING MENU (Scrollable, max 4 lines) -->
-  <div class="flex flex-col border-b border-slate-800">
-    <!-- Toggle Header (Assuming you have an isMenuOpen signal or variable) -->
-    <button (click)="isMenuOpen.set(!isMenuOpen())" class="flex justify-between items-center w-full p-3 font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors focus:outline-none">
-      <span>📁 Quick Categories</span>
-      <span class="text-xs transition-transform duration-300" [ngClass]="isMenuOpen() ? 'rotate-180' : ''">🔽</span>
-    </button>
-
-    <!-- The Dropdown List (max-h-[168px] fits exactly 4 lines at 42px each) -->
-    @if (isMenuOpen()) {
-      <div class="max-h-[168px] overflow-y-auto flex flex-col bg-slate-950/50 hide-scrollbar shadow-inner">
-        <!-- Replace this loop with your actual items -->
-        @for (cat of salesService.categories(); track cat.id) {
-          <button class="text-left px-4 py-2.5 text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border-b border-slate-800/50 last:border-none focus:outline-none">
-            {{ cat.name }}
+      
+      <!-- 2. THE 3 QUICK ACTION BUTTONS -->
+      <div class="flex gap-2 p-3 bg-slate-950">
+        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold transition-colors shadow-sm"
+                [ngClass]="salesService.isRefundMode() ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                (click)="salesService.isRefundMode.set(!salesService.isRefundMode()); salesService.triggerSearchFocus()">
+          <span class="text-base mb-0.5">↩️</span>
+          <span>Refund</span>
+        </button>
+        
+        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+                (click)="salesService.clearBasket()" [disabled]="salesService.basket().length === 0">
+          <span class="text-base mb-0.5">🗑️</span>
+          <span>Clear</span>
+        </button>
+        
+        @if (!salesService.suspendedBasket()) {
+          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  (click)="salesService.suspendOrder()" [disabled]="salesService.basket().length === 0">
+            <span class="text-base mb-0.5">⏸️</span>
+            <span>Suspend</span>
+          </button>
+        } @else {
+          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 transition-colors shadow-sm"
+                  (click)="salesService.recallOrder()">
+            <span class="text-base mb-0.5">🔄</span>
+            <span>Recall (1)</span>
           </button>
         }
       </div>
-    }
-  </div>
 
-  <!-- Space filler so the bottom widget stays at the bottom -->
-  <div class="flex-1 min-h-0">
-    <!-- Cart or other sidebar content goes here -->
-  </div>
-
-  <!-- 3. BEAUTIFUL BOTTOM ANCHOR (Live Dashboard Widget) -->
-  <div class="mt-auto p-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 z-20">
-    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] cursor-pointer hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all active:scale-95 flex items-center justify-between group">
-      
-      <div class="flex items-center gap-3">
-        <!-- Pulsing Live Dot -->
-        <span class="relative flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-        </span>
-        <span class="font-bold text-sm text-white tracking-wide">Live Dashboard</span>
+      <!-- 3. MOBILE CATEGORY TOGGLE -->
+      <div class="md:hidden p-3 bg-slate-800 border-y border-slate-700 cursor-pointer flex items-center justify-between"
+           (click)="isSidebarMobileOpen.set(!isSidebarMobileOpen())">
+        <div class="flex items-center gap-3">
+          <span class="text-xl font-bold w-6 text-center">{{ isSidebarMobileOpen() ? '✕' : '☰' }}</span>
+          <span class="font-bold text-[15px]">Menu & Categories</span>
+        </div>
       </div>
-      
-      <!-- Animated arrow on hover -->
-      <span class="text-white/80 group-hover:translate-x-1 group-hover:text-white transition-all">➡️</span>
-      
-    </div>
-  </div>
 
-</aside>
+      <!-- 4. COLLAPSIBLE CATEGORIES CONTENT -->
+      <div class="flex-col p-4 overflow-y-auto" [ngClass]="isSidebarMobileOpen() ? 'flex' : 'hidden md:flex'">
+        
+        <div class="mb-3 text-xs font-extrabold text-muted uppercase tracking-wider">Catalog Filters</div>
+        <div class="flex flex-col gap-1.5 pr-1">
+          <button (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
+                  class="text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm"
+                  [ngClass]="selectedCategoryId() === 'ALL' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'">
+            🌐 Show All Items
+          </button>
+          @for (cat of salesService.categories(); track cat.id) {
+            <button (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
+                    class="text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm"
+                    [ngClass]="selectedCategoryId() === cat.id ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'">
+              📁 {{ cat.name }}
+            </button>
+          }
+        </div>
+
+        <div class="mt-6 p-3 bg-slate-800 rounded-xl border border-slate-700">
+          <div class="mb-2 text-[11px] font-black text-muted uppercase tracking-wider">⚡ Quick Misc Charge</div>
+          <div class="flex gap-2">
+            <input type="number" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="€0.00" [value]="miscAmount()" (input)="miscAmount.set($any($event.target).value)" (keyup.enter)="addMiscCharge()">
+            <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-colors shadow-sm" (click)="addMiscCharge()">Add</button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
 
     <section class="flex-1 flex flex-col bg-base relative overflow-hidden">
       
