@@ -3,14 +3,14 @@
 <!-- ========================================== -->
 @if (salesService.activeModal(); as modal) {
   <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-fade-in-up">
+    <div class="bg-panel rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-fade-in-up">
       <div class="p-4 font-bold text-lg border-b" 
            [class.bg-orange-50]="modal.type === 'warning'" [class.text-orange-700]="modal.type === 'warning'" [class.border-orange-200]="modal.type === 'warning'"
            [class.bg-green-50]="modal.type === 'success'" [class.text-green-700]="modal.type === 'success'" [class.border-green-200]="modal.type === 'success'"
-           [class.bg-slate-50]="modal.type === 'prompt'" [class.text-slate-800]="modal.type === 'prompt'" [class.border-slate-200]="modal.type === 'prompt'">
+           [class.bg-base]="modal.type === 'prompt'" [class.text-primary]="modal.type === 'prompt'" [class.border-slate-200]="modal.type === 'prompt'">
         {{ modal.title }}
       </div>
-      <div class="p-6 text-slate-700 whitespace-pre-line bg-white">
+      <div class="p-6 text-primary whitespace-pre-line bg-panel">
         <p class="mt-0 mb-2 font-medium">{{ modal.message }}</p>
         @if (modal.type === 'prompt') {
           <input #weightInput [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" 
@@ -19,9 +19,9 @@
                  [attr.step]="modal.title?.includes('Date') ? null : '0.001'" autofocus />
         }
       </div>
-      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+      <div class="p-4 border-t border-slate-200 bg-base flex justify-end gap-3">
         @if (modal.type === 'prompt') {
-          <button class="px-5 py-2.5 font-bold rounded-xl text-slate-600 hover:bg-slate-200 active:scale-95 transition-all" (click)="salesService.closeModal()">Cancel</button>
+          <button class="px-5 py-2.5 font-bold rounded-xl text-muted hover:bg-slate-200 active:scale-95 transition-all" (click)="salesService.closeModal()">Cancel</button>
           <button class="px-5 py-2.5 font-bold rounded-xl bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95 transition-all" (click)="modal.onConfirm(modal.value)">Confirm</button>
         }
         @if (modal.type === 'warning' || modal.type === 'success') {
@@ -34,39 +34,39 @@
 
 @if (editingProduct(); as prod) {
   <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99998] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col animate-fade-in-up">
+    <div class="bg-panel rounded-2xl shadow-2xl w-full max-w-[500px] overflow-hidden flex flex-col animate-fade-in-up">
       <div class="p-4 font-bold text-lg bg-green-50 border-b border-green-200 text-green-800">
         ✏️ Quick Edit: {{ prod.name }}
       </div>
-      <div class="p-6 bg-white">
+      <div class="p-6 bg-panel">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Retail Price (€)</label>
+            <label class="text-xs font-bold text-muted uppercase tracking-wider">Retail Price (€)</label>
             <input type="number" step="0.01" class="px-3 py-2 rounded-lg border-2 border-green-500 bg-green-50 text-green-900 font-bold focus:outline-none focus:ring-2 focus:ring-green-600" [(ngModel)]="editForm.price" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Stock</label>
-            <input type="number" class="px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.stockQuantity" />
+            <label class="text-xs font-bold text-muted uppercase tracking-wider">Current Stock</label>
+            <input type="number" class="px-3 py-2 rounded-lg border border-slate-300 text-primary font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.stockQuantity" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Expiration Date</label>
-            <input type="date" class="px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.expire" />
+            <label class="text-xs font-bold text-muted uppercase tracking-wider">Expiration Date</label>
+            <input type="date" class="px-3 py-2 rounded-lg border border-slate-300 text-primary font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.expire" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Barcode String</label>
-            <input type="text" class="px-3 py-2 rounded-lg border border-slate-300 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.barcode" />
+            <label class="text-xs font-bold text-muted uppercase tracking-wider">Barcode String</label>
+            <input type="text" class="px-3 py-2 rounded-lg border border-slate-300 text-primary font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="editForm.barcode" />
           </div>
         </div>
       </div>
-      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
-        <button class="px-5 py-2.5 font-bold rounded-xl text-slate-600 hover:bg-slate-200 active:scale-95 transition-all" (click)="closeQuickEdit()">Cancel</button>
+      <div class="p-4 border-t border-slate-200 bg-base flex justify-end gap-3">
+        <button class="px-5 py-2.5 font-bold rounded-xl text-muted hover:bg-slate-200 active:scale-95 transition-all" (click)="closeQuickEdit()">Cancel</button>
         <button class="px-5 py-2.5 font-bold rounded-xl bg-green-600 text-white shadow-md hover:bg-green-700 active:scale-95 transition-all" (click)="saveQuickEdit()">💾 Save Changes</button>
       </div>
     </div>
   </div>
 }
 
-<div class="h-screen flex flex-col bg-slate-100 font-sans">
+<div class="h-screen flex flex-col bg-hover font-sans">
   
   <!-- 1. THE SKY HEADER -->
   <header class="flex items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-md flex-shrink-0 z-20">
@@ -74,7 +74,7 @@
       <div class="font-black text-xl tracking-tight">🍊 MARANTH</div>
       <div class="flex items-center bg-blue-900/50 rounded-lg p-0.5 mr-1 border border-blue-700/50">
         <button (click)="themeService.setTheme('light')" 
-                [ngClass]="themeService.currentTheme() === 'light' ? 'bg-white text-blue-900 shadow-sm' : 'text-white/60 hover:text-white'" 
+                [ngClass]="themeService.currentTheme() === 'light' ? 'bg-panel text-blue-900 shadow-sm' : 'text-white/60 hover:text-white'" 
                 class="px-2 py-1 rounded-md text-sm transition-all focus:outline-none" title="Light Mode">☀️</button>
         <button (click)="themeService.setTheme('dim')" 
                 [ngClass]="themeService.currentTheme() === 'dim' ? 'bg-slate-600 text-white shadow-sm' : 'text-white/60 hover:text-white'" 
@@ -89,9 +89,9 @@
         👤 {{ salesService.currentCashier() || 'Unknown' }} | {{ salesService.currentRole() || 'CASHIER' }}
       </div>
       <nav class="flex items-center gap-1 bg-blue-800/40 p-1 rounded-xl">
-        <a routerLink="/pos" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-blue-700 shadow-sm no-underline transition-all">🛒 POS</a>
-        <a routerLink="/inventory" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">📦 INV</a>
-        <a routerLink="/reports" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">📊 REP</a>
+        <a routerLink="/pos" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-panel text-blue-700 shadow-sm no-underline transition-all">🛒 POS</a>
+        <a routerLink="/inventory" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-panel/20 no-underline transition-all">📦 INV</a>
+        <a routerLink="/reports" class="px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-panel/20 no-underline transition-all">📊 REP</a>
       </nav>
       <button (click)="onLogout()" class="p-1.5 rounded-lg hover:bg-red-500/20 text-red-100 transition-colors focus:outline-none" title="Log Out">
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -149,7 +149,7 @@
       <!-- 4. COLLAPSIBLE CATEGORIES CONTENT -->
       <div class="flex-col p-4 overflow-y-auto" [ngClass]="isSidebarMobileOpen() ? 'flex' : 'hidden md:flex'">
         
-        <div class="mb-3 text-xs font-extrabold text-slate-500 uppercase tracking-wider">Catalog Filters</div>
+        <div class="mb-3 text-xs font-extrabold text-muted uppercase tracking-wider">Catalog Filters</div>
         <div class="flex flex-col gap-1.5 pr-1">
           <button (click)="selectedCategoryId.set('ALL'); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
                   class="text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm"
@@ -166,7 +166,7 @@
         </div>
 
         <div class="mt-6 p-3 bg-slate-800 rounded-xl border border-slate-700">
-          <div class="mb-2 text-[11px] font-black text-slate-400 uppercase tracking-wider">⚡ Quick Misc Charge</div>
+          <div class="mb-2 text-[11px] font-black text-muted uppercase tracking-wider">⚡ Quick Misc Charge</div>
           <div class="flex gap-2">
             <input type="number" class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="€0.00" [value]="miscAmount()" (input)="miscAmount.set($any($event.target).value)" (keyup.enter)="addMiscCharge()">
             <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-colors shadow-sm" (click)="addMiscCharge()">Add</button>
@@ -176,15 +176,15 @@
       </div>
     </aside>
 
-    <section class="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
+    <section class="flex-1 flex flex-col bg-base relative overflow-hidden">
       
       <!-- Pinned Search Bar -->
-      <div class="bg-white p-3 border-b border-slate-200 flex-shrink-0 shadow-sm z-10">
-        <div class="flex items-center bg-slate-100 border-2 border-slate-300 rounded-xl px-3 h-12 focus-within:border-blue-500 focus-within:bg-white transition-colors">
-          <span class="text-xl text-slate-400 mr-2">🔍</span>
+      <div class="bg-panel p-3 border-b border-slate-200 flex-shrink-0 shadow-sm z-10">
+        <div class="flex items-center bg-hover border-2 border-slate-300 rounded-xl px-3 h-12 focus-within:border-blue-500 focus-within:bg-panel transition-colors">
+          <span class="text-xl text-muted mr-2">🔍</span>
           <input #searchInput type="text" placeholder="Scan barcode or type name..." 
                  [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (keydown.enter)="onSearchEnter($event)" 
-                 class="w-full bg-transparent border-none outline-none text-[15px] font-bold text-slate-800 placeholder:font-semibold placeholder:text-slate-400" autocomplete="off" autofocus />
+                 class="w-full bg-transparent border-none outline-none text-[15px] font-bold text-primary placeholder:font-semibold placeholder:text-muted" autocomplete="off" autofocus />
         </div>
       </div>
 
@@ -195,18 +195,18 @@
         <!-- ========================================== -->
         @if (weightedProducts().length > 0 && !searchQuery()) {
           <div class="flex items-center gap-3 mb-4 mt-2">
-            <span class="text-2xl bg-white p-2 rounded-xl shadow-sm border border-slate-100">⚖️</span> 
+            <span class="text-2xl bg-panel p-2 rounded-xl shadow-sm border border-slate-100">⚖️</span> 
             <div>
               <div class="font-black text-lg text-green-800">Weighing Station</div>
-              <div class="text-xs font-bold text-slate-500">Scaled items require weight input</div>
+              <div class="text-xs font-bold text-muted">Scaled items require weight input</div>
             </div>
           </div>
           
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
             @for (prod of weightedProducts(); track prod.id) {
-              <div class="bg-white border-2 border-green-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:bg-green-50 active:scale-95 transition-all h-24" (click)="handleProductClick(prod)">
+              <div class="bg-panel border-2 border-green-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:bg-green-50 active:scale-95 transition-all h-24" (click)="handleProductClick(prod)">
                 <span class="text-green-700 font-black text-xl mb-1">{{ formatMoney(prod.price) }}<span class="text-sm font-bold">/kg</span></span>
-                <span class="text-slate-800 font-bold text-sm leading-tight text-center">{{ prod.name.length > 12 ? prod.name.substring(0, 12) + '..' : prod.name }}</span>
+                <span class="text-primary font-bold text-sm leading-tight text-center">{{ prod.name.length > 12 ? prod.name.substring(0, 12) + '..' : prod.name }}</span>
               </div>
             }
           </div>
@@ -219,10 +219,10 @@
           @for (prod of getPinnedProducts(); track prod.id) {
             <button (click)="handleProductClick(prod)" 
                     class="bg-sky-100/70 border-2 border-sky-300 rounded-2xl p-3 flex flex-col items-center justify-between gap-2 min-h-[105px] shadow-sm hover:shadow-md hover:bg-sky-200/80 hover:border-sky-400 transition-all cursor-pointer active:scale-95">
-              <span class="font-extrabold text-[13px] text-slate-800 text-center leading-tight uppercase line-clamp-2 break-words">
+              <span class="font-extrabold text-[13px] text-primary text-center leading-tight uppercase line-clamp-2 break-words">
                 {{ prod.name | slice:0:15 }}{{ prod.name.length > 15 ? '.' : '' }}
               </span>
-              <span class="font-black text-green-700 bg-white border-2 border-green-500 px-3 py-1.5 rounded-xl text-xl whitespace-nowrap shadow-sm">
+              <span class="font-black text-green-700 bg-panel border-2 border-green-500 px-3 py-1.5 rounded-xl text-xl whitespace-nowrap shadow-sm">
                 {{ formatMoney(prod.price) }}
               </span>
             </button>
@@ -237,19 +237,19 @@
         <!-- PRIORITY 3: STANDARD CATALOG -->
         <!-- ========================================== -->
         <div class="flex items-center gap-3 mb-4 border-b-2 border-slate-200 pb-3">
-          <div class="font-black text-lg text-slate-700">{{ searchQuery() ? 'Search Results' : '📦 Standard Catalog (Max 15)' }}</div>
+          <div class="font-black text-lg text-primary">{{ searchQuery() ? 'Search Results' : '📦 Standard Catalog (Max 15)' }}</div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           @for (prod of filteredCatalogProducts() | slice:0:15; track prod.id; let idx = $index) {
             
             <!-- CHANGED: Swapped "border border-slate-200" for "border-2 border-slate-200" -->
-           <div class="bg-white border border-slate-300 rounded-xl p-3 flex flex-col gap-2 cursor-pointer shadow-sm hover:shadow-md hover:border-blue-500 active:scale-95 transition-all min-h-[110px]" (click)="handleProductClick(prod)">
+           <div class="bg-panel border border-slate-300 rounded-xl p-3 flex flex-col gap-2 cursor-pointer shadow-sm hover:shadow-md hover:border-blue-500 active:scale-95 transition-all min-h-[110px]" (click)="handleProductClick(prod)">
               <div class="flex justify-between items-start gap-2">
-                <span class="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{{ prod.name }}</span>
+                <span class="font-bold text-primary text-sm leading-tight line-clamp-2">{{ prod.name }}</span>
                 <div class="flex gap-1 items-center flex-shrink-0">
-                  @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { <span class="text-sm bg-slate-100 p-1 rounded-md" title="Scaled Item">⚖️</span> }
-                  <button class="text-sm p-1 rounded-md hover:bg-slate-100 transition-colors" title="Quick Edit" (click)="openQuickEdit(prod, $event)">✏️</button>
+                  @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { <span class="text-sm bg-hover p-1 rounded-md" title="Scaled Item">⚖️</span> }
+                  <button class="text-sm p-1 rounded-md hover:bg-hover transition-colors" title="Quick Edit" (click)="openQuickEdit(prod, $event)">✏️</button>
                 </div>
               </div>
 
@@ -261,7 +261,7 @@
                      'bg-red-100 text-red-700': expStatus === 'danger',
                      'bg-orange-100 text-orange-700': expStatus === 'warning',
                      'bg-green-100 text-green-700': expStatus === 'safe',
-                     'bg-slate-100 text-slate-500': expStatus === 'none'
+                     'bg-hover text-muted': expStatus === 'none'
                    }">
                 @if (liveProduct.expire) { 📅 Exp: {{ liveProduct.expire | date:'dd/MM/yyyy' }} } @else { 📅 No Exp Date }
               </div>
@@ -269,14 +269,14 @@
               @let liveStock = liveProduct.stockQuantity;
               
               <div class="flex justify-between items-end mt-auto pt-2 border-t border-slate-100">
-                <div class="text-[11px] font-black px-2 py-1 rounded-lg" [ngClass]="liveStock <= 5 ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'">
+                <div class="text-[11px] font-black px-2 py-1 rounded-lg" [ngClass]="liveStock <= 5 ? 'bg-red-100 text-red-700' : 'bg-hover text-muted'">
                   📦 {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
                 </div>
                 <div class="text-[15px] font-black text-blue-700">{{ formatMoney(prod.price) }}</div>
               </div>
             </div>
           } @empty {
-            <div class="col-span-full p-10 text-center font-bold text-slate-500 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300">
+            <div class="col-span-full p-10 text-center font-bold text-muted bg-hover rounded-2xl border-2 border-dashed border-slate-300">
               ⚠️ No items match your search.
             </div>
           }
@@ -286,9 +286,9 @@
     </section>
 
     <!-- FLOATING BASKET CHECKOUT PANEL -->
-    <section class="fixed md:static inset-0 z-40 bg-white flex flex-col w-full md:w-96 md:border-l border-slate-200 transform transition-transform duration-300 shadow-2xl md:shadow-none"
+    <section class="fixed md:static inset-0 z-40 bg-panel flex flex-col w-full md:w-96 md:border-l border-slate-200 transform transition-transform duration-300 shadow-2xl md:shadow-none"
              [ngClass]="isMobileBasketOpen() ? 'translate-y-0' : 'translate-y-full md:translate-y-0'">
-      <button class="md:hidden bg-slate-100 text-slate-500 font-black py-4 text-center border-b border-slate-200 active:bg-slate-200 transition-colors uppercase tracking-widest text-xs" 
+      <button class="md:hidden bg-hover text-muted font-black py-4 text-center border-b border-slate-200 active:bg-slate-200 transition-colors uppercase tracking-widest text-xs" 
               (click)="isMobileBasketOpen.set(false)">
         ⬇️ Swipe down to hide checkout ⬇️
       </button>
@@ -303,7 +303,7 @@
          (click)="isMobileBasketOpen.set(true)">
       <div class="flex items-center gap-3">
         <span class="text-2xl drop-shadow-md">🛒</span>
-        <span class="bg-white text-blue-700 px-3 py-1 rounded-xl text-sm font-black shadow-inner">
+        <span class="bg-panel text-blue-700 px-3 py-1 rounded-xl text-sm font-black shadow-inner">
           {{ salesService.totalItems() }} items
         </span>
       </div>
