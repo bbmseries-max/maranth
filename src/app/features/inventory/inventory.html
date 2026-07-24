@@ -46,6 +46,13 @@
   <!-- ========================================== -->
   @if (activeTab() === 'products') {
     <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
+
+       @if (editingProductId === 'NEW') {
+        <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600 transition-colors duration-300">
+          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-line bg-green-50/20">✨ Register New Item</div>
+          <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
+        </div>
+      }
       
       <!-- TOP ROW: Search & Add -->
       <div class="flex gap-2 items-center">
@@ -88,12 +95,7 @@
       
     <div class="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">      
       
-      @if (editingProductId === 'NEW') {
-        <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600 transition-colors duration-300">
-          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-line bg-green-50/20">✨ Register New Item</div>
-          <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
-        </div>
-      }
+     
 
       @for (prod of filteredProducts(); track prod.id) {
         <div [id]="'prod-card-' + prod.id" class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingProductId === prod.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
