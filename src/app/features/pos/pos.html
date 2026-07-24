@@ -110,20 +110,20 @@
       <!-- 2. THE 3 QUICK ACTION BUTTONS -->
       <div class="flex gap-2 p-3 bg-slate-950">
         <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl uppercase text-xs font-bold transition-colors shadow-sm"
-                [ngClass]="salesService.isRefundMode() ? 'bg-orange-500 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'"
+                [ngClass]="salesService.isRefundMode() ? 'bg-green-400-500 text-white' : 'bg-green-800-800 text-slate-300 hover:bg-green-700'"
                 (click)="salesService.isRefundMode.set(!salesService.isRefundMode()); salesService.triggerSearchFocus()">
           <span class="text-base mb-0.5">↩️</span>
           <span>Refund</span>
         </button>
         
-        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold uppercase bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold uppercase bg-red-800 text-slate-300 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
                 (click)="salesService.clearBasket()" [disabled]="salesService.basket().length === 0">
           <span class="text-base mb-0.5">🗑️</span>
           <span>Clear</span>
         </button>
         
         @if (!salesService.suspendedBasket()) {
-          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold bg-orange-600 text-orange-100 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl uppercase text-xs font-bold bg-orange-600 text-orange-100 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
                   (click)="salesService.suspendOrder()" [disabled]="salesService.basket().length === 0">
             <span class="text-base mb-0.5">⏸️</span>
             <span>Suspend</span>
