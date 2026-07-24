@@ -16,6 +16,7 @@ import { ThemeService } from '../../shared/services/theme.service';
 })
 export class PosComponent implements OnInit, AfterViewInit {
   public salesService = inject(SalesService);
+  categories = this.salesService.categories;
   public router = inject(Router);
   isMenuOpen = signal(false);
 

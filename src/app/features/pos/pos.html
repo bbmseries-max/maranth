@@ -156,7 +156,7 @@
                   [ngClass]="selectedCategoryId() === 'ALL' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'">
             🌐 Show All Items
           </button>
-          @for (cat of salesService.categories(); track cat.id) {
+         @for (cat of salesService.categories(); track cat.id) {
             <button (click)="selectedCategoryId.set(cat.id); searchQuery.set(''); isSidebarMobileOpen.set(false); salesService.triggerSearchFocus()" 
                     class="text-left px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm"
                     [ngClass]="selectedCategoryId() === cat.id ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'">
