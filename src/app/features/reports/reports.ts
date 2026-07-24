@@ -1,6 +1,6 @@
 import { Component, inject, computed, signal, effect } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ⭐ IMPORTED FORMS MODULE
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 
@@ -15,7 +15,7 @@ export interface CashLog {
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe], // ⭐ ADDED HERE
+  imports: [CommonModule, FormsModule, RouterLink, DatePipe],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })
@@ -46,16 +46,16 @@ export class ReportsComponent {
     let totalProfit = 0;
 
     this.filteredTransactions().forEach(tx => {
-      const txTotal = this.safeParseLocal(tx.grandTotal as any);
+      const txTotal = this.safeNumber(tx.grandTotal);
       totalRev += txTotal;
       
       if (tx.paymentMethod === 'Cash') cashRev += txTotal;
       else cardRev += txTotal;
 
       tx.items.forEach((item: any) => {
-        const sellPrice = this.safeParseLocal(item.product.price);
-        const costPrice = this.safeParseLocal(item.product.costPrice || item.product.wholesalePrice || 0);
-        const qty = this.safeParseLocal(item.quantity);
+        const sellPrice = this.safeNumber(item.product.price);
+        const costPrice = this.safeNumber(item.product.costPrice || item.product.wholesalePrice || 0);
+        const qty = this.safeNumber(item.quantity);
         totalProfit += (sellPrice - costPrice) * qty;
       });
     });
@@ -83,12 +83,12 @@ export class ReportsComponent {
                      name: item.product.name,
                      unitsSold: 0,
                      totalRevenue: 0,
-                     stockQuantity: this.safeParseLocal(item.product.stockQuantity)
+                     stockQuantity: this.safeNumber(item.product.stockQuantity)
                  });
              }
              const prodData = productMap.get(pid);
-             prodData.unitsSold += this.safeParseLocal(item.quantity);
-             prodData.totalRevenue += (this.safeParseLocal(item.product.price) * this.safeParseLocal(item.quantity));
+             prodData.unitsSold += this.safeNumber(item.quantity);
+             prodData.totalRevenue += (this.safeNumber(item.product.price) * this.safeNumber(item.quantity));
          });
      });
      return Array.from(productMap.values()).sort((a, b) => b.unitsSold - a.unitsSold);
@@ -127,7 +127,7 @@ export class ReportsComponent {
       txs.forEach(tx => {
           if(tx && tx.timestamp) {
               const hour = new Date(tx.timestamp).getHours();
-              hourlyData[hour].revenue += this.safeParseLocal(tx.grandTotal as any);
+              hourlyData[hour].revenue += this.safeNumber(tx.grandTotal);
               hourlyData[hour].ticketCount += 1;
           }
       });
@@ -144,46 +144,34 @@ export class ReportsComponent {
 
   public getHeatmapBg(percentage: number): string {
       if (percentage === 0) return 'transparent';
-      if (percentage < 20) return '#dbeafe'; 
-      if (percentage < 50) return '#60a5fa'; 
-      if (percentage < 80) return '#2563eb'; 
-      return '#1e3a8a'; 
+      if (percentage < 20) return 'rgba(59, 130, 246, 0.1)'; // Light blue
+      if (percentage < 50) return 'rgba(59, 130, 246, 0.3)'; // Medium blue
+      if (percentage < 80) return 'rgba(37, 99, 235, 0.7)'; // Strong blue
+      return 'rgba(30, 64, 175, 1)'; // Deep blue
   }
 
   // ========================================================
   // ⭐ TAB 3: LIVE DASHBOARD WIDGETS
   // ========================================================
-  
- public todayProfit = computed(() => {
+  public todayProfit = computed(() => {
     const todayStr = new Date().toDateString();
     let totalEarnings = 0;
 
     const txs = this.salesService.transactions() || [];
     
     txs.forEach(tx => {
-      // Only calculate for today's transactions
       if (tx && tx.timestamp && new Date(tx.timestamp).toDateString() === todayStr) {
-        
-        // ⭐ FIX: Tell TypeScript to relax by casting tx to 'any'
         const pastOrder: any = tx;
-        
-        // Grab the items array (it might be saved as 'basket' or 'items')
         const itemsArray = pastOrder.basket || pastOrder.items || [];
 
-        // Loop through every item in this transaction
         if (Array.isArray(itemsArray)) {
           itemsArray.forEach((item: any) => {
-            
             const product = item.product || item; 
-            
-            const retailPrice = this.safeParseLocal(product.price);
-            // Check both costPrice and purchasePrice depending on what you named it
-            const wholesaleCost = this.safeParseLocal(product.costPrice || product.purchasePrice || 0);
-            const quantity = this.safeParseLocal(item.quantity || 1);
+            const retailPrice = this.safeNumber(product.price);
+            const wholesaleCost = this.safeNumber(product.costPrice || product.purchasePrice || 0);
+            const quantity = this.safeNumber(item.quantity || 1);
 
-            // Calculate profit for this line item and add to total
-            const itemProfit = (retailPrice - wholesaleCost) * quantity;
-            totalEarnings += itemProfit;
+            totalEarnings += (retailPrice - wholesaleCost) * quantity;
           });
         }
       }
@@ -192,7 +180,7 @@ export class ReportsComponent {
     return isNaN(totalEarnings) ? 0 : totalEarnings;
   });
   
-constructor() {
+  constructor() {
     effect(() => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('maranth_cash_logs', JSON.stringify(this.cashLogs()));
@@ -200,10 +188,8 @@ constructor() {
     });
   }
 
-  // 3. The Loader Helper
   private loadSavedLogs(): CashLog[] {
     if (typeof window === 'undefined') return [];
-    
     const saved = localStorage.getItem('maranth_cash_logs');
     if (!saved) return [];
 
@@ -217,15 +203,15 @@ constructor() {
 
   public liveCashInDrawer = computed(() => {
     const today = new Date().toDateString();
-    
     let todaysCashSales = 0;
+    
     const txs = this.salesService.transactions() || [];
     txs.forEach(tx => {
       if (tx && tx.timestamp && tx.paymentMethod) {
         const isToday = new Date(tx.timestamp).toDateString() === today;
         const isCash = String(tx.paymentMethod).toLowerCase() === 'cash';
         if (isToday && isCash) {
-          todaysCashSales += (Number(tx.grandTotal) || 0);
+          todaysCashSales += this.safeNumber(tx.grandTotal);
         }
       }
     });
@@ -238,26 +224,26 @@ constructor() {
     });
 
     let finalTotal = manualCashIn + todaysCashSales - manualCashOut;
-    if (isNaN(finalTotal)) return 0;
-    return Math.round(finalTotal * 100) / 100;
+    return isNaN(finalTotal) ? 0 : Math.round(finalTotal * 100) / 100;
   });
 
   public salesTarget = 1000; 
   public targetProgress = computed(() => {
     const today = new Date().toDateString();
     let todayRev = 0;
+    
     const txs = this.salesService.transactions() || [];
     txs.forEach(tx => {
       if (tx && tx.timestamp && new Date(tx.timestamp).toDateString() === today) {
-        todayRev += this.safeParseLocal(tx.grandTotal as any);
+        todayRev += this.safeNumber(tx.grandTotal);
       }
     });
-    const safeRev = isNaN(todayRev) ? 0 : todayRev;
-    let rawPercent = (safeRev / this.salesTarget) * 100;
-    return { rev: safeRev, percent: Math.min(100, isNaN(rawPercent) ? 0 : rawPercent) };
+    
+    let rawPercent = (todayRev / this.salesTarget) * 100;
+    return { rev: todayRev, percent: Math.min(100, isNaN(rawPercent) ? 0 : rawPercent) };
   });
 
- public dailyShifts = computed(() => {
+  public dailyShifts = computed(() => {
     const todayStr = new Date().toDateString();
     let shift1 = { rev: 0, count: 0 }; // 08:00 - 15:00
     let shift2 = { rev: 0, count: 0 }; // 15:00 - 17:00
@@ -267,7 +253,7 @@ constructor() {
     txs.forEach(tx => {
       if (tx && tx.timestamp && new Date(tx.timestamp).toDateString() === todayStr) {
         const txHour = new Date(tx.timestamp).getHours(); 
-        const amount = this.safeParseLocal(tx.grandTotal as any);
+        const amount = this.safeNumber(tx.grandTotal);
 
         if (txHour >= 8 && txHour < 15) {
           shift1.rev += amount; shift1.count++;
@@ -285,10 +271,13 @@ constructor() {
   public systemAlerts = computed(() => {
     const alerts: { type: string, msg: string }[] = [];
     const prods = this.salesService.products() || [];
+    
     prods.forEach(p => {
       if (!p) return;
-      const stock = this.safeParseLocal(p.stockQuantity as any);
-      if (stock <= this.safeParseLocal(p.minStockWarning || 5 as any)) alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
+      const stock = this.safeNumber(p.stockQuantity);
+      if (stock <= this.safeNumber(p.minStockWarning || 5)) {
+        alerts.push({ type: 'warning', msg: `Low Stock: ${p.name} (${stock} left)` });
+      }
       
       if (p.expire) {
         const expDate = new Date(p.expire + 'T00:00:00');
@@ -299,7 +288,7 @@ constructor() {
     return alerts;
   });
 
-public addManualCash(): void {
+  public addManualCash(): void {
     const amountStr = window.prompt('🟢 ADD CASH\n\nEnter the amount (€):');
     if (!amountStr) return;
     
@@ -325,7 +314,7 @@ public addManualCash(): void {
     const amount = parseFloat(amountStr.replace(',', '.'));
     if (isNaN(amount) || amount <= 0) return;
 
-    const reason = window.prompt('Enter the reason (e.g., Coca-Cola delivery):');
+    const reason = window.prompt('Enter the reason (e.g., Supplier payment):');
     if (!reason) return;
 
     this.cashLogs.update(logs => [...logs, {
@@ -351,10 +340,9 @@ public addManualCash(): void {
     return '€' + parsed.toFixed(2);
   }
 
-  private safeParseLocal(key: string | number): number {
-    if (typeof key === 'number') return isNaN(key) ? 0 : key;
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 0;
-    const val = localStorage.getItem(key as string) || key;
+  // 🚀 REPLACED: Safe, blazing-fast number parser that doesn't hit localStorage
+  private safeNumber(val: any): number {
+    if (val === null || val === undefined) return 0;
     const parsed = Number(val);
     return isNaN(parsed) ? 0 : parsed;
   }

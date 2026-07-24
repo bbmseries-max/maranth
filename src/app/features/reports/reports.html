@@ -1,38 +1,38 @@
-<div class="flex flex-col h-screen bg-slate-50 font-sans">
+<div class="flex flex-col h-screen bg-base font-sans transition-colors duration-300">
   
   <!-- HEADER -->
-  <header class="flex flex-wrap items-center justify-between px-4 h-14 bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-md flex-shrink-0 z-20 no-print">
+  <header class="flex flex-wrap items-center justify-between px-4 h-14 bg-panel border-b border-line shadow-sm flex-shrink-0 z-20 no-print transition-colors duration-300">
     <div class="flex items-center flex-wrap gap-2">
-      <span class="font-black text-lg ml-2 tracking-tight">🍊 MARANTH</span>
-      <span class="hidden md:inline-block bg-slate-800/50 text-slate-300 px-2 py-0.5 rounded text-[11px] ml-2 font-bold uppercase tracking-wider">Manager Dashboard</span>
+      <span class="font-black text-lg ml-2 tracking-tight text-primary">🍊 MARANTH</span>
+      <span class="hidden md:inline-block bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded text-[11px] ml-2 font-bold uppercase tracking-wider border border-blue-500/20">Manager Dashboard</span>
     </div>
     <div class="flex items-center flex-wrap gap-2">
-      <a routerLink="/pos" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-sky-500 text-white hover:bg-sky-600 shadow-sm no-underline transition-all">🛒 Back to Register</a>
-      <a routerLink="/inventory" class="hidden md:block px-3 py-1.5 rounded-lg text-sm font-bold text-white hover:bg-white/20 no-underline transition-all">📦 Inventory</a>
+      <a routerLink="/pos" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-sm no-underline transition-all">🛒 Back to Register</a>
+      <a routerLink="/inventory" class="hidden md:block px-3 py-1.5 rounded-lg text-sm font-bold text-muted hover:text-primary hover:bg-hover no-underline transition-all">📦 Inventory</a>
     </div>
   </header>
 
   <!-- TAB NAVIGATION -->
-  <div class="flex overflow-x-auto bg-white border-b border-slate-200 flex-shrink-0 hide-scrollbar no-print">
+  <div class="flex overflow-x-auto bg-panel border-b border-line flex-shrink-0 hide-scrollbar no-print transition-colors duration-300">
     <button class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
-            [ngClass]="activeTab() === 'zreport' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'" 
+            [ngClass]="activeTab() === 'zreport' ? 'border-blue-600 text-blue-600' : 'border-transparent text-muted hover:text-primary hover:bg-hover/50'" 
             (click)="activeTab.set('zreport')">
       🧾 Z-Report & Sales Ledger
     </button>
     <button class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
-            [ngClass]="activeTab() === 'analytics' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'" 
+            [ngClass]="activeTab() === 'analytics' ? 'border-blue-600 text-blue-600' : 'border-transparent text-muted hover:text-primary hover:bg-hover/50'" 
             (click)="activeTab.set('analytics')">
       📈 Sales Analytics
     </button>
     <button class="px-5 py-3 font-bold text-sm whitespace-nowrap border-b-2 transition-colors focus:outline-none"
-            [ngClass]="activeTab() === 'dashboard' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'" 
+            [ngClass]="activeTab() === 'dashboard' ? 'border-blue-600 text-blue-600' : 'border-transparent text-muted hover:text-primary hover:bg-hover/50'" 
             (click)="activeTab.set('dashboard')">
       ⚙️ Live Dashboard Widgets
     </button>
   </div>
 
   <!-- REPORTS WRAPPER -->
-  <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50">
+  <div class="flex-1 overflow-y-auto p-4 md:p-6 transition-colors duration-300">
     
     <!-- ================== TAB 1: Z-REPORT & SALES LEDGER ================== -->
     @if (activeTab() === 'zreport') {
@@ -40,32 +40,32 @@
       <!-- Date Picker & Print Header -->
       <div class="flex justify-between items-center flex-wrap gap-4 mb-6 no-print">
         <div>
-          <h1 class="m-0 text-2xl text-slate-900 font-extrabold tracking-tight">End of Day Z-Report & Ledger</h1>
-          <p class="m-0 mt-1 text-sm text-slate-500 font-medium">Select a date to audit sales and calculate margins.</p>
+          <h1 class="m-0 text-2xl text-primary font-extrabold tracking-tight">End of Day Z-Report & Ledger</h1>
+          <p class="m-0 mt-1 text-sm text-muted font-medium">Select a date to audit sales and calculate margins.</p>
         </div>
         <div class="flex items-center gap-3">
-          <input type="date" class="px-3 py-2 border-2 border-slate-300 rounded-lg font-bold text-slate-700 outline-none focus:border-blue-500 bg-white" 
+          <input type="date" class="px-3 py-2 border-2 border-line rounded-lg font-bold text-primary bg-panel outline-none focus:border-blue-500 transition-colors" 
                  [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)" />
         </div>
       </div>
 
       <!-- Top Metrics Row Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6 z-report-print-area">
-        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-l-blue-500 flex flex-col">
-          <div class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Gross Revenue</div>
-          <div class="text-3xl font-black text-slate-800 mt-1">{{ formatMoney(totalRevenue()) }}</div>
+        <div class="bg-panel p-5 rounded-xl shadow-sm border border-line border-l-4 border-l-blue-500 flex flex-col transition-colors">
+          <div class="text-[11px] text-muted font-extrabold uppercase tracking-wider">Gross Revenue</div>
+          <div class="text-3xl font-black text-primary mt-1">{{ formatMoney(totalRevenue()) }}</div>
         </div>
-        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-l-emerald-500 flex flex-col">
-          <div class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Cash Drawer Total</div>
-          <div class="text-3xl font-black text-emerald-700 mt-1">{{ formatMoney(cashRevenue()) }}</div>
+        <div class="bg-panel p-5 rounded-xl shadow-sm border border-line border-l-4 border-l-emerald-500 flex flex-col transition-colors">
+          <div class="text-[11px] text-muted font-extrabold uppercase tracking-wider">Cash Drawer Total</div>
+          <div class="text-3xl font-black text-emerald-500 mt-1">{{ formatMoney(cashRevenue()) }}</div>
         </div>
-        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-l-violet-500 flex flex-col">
-          <div class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Card Settlements</div>
-          <div class="text-3xl font-black text-violet-700 mt-1">{{ formatMoney(cardRevenue()) }}</div>
+        <div class="bg-panel p-5 rounded-xl shadow-sm border border-line border-l-4 border-l-violet-500 flex flex-col transition-colors">
+          <div class="text-[11px] text-muted font-extrabold uppercase tracking-wider">Card Settlements</div>
+          <div class="text-3xl font-black text-violet-500 mt-1">{{ formatMoney(cardRevenue()) }}</div>
         </div>
-        <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-l-amber-500 flex flex-col no-print">
-          <div class="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider">Estimated Profit</div>
-          <div class="text-3xl font-black text-amber-700 mt-1">{{ formatMoney(zReportStats().totalProfit) }}</div>
+        <div class="bg-panel p-5 rounded-xl shadow-sm border border-line border-l-4 border-l-amber-500 flex flex-col no-print transition-colors">
+          <div class="text-[11px] text-muted font-extrabold uppercase tracking-wider">Estimated Profit</div>
+          <div class="text-3xl font-black text-amber-500 mt-1">{{ formatMoney(zReportStats().totalProfit) }}</div>
         </div>
       </div>
 
@@ -73,48 +73,48 @@
       <div class="flex flex-col lg:flex-row gap-6 mb-6 z-report-print-area items-start">
         
         <!-- Z-Report Details -->
-        <div class="flex-1 w-full bg-white p-6 rounded-xl shadow-sm border-t-4 border-t-slate-900">
+        <div class="flex-1 w-full bg-panel p-6 rounded-xl shadow-sm border border-line border-t-4 border-t-blue-500 transition-colors">
           <div class="flex justify-between items-center mb-5">
             <div>
-              <h3 class="m-0 text-lg font-black text-slate-900">📋 Terminal Z-Report</h3>
-              <p class="m-0 mt-1 text-xs font-semibold text-slate-500">End-of-day financial reconciliation audits</p>
+              <h3 class="m-0 text-lg font-black text-primary">📋 Terminal Z-Report</h3>
+              <p class="m-0 mt-1 text-xs font-semibold text-muted">End-of-day financial reconciliation audits</p>
             </div>
-            <button class="no-print bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors active:scale-95 shadow-sm focus:outline-none" 
+            <button class="no-print bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors active:scale-95 focus:outline-none" 
                     (click)="printZReport()">
               🖨️ Print Z-Report
             </button>
           </div>
-          <div class="flex flex-col gap-2.5 text-sm text-slate-700">
-            <div class="flex justify-between items-center py-2 border-b border-slate-100">
-              <span class="text-slate-500 font-semibold">Gross Taxable Sales:</span>
-              <span class="font-black text-slate-900">{{ formatMoney(totalRevenue()) }}</span>
+          <div class="flex flex-col gap-2.5 text-sm text-primary">
+            <div class="flex justify-between items-center py-2 border-b border-line">
+              <span class="text-muted font-semibold">Gross Taxable Sales:</span>
+              <span class="font-black">{{ formatMoney(totalRevenue()) }}</span>
             </div>
-            <div class="flex justify-between items-center py-2 border-b border-slate-100">
-              <span class="text-slate-500 font-semibold">Tax pool liability (24% VAT):</span>
-              <span class="font-black text-amber-700">{{ formatMoney(totalRevenue() * 0.1935) }}</span>
+            <div class="flex justify-between items-center py-2 border-b border-line">
+              <span class="text-muted font-semibold">Tax pool liability (24% VAT):</span>
+              <span class="font-black text-amber-500">{{ formatMoney(totalRevenue() * 0.1935) }}</span>
             </div>
-            <div class="flex justify-between items-center py-2 border-b border-slate-100">
-              <span class="text-slate-500 font-semibold">Net Sales (Excl. VAT):</span>
-              <span class="font-black text-slate-900">{{ formatMoney(totalRevenue() * 0.8065) }}</span>
+            <div class="flex justify-between items-center py-2 border-b border-line">
+              <span class="text-muted font-semibold">Net Sales (Excl. VAT):</span>
+              <span class="font-black">{{ formatMoney(totalRevenue() * 0.8065) }}</span>
             </div>
-            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg mt-2 border border-slate-100">
-              <span class="font-black text-slate-800">Total Drawer Cash drops:</span>
-              <span class="font-black text-emerald-700 text-lg">{{ formatMoney(cashRevenue()) }}</span>
+            <div class="flex justify-between items-center p-3 bg-base rounded-lg mt-2 border border-line">
+              <span class="font-black">Total Drawer Cash drops:</span>
+              <span class="font-black text-emerald-500 text-lg">{{ formatMoney(cashRevenue()) }}</span>
             </div>
-            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100">
-              <span class="font-black text-slate-800">Total Electronic Settlements:</span>
-              <span class="font-black text-violet-700 text-lg">{{ formatMoney(cardRevenue()) }}</span>
+            <div class="flex justify-between items-center p-3 bg-base rounded-lg border border-line">
+              <span class="font-black">Total Electronic Settlements:</span>
+              <span class="font-black text-violet-500 text-lg">{{ formatMoney(cardRevenue()) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Product Leaderboard -->
-        <div class="lg:flex-[1.5] w-full bg-white p-6 rounded-xl shadow-sm no-print">
-          <h3 class="m-0 mb-4 text-lg font-black text-slate-900">🏆 Product Velocity</h3>
-          <div class="max-h-[250px] overflow-y-auto pr-2">
+        <div class="lg:flex-[1.5] w-full bg-panel p-6 rounded-xl shadow-sm border border-line no-print transition-colors">
+          <h3 class="m-0 mb-4 text-lg font-black text-primary">🏆 Product Velocity</h3>
+          <div class="max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
             <table class="w-full border-collapse text-left text-sm">
-              <thead class="sticky top-0 bg-white z-10 shadow-[0_2px_0_0_#f1f5f9]">
-                <tr class="text-xs text-slate-500 font-extrabold uppercase tracking-wider">
+              <thead class="sticky top-0 bg-panel z-10 border-b border-line">
+                <tr class="text-xs text-muted font-extrabold uppercase tracking-wider">
                   <th class="py-3 px-2">Item Name</th>
                   <th class="py-3 px-2 text-center">Units Moved</th>
                   <th class="py-3 px-2 text-right">Gross Revenue</th>
@@ -123,19 +123,19 @@
               </thead>
               <tbody>
                 @for (item of topSellingProducts(); track item.id) {
-                  <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td class="py-2.5 px-2 font-bold text-slate-700">{{ item.name }}</td>
-                    <td class="py-2.5 px-2 text-center font-black text-slate-900">{{ item.unitsSold }}</td>
-                    <td class="py-2.5 px-2 text-right font-black text-blue-700">{{ formatMoney(item.totalRevenue) }}</td>
+                  <tr class="border-b border-line hover:bg-hover transition-colors">
+                    <td class="py-2.5 px-2 font-bold text-primary">{{ item.name }}</td>
+                    <td class="py-2.5 px-2 text-center font-black text-primary">{{ item.unitsSold }}</td>
+                    <td class="py-2.5 px-2 text-right font-black text-blue-500">{{ formatMoney(item.totalRevenue) }}</td>
                     <td class="py-2.5 px-2 text-right">
-                      <span class="text-[11px] px-2 py-0.5 rounded-md font-bold whitespace-nowrap"
-                            [ngClass]="item.stockQuantity <= 5 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-800'">
+                      <span class="text-[11px] px-2 py-0.5 rounded-md font-bold whitespace-nowrap border"
+                            [ngClass]="item.stockQuantity <= 5 ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-green-500/10 text-green-500 border-green-500/30'">
                         {{ item.stockQuantity }} left {{ item.stockQuantity <= 5 ? '⚠️' : '✓' }}
                       </span>
                     </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="4" class="text-center text-slate-400 font-bold py-10">No sales data available.</td></tr>
+                  <tr><td colspan="4" class="text-center text-muted font-bold py-10">No sales data available.</td></tr>
                 }
               </tbody>
             </table>
@@ -147,17 +147,17 @@
       <div class="flex flex-col lg:flex-row gap-6 items-start no-print">
         
         <!-- Journal Ledger Table -->
-        <div class="lg:flex-[1.5] w-full bg-white rounded-xl shadow-sm p-5 md:p-6 overflow-x-auto">
+        <div class="lg:flex-[1.5] w-full bg-panel rounded-xl shadow-sm p-5 md:p-6 overflow-x-auto border border-line transition-colors">
           <div class="flex justify-between items-center mb-5">
-            <h3 class="m-0 text-lg font-black text-slate-900">Journal Ledger Archive ({{ totalSalesCount() }} Tickets)</h3>
-            <button class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors active:scale-95 focus:outline-none" 
+            <h3 class="m-0 text-lg font-black text-primary">Journal Ledger Archive ({{ totalSalesCount() }} Tickets)</h3>
+            <button class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors active:scale-95 focus:outline-none" 
                     (click)="clearAllLedgerData()">
               ⚠️ Clear Ledger
             </button>
           </div>
           <table class="w-full border-collapse text-left text-sm whitespace-nowrap">
             <thead>
-              <tr class="border-b-2 border-slate-100 text-slate-500 font-extrabold text-xs uppercase tracking-wider">
+              <tr class="border-b-2 border-line text-muted font-extrabold text-xs uppercase tracking-wider">
                 <th class="py-3 px-2">Ticket ID</th>
                 <th class="py-3 px-2">Time</th>
                 <th class="py-3 px-2">Cashier</th>
@@ -167,57 +167,57 @@
             </thead>
             <tbody>
               @for (tx of filteredTransactions(); track tx.id) {
-                <tr class="border-b border-slate-100 cursor-pointer transition-colors"
-                    [ngClass]="selectedTxnId() === tx.id ? 'bg-green-50/70' : 'hover:bg-slate-50'"
+                <tr class="border-b border-line cursor-pointer transition-colors"
+                    [ngClass]="selectedTxnId() === tx.id ? 'bg-blue-500/10' : 'hover:bg-hover'"
                     (click)="selectTxn(tx.id)">
-                  <td class="py-3 px-2 font-mono font-bold text-blue-600">{{ tx.id.slice(-8) }}</td>
-                  <td class="py-3 px-2 font-semibold text-slate-600">{{ tx.timestamp | date:'HH:mm' }}</td>
-                  <td class="py-3 px-2 font-bold text-slate-700">{{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}</td>
+                  <td class="py-3 px-2 font-mono font-bold text-blue-500">{{ tx.id.slice(-8) }}</td>
+                  <td class="py-3 px-2 font-semibold text-muted">{{ tx.timestamp | date:'HH:mm' }}</td>
+                  <td class="py-3 px-2 font-bold text-primary">{{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}</td>
                   <td class="py-3 px-2">
-                    <span class="text-[11px] px-2 py-0.5 rounded-md font-bold"
-                          [ngClass]="tx.paymentMethod === 'Cash' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'">
+                    <span class="text-[11px] px-2 py-0.5 rounded-md font-bold border"
+                          [ngClass]="tx.paymentMethod === 'Cash' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-violet-500/10 text-violet-500 border-violet-500/30'">
                       {{ tx.paymentMethod }}
                     </span>
                   </td>
-                  <td class="py-3 px-2 text-right font-black text-slate-900">{{ formatMoney(tx.grandTotal) }}</td>
+                  <td class="py-3 px-2 text-right font-black text-primary">{{ formatMoney(tx.grandTotal) }}</td>
                 </tr>
               } @empty {
-                <tr><td colspan="5" class="text-center text-slate-400 font-bold py-12">No receipts found.</td></tr>
+                <tr><td colspan="5" class="text-center text-muted font-bold py-12">No receipts found.</td></tr>
               }
             </tbody>
           </table>
         </div>
 
         <!-- Sticky Itemized Auditor -->
-        <div class="flex-1 w-full bg-white rounded-xl shadow-sm p-5 md:p-6 border border-dashed border-slate-300 min-h-[300px] lg:sticky lg:top-0 max-h-[calc(100vh-160px)] overflow-y-auto">
-          <h3 class="m-0 mb-4 text-base font-black text-slate-900 border-b border-slate-100 pb-3">Itemized Ticket Auditor</h3>
+        <div class="flex-1 w-full bg-panel rounded-xl shadow-sm p-5 md:p-6 border border-dashed border-line min-h-[300px] lg:sticky lg:top-0 max-h-[calc(100vh-160px)] overflow-y-auto transition-colors">
+          <h3 class="m-0 mb-4 text-base font-black text-primary border-b border-line pb-3">Itemized Ticket Auditor</h3>
           
           @if (selectedTxnDetails(); as tx) {
-            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
-              <div class="flex justify-between items-center text-[13px] font-semibold text-slate-500 mb-4 pb-3 border-b border-dashed border-slate-300">
-                <span>Ref: <strong class="text-slate-800">{{ tx.id }}</strong></span>
+            <div class="bg-base border border-line p-4 rounded-xl">
+              <div class="flex justify-between items-center text-[13px] font-semibold text-muted mb-4 pb-3 border-b border-dashed border-line">
+                <span>Ref: <strong class="text-primary">{{ tx.id }}</strong></span>
                 <span>{{ tx.timestamp | date:'HH:mm' }}</span>
-                <span>By: <strong class="text-slate-800">{{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}</strong></span>
+                <span>By: <strong class="text-primary">{{ $any(tx).cashierId || $any(tx).cashierName || $any(tx).cashier || 'Unknown' }}</strong></span>
               </div>
               
-              <div class="flex flex-col gap-2 mb-4 pb-3 border-b border-dashed border-slate-300">
+              <div class="flex flex-col gap-2 mb-4 pb-3 border-b border-dashed border-line">
                 @for (item of tx.items; track item.product.id) {
-                  <div class="flex justify-between text-sm text-slate-700">
-                    <span class="font-bold">{{ item.product.name }} <span class="text-slate-400">(x{{ item.quantity }})</span></span>
+                  <div class="flex justify-between text-sm text-primary">
+                    <span class="font-bold">{{ item.product.name }} <span class="text-muted">(x{{ item.quantity }})</span></span>
                     <span class="font-black">{{ formatMoney(item.product.price * item.quantity) }}</span>
                   </div>
                 }
               </div>
               
-              <div class="flex flex-col gap-1 text-[13px] font-semibold text-slate-500 text-right">
+              <div class="flex flex-col gap-1 text-[13px] font-semibold text-muted text-right">
                 <div>Computed VAT (24%): {{ formatMoney(tx.taxAmount || 0) }}</div>
-                <div class="text-base font-black text-slate-900 mt-2 pt-2 border-t border-slate-200">
-                  Paid Total: <span class="text-emerald-600">{{ formatMoney(tx.grandTotal) }}</span>
+                <div class="text-base font-black text-primary mt-2 pt-2 border-t border-line">
+                  Paid Total: <span class="text-emerald-500">{{ formatMoney(tx.grandTotal) }}</span>
                 </div>
               </div>
             </div>
           } @else {
-            <div class="text-center text-slate-400 font-bold py-20 px-4 text-sm leading-relaxed">
+            <div class="text-center text-muted font-bold py-20 px-4 text-sm leading-relaxed">
               Select any closed ticket from the archive log to audit line item metrics.
             </div>
           }
@@ -227,14 +227,14 @@
 
     <!-- ================== TAB 2: ANALYTICS ================== -->
     @if (activeTab() === 'analytics') {
-      <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+      <div class="bg-panel p-6 rounded-xl shadow-sm border border-line mb-6 transition-colors">
         <div class="mb-6">
-          <h3 class="m-0 text-lg font-black text-slate-900">⏰ Hourly Performance Heatmap</h3>
-          <p class="m-0 mt-1 text-sm font-semibold text-slate-500">Identify peak velocity sales windows.</p>
+          <h3 class="m-0 text-lg font-black text-primary">⏰ Hourly Performance Heatmap</h3>
+          <p class="m-0 mt-1 text-sm font-semibold text-muted">Identify peak velocity sales windows.</p>
         </div>
 
         <div class="overflow-x-auto hide-scrollbar pb-2">
-          <div class="grid grid-cols-[repeat(24,1fr)] gap-1.5 items-end min-h-[140px] border-b-2 border-slate-200 pb-2 mb-2 min-w-[600px]">
+          <div class="grid grid-cols-[repeat(24,1fr)] gap-1.5 items-end min-h-[140px] border-b-2 border-line pb-2 mb-2 min-w-[600px]">
             @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
               <div [title]="slot.hourLabel + '\nRevenue: ' + formatMoney(slot.revenue) + '\nTickets: ' + slot.ticketCount" 
                    class="flex flex-col justify-end h-full cursor-pointer group">
@@ -244,26 +244,26 @@
               </div>
             }
           </div>
-          <div class="grid grid-cols-[repeat(24,1fr)] gap-1.5 text-center text-[10px] font-extrabold text-slate-400 min-w-[600px]">
+          <div class="grid grid-cols-[repeat(24,1fr)] gap-1.5 text-center text-[10px] font-extrabold text-muted min-w-[600px]">
             @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
               <div>{{ slot.hour % 2 === 0 ? slot.hour : '' }}</div>
             }
           </div>
         </div>
 
-        <div class="mt-8 pt-6 border-t border-dashed border-slate-200">
-          <h4 class="m-0 mb-4 text-xs font-extrabold uppercase tracking-wider text-slate-500">High-Velocity Windows</h4>
+        <div class="mt-8 pt-6 border-t border-dashed border-line">
+          <h4 class="m-0 mb-4 text-xs font-extrabold uppercase tracking-wider text-muted">High-Velocity Windows</h4>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
               @if (slot.ticketCount > 0) {
-                <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg flex justify-between items-center shadow-sm">
+                <div class="bg-base border border-line p-3 rounded-lg flex justify-between items-center shadow-sm">
                   <div class="flex flex-col gap-0.5">
-                    <span class="font-black text-slate-800 text-sm">{{ slot.hourLabel }}</span>
-                    <span class="font-bold text-slate-500 text-[11px]">{{ slot.ticketCount }} sales</span>
+                    <span class="font-black text-primary text-sm">{{ slot.hourLabel }}</span>
+                    <span class="font-bold text-muted text-[11px]">{{ slot.ticketCount }} sales</span>
                   </div>
                   <div class="flex flex-col items-end gap-0.5">
-                    <span class="font-black text-blue-700 text-sm">{{ formatMoney(slot.revenue) }}</span>
-                    <span class="font-bold text-emerald-700 text-[11px]">Avg: {{ formatMoney(slot.averageTicketSize) }}</span>
+                    <span class="font-black text-blue-500 text-sm">{{ formatMoney(slot.revenue) }}</span>
+                    <span class="font-bold text-emerald-500 text-[11px]">Avg: {{ formatMoney(slot.averageTicketSize) }}</span>
                   </div>
                 </div>
               }
@@ -276,48 +276,48 @@
     <!-- ================== TAB 3: LIVE DASHBOARD ================== -->
     @if (activeTab() === 'dashboard') {
       <div class="mb-6 no-print">
-        <h1 class="m-0 text-2xl text-slate-900 font-extrabold tracking-tight">Live Dashboard Widgets</h1>
+        <h1 class="m-0 text-2xl text-primary font-extrabold tracking-tight">Live Dashboard Widgets</h1>
       </div>
       
       <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 no-print">
         
         <!-- NEW NET EARNINGS (PROFIT) WIDGET -->
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-col justify-center">
-          <div class="text-sm font-black text-slate-700 uppercase tracking-wider mb-1">📈 Today's Net Earnings</div>
-          <div class="text-xs font-bold text-slate-500 mb-5">Sum of (Retail Price - Wholesale Cost)</div>
+        <div class="bg-panel rounded-xl p-5 shadow-sm border border-line flex flex-col justify-center transition-colors">
+          <div class="text-sm font-black text-primary uppercase tracking-wider mb-1">📈 Today's Net Earnings</div>
+          <div class="text-xs font-bold text-muted mb-5">Sum of (Retail Price - Wholesale Cost)</div>
           
           <div class="flex items-baseline gap-3">
-            <div class="text-4xl font-black text-green-600 tracking-tight">{{ formatMoney(todayProfit()) }}</div>
-            <div class="text-xs font-black text-emerald-700 bg-emerald-100 px-2 py-1 rounded-md">Pure Profit</div>
+            <div class="text-4xl font-black text-green-500 tracking-tight">{{ formatMoney(todayProfit()) }}</div>
+            <div class="text-xs font-black text-emerald-500 bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 rounded-md">Pure Profit</div>
           </div>
         </div>
 
         <!-- CASH DRAWER WIDGET -->
-        <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-col h-[400px]">
+        <div class="bg-panel rounded-xl p-5 shadow-sm border border-line flex flex-col h-[400px] transition-colors">
           <div class="flex justify-between items-center mb-4">
-            <span class="text-sm font-black text-slate-700 uppercase tracking-wider">💵 Cash Drawer Control</span>
-            <button class="bg-transparent hover:bg-red-50 text-red-500 border border-red-500 px-2 py-1 text-[11px] rounded font-bold transition-colors focus:outline-none" 
+            <span class="text-sm font-black text-primary uppercase tracking-wider">💵 Cash Drawer Control</span>
+            <button class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-2 py-1 text-[11px] rounded font-bold transition-colors focus:outline-none" 
                     (click)="cashLogs.set([])">Reset</button>
           </div>
 
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex justify-between items-baseline mb-4">
-            <span class="text-sm font-bold text-slate-500">Expected Cash:</span>
-            <span class="text-3xl font-black text-emerald-600 tracking-tight">{{ formatMoney(liveCashInDrawer()) }}</span>
+          <div class="bg-base border border-line rounded-xl p-4 flex justify-between items-baseline mb-4">
+            <span class="text-sm font-bold text-muted">Expected Cash:</span>
+            <span class="text-3xl font-black text-emerald-500 tracking-tight">{{ formatMoney(liveCashInDrawer()) }}</span>
           </div>
 
-          <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl p-2 bg-white mb-4 pr-1">
-            <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 ml-1">Today's Activity</div>
+          <div class="flex-1 overflow-y-auto border border-line rounded-xl p-2 bg-base mb-4 pr-1">
+            <div class="text-[10px] font-extrabold text-muted uppercase tracking-wider mb-2 ml-1">Today's Activity</div>
             @for (log of cashLogs(); track log.id) {
-              <div class="flex justify-between items-center p-1.5 border-b border-slate-50 text-xs">
+              <div class="flex justify-between items-center p-1.5 border-b border-line text-xs">
                 <div class="flex items-center gap-2">
-                  <span *ngIf="log.type === 'IN'" class="text-green-600 font-black">+{{ formatMoney(log.amount) }}</span>
+                  <span *ngIf="log.type === 'IN'" class="text-green-500 font-black">+{{ formatMoney(log.amount) }}</span>
                   <span *ngIf="log.type === 'OUT'" class="text-red-500 font-black">-{{ formatMoney(log.amount) }}</span>
-                  <span class="text-slate-600 font-bold">{{ log.reason }}</span>
+                  <span class="text-primary font-bold">{{ log.reason }}</span>
                 </div>
-                <span class="text-[10px] font-bold text-slate-400">{{ log.timestamp | date:'HH:mm' }}</span>
+                <span class="text-[10px] font-bold text-muted">{{ log.timestamp | date:'HH:mm' }}</span>
               </div>
             } @empty {
-              <div class="text-center text-slate-400 font-bold italic py-4 text-xs">No cash movements yet today.</div>
+              <div class="text-center text-muted font-bold italic py-4 text-xs">No cash movements yet today.</div>
             }
           </div>
 
@@ -328,17 +328,17 @@
         </div>
 
         <!-- ALERTS WIDGET -->
-        <div class="bg-white rounded-xl p-5 shadow-sm border flex flex-col"
-             [ngClass]="systemAlerts().length > 0 ? 'border-red-300 bg-red-50/50' : 'border-slate-200'">
+        <div class="bg-panel rounded-xl p-5 shadow-sm border flex flex-col transition-colors"
+             [ngClass]="systemAlerts().length > 0 ? 'border-red-500/50 bg-red-500/5' : 'border-line'">
           <div class="text-sm font-black uppercase tracking-wider mb-4"
-               [ngClass]="systemAlerts().length > 0 ? 'text-red-800' : 'text-green-800'">
+               [ngClass]="systemAlerts().length > 0 ? 'text-red-500' : 'text-green-500'">
             {{ systemAlerts().length > 0 ? '⚠️ System Alerts (' + systemAlerts().length + ')' : '✅ System Healthy' }}
           </div>
           
           <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
             @for (alert of systemAlerts(); track alert.msg) {
               <div class="text-xs font-bold p-2.5 rounded-lg border"
-                   [ngClass]="alert.type === 'danger' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'">
+                   [ngClass]="alert.type === 'danger' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30'">
                 {{ alert.msg }}
               </div>
             }
@@ -350,27 +350,32 @@
   </div>
 </div>
 
-<!-- MODAL (Shared styling with POS) -->
+<!-- MODAL (Unified styling with POS) -->
 @if (salesService.activeModal(); as modal) {
-  <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-fade-in-up">
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div class="bg-panel border border-line rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transition-colors">
+      
       <div class="p-4 font-bold text-lg border-b" 
-           [class.bg-red-50]="modal.type === 'warning'" [class.text-red-800]="modal.type === 'warning'" [class.border-red-200]="modal.type === 'warning'"
-           [class.bg-green-50]="modal.type === 'success'" [class.text-green-800]="modal.type === 'success'" [class.border-green-200]="modal.type === 'success'"
-           [class.bg-slate-50]="modal.type === 'prompt'" [class.text-slate-900]="modal.type === 'prompt'" [class.border-slate-200]="modal.type === 'prompt'">
+           [ngClass]="{
+             'bg-red-500/10 text-red-500 border-red-500/20': modal.type === 'warning',
+             'bg-green-500/10 text-green-500 border-green-500/20': modal.type === 'success',
+             'bg-panel text-primary border-line': modal.type === 'prompt'
+           }">
         {{ modal.title }}
       </div>
-      <div class="p-5 text-slate-700 whitespace-pre-line bg-white text-sm font-medium">
+      
+      <div class="p-5 text-primary whitespace-pre-line bg-panel text-sm font-medium">
         <p class="m-0">{{ modal.message }}</p>
         @if (modal.type === 'prompt') {
           <input #promptInput type="number" step="0.01" 
-                 class="w-full mt-3 px-4 py-3 border-2 border-slate-300 rounded-xl text-lg font-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-slate-800" 
+                 class="w-full mt-3 px-4 py-3 border-2 border-line bg-base rounded-xl text-lg font-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-primary" 
                  [value]="modal.value" (input)="modal.value = promptInput.value" (keyup.enter)="modal.onConfirm(modal.value)" autofocus />
         }
       </div>
-      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+      
+      <div class="p-4 border-t border-line bg-base flex justify-end gap-3">
         @if (modal.type === 'prompt') {
-          <button class="px-5 py-2.5 font-bold rounded-xl text-slate-600 bg-slate-200 hover:bg-slate-300 active:scale-95 transition-all" (click)="salesService.closeModal()">Cancel</button>
+          <button class="px-5 py-2.5 font-bold rounded-xl text-muted hover:text-primary hover:bg-hover active:scale-95 transition-all" (click)="salesService.closeModal()">Cancel</button>
           <button class="px-5 py-2.5 font-bold rounded-xl bg-blue-600 text-white shadow-md hover:bg-blue-700 active:scale-95 transition-all" (click)="modal.onConfirm(modal.value)">Confirm</button>
         }
         @if (modal.type === 'warning' || modal.type === 'success') {
