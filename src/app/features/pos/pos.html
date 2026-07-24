@@ -197,7 +197,7 @@
 
       <div class="flex-1 overflow-y-auto p-4 md:p-5">
         
-        <!-- ========================================== -->
+      <!-- ========================================== -->
         <!-- PRIORITY 1: SCALED ITEMS (Always Top) -->
         <!-- ========================================== -->
         @if (weightedProducts().length > 0 && !searchQuery()) {
@@ -211,9 +211,23 @@
           
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
             @for (prod of weightedProducts(); track prod.id) {
-              <div class="bg-panel border-2 border-green-500 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:bg-green-50 active:scale-95 transition-all h-24" (click)="handleProductClick(prod)">
-                <span class="text-green-700 font-black text-xl mb-1">{{ formatMoney(prod.price) }}<span class="text-sm font-bold">/kg</span></span>
-                <span class="text-primary font-bold text-sm leading-tight uppercase text-center">{{ prod.name.length > 12 ? prod.name.substring(0, 12) + '..' : prod.name }}</span>
+              <div class="bg-panel border-2 border-green-500 rounded-xl p-2 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:bg-green-50 active:scale-95 transition-all h-28 group focus:outline-none" (click)="handleProductClick(prod)">
+                
+                <!-- 1. The massive Emoji extracted from the first character -->
+                <span class="text-3xl group-hover:scale-110 transition-transform duration-300">
+                  {{ prod.name.charAt(0) }}
+                </span>
+                
+                <!-- 2. The Text Name (without the emoji), keeping your exact 12-char cutoff -->
+                <span class="text-primary font-bold text-[13px] leading-tight uppercase text-center mt-1">
+                  {{ prod.name.substring(1).trim().length > 12 ? prod.name.substring(1).trim().substring(0, 12) + '..' : prod.name.substring(1).trim() }}
+                </span>
+
+                <!-- 3. Your awesome green price layout (scaled down slightly to fit) -->
+                <span class="text-green-700 font-black text-sm mt-0.5">
+                  {{ formatMoney(prod.price) }}<span class="text-[10px] font-bold">/kg</span>
+                </span>
+                
               </div>
             }
           </div>
