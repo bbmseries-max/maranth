@@ -233,23 +233,23 @@
           }
         </div>
 
-        <!-- ========================================== -->
+      <!-- ========================================== -->
         <!-- PRIORITY 3: STANDARD CATALOG -->
         <!-- ========================================== -->
-        <div class="flex items-center gap-3 mb-4 border-b-2 border-slate-200 pb-3">
+        <div class="flex items-center gap-3 mb-4 border-b-2 border-line pb-3 transition-colors">
           <div class="font-black text-lg text-primary">{{ searchQuery() ? 'Search Results' : '📦 Standard Catalog (Max 15)' }}</div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           @for (prod of filteredCatalogProducts() | slice:0:15; track prod.id; let idx = $index) {
             
-            <!-- CHANGED: Swapped "border border-slate-200" for "border-2 border-slate-200" -->
-           <div class="bg-panel border border-slate-300 rounded-xl p-3 flex flex-col gap-2 cursor-pointer shadow-sm hover:shadow-md hover:border-blue-500 active:scale-95 transition-all min-h-[110px]" (click)="handleProductClick(prod)">
+            <div class="bg-panel border border-line rounded-xl p-3 flex flex-col gap-2 cursor-pointer shadow-sm hover:shadow-md hover:border-blue-500 active:scale-95 transition-all min-h-[110px]" (click)="handleProductClick(prod)">
+              
               <div class="flex justify-between items-start gap-2">
                 <span class="font-bold text-primary text-sm leading-tight line-clamp-2">{{ prod.name }}</span>
                 <div class="flex gap-1 items-center flex-shrink-0">
-                  @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { <span class="text-sm bg-hover p-1 rounded-md" title="Scaled Item">⚖️</span> }
-                  <button class="text-sm p-1 rounded-md hover:bg-hover transition-colors" title="Quick Edit" (click)="openQuickEdit(prod, $event)">✏️</button>
+                  @if (prod.isWeighted === true || $any(prod.isWeighted) === 'true') { <span class="text-sm bg-hover text-primary p-1 rounded-md" title="Scaled Item">⚖️</span> }
+                  <button class="text-sm p-1 rounded-md text-primary hover:bg-hover transition-colors" title="Quick Edit" (click)="openQuickEdit(prod, $event)">✏️</button>
                 </div>
               </div>
 
@@ -268,7 +268,7 @@
 
               @let liveStock = liveProduct.stockQuantity;
               
-              <div class="flex justify-between items-end mt-auto pt-2 border-t border-slate-100">
+              <div class="flex justify-between items-end mt-auto pt-2 border-t border-line">
                 <div class="text-[11px] font-black px-2 py-1 rounded-lg" [ngClass]="liveStock <= 5 ? 'bg-red-100 text-red-700' : 'bg-hover text-muted'">
                   📦 {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
                 </div>
@@ -276,7 +276,7 @@
               </div>
             </div>
           } @empty {
-            <div class="col-span-full p-10 text-center font-bold text-muted bg-hover rounded-2xl border-2 border-dashed border-slate-300">
+            <div class="col-span-full p-10 text-center font-bold text-muted bg-hover rounded-2xl border-2 border-dashed border-line">
               ⚠️ No items match your search.
             </div>
           }
