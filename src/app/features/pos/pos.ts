@@ -17,6 +17,7 @@ import { ThemeService } from '../../shared/services/theme.service';
 export class PosComponent implements OnInit, AfterViewInit {
   public salesService = inject(SalesService);
   public router = inject(Router);
+  isMenuOpen = signal(false);
 
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
 
