@@ -154,13 +154,33 @@
     </summary>
 
     <div class="max-h-[168px] overflow-y-auto flex flex-col bg-slate-950/50 hide-scrollbar shadow-inner">
-      @for (cat of categories(); track cat.id) {
-        <button class="text-left px-4 py-2.5 text-[13px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border-b border-slate-800/50 last:border-none focus:outline-none">
+      @for (cat of salesService.categories(); track cat.id) {
+        <button class="text-left px-4 py-2.5 text-[16px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border-b border-slate-800/50 last:border-none focus:outline-none">
           {{ cat.name }}
         </button>
       }
     </div>
   </details>
+ <!-- 3. BEAUTIFUL BOTTOM ANCHOR (Live Dashboard Widget) -->
+  <div class="mt-auto p-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 z-20">
+    
+    <!-- CHANGED: Turned the div into an <a> tag and added routerLink -->
+    <a routerLink="/reports" fragment="live-dashboard" class="bg-gradient-to-r from-indigo-600 to-purple-600 p-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] cursor-pointer hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all active:scale-95 flex items-center justify-between group no-underline outline-none border-none">
+      
+      <div class="flex items-center gap-3">
+        <!-- Pulsing Live Dot -->
+        <span class="relative flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+        </span>
+        <span class="font-bold text-sm text-white tracking-wide">Live Dashboard</span>
+      </div>
+      
+      <!-- Animated arrow on hover -->
+      <span class="text-white/80 group-hover:translate-x-1 group-hover:text-white transition-all">➡️</span>
+      
+    </a>
+  </div>
     </aside>
 
     <section class="flex-1 flex flex-col bg-base relative overflow-hidden">
