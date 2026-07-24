@@ -108,28 +108,35 @@
     <aside class="w-full md:w-[280px] bg-slate-900 text-white flex-shrink-0 flex flex-col border-r border-slate-800 z-10 transition-all">
       
       <!-- 2. THE 3 QUICK ACTION BUTTONS -->
-      <div class="flex gap-2 p-3 bg-slate-950">
-        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl uppercase text-xs font-bold transition-colors shadow-sm"
-                [ngClass]="salesService.isRefundMode() ? 'bg-green-400-500 text-white' : 'bg-green-800-800 text-slate-300 hover:bg-green-700'"
+      <div class="flex gap-2 p-3 bg-base border-t border-line transition-colors duration-300">
+        
+        <!-- REFUND BUTTON -->
+        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl uppercase text-xs font-bold transition-all shadow-sm border"
+                [ngClass]="salesService.isRefundMode() 
+                  ? 'bg-green-600 border-green-600 text-white shadow-md scale-95' 
+                  : 'bg-green-500/10 border-green-500/30 text-primary hover:bg-green-500/20 hover:border-green-500/50'"
                 (click)="salesService.isRefundMode.set(!salesService.isRefundMode()); salesService.triggerSearchFocus()">
           <span class="text-base mb-0.5">↩️</span>
           <span>Refund</span>
         </button>
         
-        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold uppercase bg-red-800 text-slate-300 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+        <!-- CLEAR BUTTON -->
+        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold uppercase transition-all shadow-sm border bg-red-500/10 border-red-500/30 text-primary hover:bg-red-500/20 hover:border-red-500/50 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                 (click)="salesService.clearBasket()" [disabled]="salesService.basket().length === 0">
           <span class="text-base mb-0.5">🗑️</span>
           <span>Clear</span>
         </button>
         
+        <!-- SUSPEND / RECALL BUTTON -->
         @if (!salesService.suspendedBasket()) {
-          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl uppercase text-xs font-bold bg-orange-600 text-orange-100 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl uppercase text-xs font-bold transition-all shadow-sm border bg-orange-500/10 border-orange-500/30 text-primary hover:bg-orange-500/20 hover:border-orange-500/50 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                   (click)="salesService.suspendOrder()" [disabled]="salesService.basket().length === 0">
             <span class="text-base mb-0.5">⏸️</span>
             <span>Suspend</span>
           </button>
         } @else {
-          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold bg-sky-700 text-white hover:bg-sky-400 transition-colors shadow-sm"
+          <!-- Active Recall State (Solid Color) -->
+          <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl uppercase text-xs font-bold transition-all shadow-sm border bg-blue-600 border-blue-600 text-white hover:bg-blue-700 shadow-md"
                   (click)="salesService.recallOrder()">
             <span class="text-base mb-0.5">🔄</span>
             <span>Recall (1)</span>
