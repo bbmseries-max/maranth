@@ -206,6 +206,8 @@
   <!-- TAB 2: SUPPLIERS -->
   <!-- ========================================== -->
   @if (activeTab() === 'suppliers') {
+    
+    <!-- 1. REUSABLE FORM -->
     <ng-template #supplierFormTemplate>
       <div class="p-4 bg-base border-t border-line flex flex-col gap-4 transition-colors duration-300">
         <div class="flex flex-col">
@@ -227,7 +229,7 @@
       </div>
     </ng-template>
 
-   <!-- UPDATED SUPPLIER HEADER WITH SEARCH -->
+    <!-- 2. SEARCH & ADD HEADER -->
     <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
       <div class="flex gap-2 items-center">
         <div class="flex-1 flex items-center bg-panel border border-line rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
@@ -239,13 +241,8 @@
       </div>
     </div>
     
+    <!-- 3. MAIN SUPPLIER LIST -->
     <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
-      @if (editingSupplierId === 'NEW') {
-        <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600 transition-colors duration-300">
-          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-line bg-green-50/20">✨ New Supplier Profile</div>
-          <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
-        </div>
-      }
       @for (sup of suppliers(); track sup.id) {
         <div class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingSupplierId === sup.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
           <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleSupplierEdit(sup)">
@@ -255,18 +252,38 @@
             </div>
             <div class="text-lg text-muted">{{ editingSupplierId === sup.id ? '🔼' : '✏️' }}</div>
           </div>
+          <!-- Inline Edit for existing suppliers -->
           @if (editingSupplierId === sup.id) {
             <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
           }
         </div>
+      } @empty {
+        <div class="text-center p-10 font-bold text-muted bg-hover rounded-xl border-2 border-dashed border-line">No suppliers found.</div>
       }
     </div>
+
+    <!-- 4. ✨ NEW SUPPLIER MODAL ✨ -->
+    @if (editingSupplierId === 'NEW') {
+      <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div class="bg-base border border-line rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+          <div class="flex justify-between items-center p-4 border-b border-line bg-panel">
+            <h2 class="text-xl font-black text-green-600 m-0">✨ New Supplier Profile</h2>
+            <button (click)="cancelAllEdits()" class="text-muted hover:text-red-500 hover:bg-red-500/10 w-8 h-8 flex items-center justify-center rounded-lg text-lg font-bold transition-colors focus:outline-none">✖</button>
+          </div>
+          <div class="flex-1 overflow-y-auto">
+             <ng-container *ngTemplateOutlet="supplierFormTemplate"></ng-container>
+          </div>
+        </div>
+      </div>
+    }
   }
 
-  <!-- ========================================== -->
+<!-- ========================================== -->
   <!-- TAB 3: CATEGORIES -->
   <!-- ========================================== -->
   @if (activeTab() === 'categories') {
+    
+    <!-- 1. REUSABLE FORM -->
     <ng-template #categoryFormTemplate>
       <div class="p-4 bg-base border-t border-line flex flex-col gap-4 transition-colors duration-300">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -286,7 +303,7 @@
       </div>
     </ng-template>
 
-   <!-- UPDATED CATEGORY HEADER WITH SEARCH -->
+    <!-- 2. SEARCH & ADD HEADER -->
     <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
       <div class="flex gap-2 items-center">
         <div class="flex-1 flex items-center bg-panel border border-line rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
@@ -298,13 +315,8 @@
       </div>
     </div>
     
+    <!-- 3. MAIN CATEGORY LIST -->
     <div class="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
-      @if (editingCategoryId === 'NEW') {
-        <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600 transition-colors duration-300">
-          <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-line bg-green-50/20">✨ New Category</div>
-          <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
-        </div>
-      }
       @for (cat of categories(); track cat.id) {
         <div class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingCategoryId === cat.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
           <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleCategoryEdit(cat)">
@@ -314,12 +326,30 @@
             </div>
             <div class="text-lg text-muted">{{ editingCategoryId === cat.id ? '🔼' : '✏️' }}</div>
           </div>
+          <!-- Inline Edit for existing categories -->
           @if (editingCategoryId === cat.id) {
             <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
           }
         </div>
+      } @empty {
+        <div class="text-center p-10 font-bold text-muted bg-hover rounded-xl border-2 border-dashed border-line">No categories found.</div>
       }
     </div>
+
+    <!-- 4. ✨ NEW CATEGORY MODAL ✨ -->
+    @if (editingCategoryId === 'NEW') {
+      <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div class="bg-base border border-line rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
+          <div class="flex justify-between items-center p-4 border-b border-line bg-panel">
+            <h2 class="text-xl font-black text-green-600 m-0">✨ New Category</h2>
+            <button (click)="cancelAllEdits()" class="text-muted hover:text-red-500 hover:bg-red-500/10 w-8 h-8 flex items-center justify-center rounded-lg text-lg font-bold transition-colors focus:outline-none">✖</button>
+          </div>
+          <div class="flex-1 overflow-y-auto">
+             <ng-container *ngTemplateOutlet="categoryFormTemplate"></ng-container>
+          </div>
+        </div>
+      </div>
+    }
   }
 
   <!-- ========================================== -->
