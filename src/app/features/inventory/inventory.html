@@ -41,60 +41,23 @@
             [ngClass]="activeTab() === 'staff' ? 'border-blue-600 text-blue-700' : 'border-transparent text-muted hover:text-primary'">👥 Staff</button>
   </div>
 
-<!-- ========================================== -->
+  <!-- ========================================== -->
   <!-- TAB 1: PRODUCTS LIST -->
   <!-- ========================================== -->
   @if (activeTab() === 'products') {
-    <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
-      <!-- TOP ROW: Search & Add -->
-      <div class="flex gap-2 items-center">
-        <div class="flex-1 flex items-center bg-panel border border-line rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-          <span class="text-lg text-muted mr-2">🔍</span>
-          <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-primary placeholder:text-muted" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-          @if (searchQuery()) { <button class="text-muted hover:text-red-500 font-bold focus:outline-none" (click)="searchQuery.set('')">✖</button> }
-        </div>
-        <button (click)="prepareNewProduct()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
-      </div>
-      
-      <!-- BOTTOM ROW: Filters -->
-      <div class="flex flex-wrap gap-3 items-center w-full py-1">
-        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
-          <option value="active">🟢 Active Items</option>
-          <option value="inactive">🔴 Inactive Items</option>
-          <option value="all">⚪ All Items</option>
-        </select>
-        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
-          <option value="ALL">📁 All Categories</option>
-          @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
-        </select>
-        <button (click)="filterLowStock.set(!filterLowStock())" 
-                class="py-2 px-4 rounded-lg font-bold text-sm transition-colors border"
-                [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-panel text-primary border-line hover:bg-hover'">
-          📦 Low Stock
-        </button>
-        <div class="flex items-center bg-panel border border-line rounded-lg pr-2 focus-within:border-blue-500 transition-colors">
-          <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-primary outline-none bg-transparent" title="Filter by expiration date" />
-          @if (expireFilterDate()) { <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> }
-        </div>
-      </div>
-    </div>
-      
-    <div class="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">      
-      
-     <!-- 1. THE REUSABLE FORM (Now with Null-Safeguards!) -->
+    
+    <!-- Reusable Product Form Template (Now safely at the top!) -->
     <ng-template #productFormTemplate>
       <div class="p-4 bg-base border-t border-line flex flex-col gap-4 transition-colors duration-300">
-        
         <!-- ALTERNATIVE BARCODES -->
         <div class="p-3 border border-dashed border-line rounded-lg bg-hover">
-          <label class="block font-bold text-[13px] text-primary mb-2">Alternative Barcodes</label>
+          <label class="block font-bold text-[13px] text-primary mb-2">Alternative Barcodes (New Packaging, Promos)</label>
           <div class="flex gap-2 mb-3">
             <input type="text" [(ngModel)]="newAltBarcode" placeholder="Scan or type new barcode..." class="flex-1 px-3 py-2 border border-line bg-panel text-primary rounded-md text-sm outline-none focus:border-blue-500" (keyup.enter)="addAltBarcode()" />
             <button type="button" (click)="addAltBarcode()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-md font-bold text-sm transition-colors shadow-sm">+ Add</button>
           </div>
           <div class="flex flex-wrap gap-2">
-            <!-- 🛑 CRASH FIX: Added ( ... || [] ) so older products don't break -->
-            @for (code of (editForm.altBarcodes || []); track $index) {
+            @for (code of editForm.altBarcodes; track code) {
               <div class="bg-panel border border-line text-primary px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2">
                 <span>{{ code }}</span>
                 <button type="button" (click)="removeAltBarcode(code)" class="bg-red-500 hover:bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] focus:outline-none">✕</button>
@@ -127,23 +90,21 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Expiration Date</label><input type="date" [(ngModel)]="editForm.expire" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-mono font-bold outline-none focus:border-blue-500" /></div>
-          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Low Stock Warning At</label><input type="number" [(ngModel)]="editForm.minStockWarning" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
+          <div class="flex flex-col"><label class="text-xs font-bold text-muted uppercase mb-1">Low Stock Warning At</label><input type="number" [(ngModel)]="editForm.minStockWarning" placeholder="e.g. 5" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" /></div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col">
             <label class="text-xs font-bold text-muted uppercase mb-1">Category</label>
             <select [(ngModel)]="editForm.categoryId" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500">
-              <!-- 🛑 CRASH FIX: Added ( ... || [] ) -->
-              @for (cat of (categories() || []); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
+              @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
             </select>
           </div>
           <div class="flex flex-col">
             <label class="text-xs font-bold text-muted uppercase mb-1">Supplier</label>
             <select [(ngModel)]="editForm.supplierId" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500">
               <option [value]="undefined">-- None --</option>
-              <!-- 🛑 CRASH FIX: Added ( ... || [] ) -->
-              @for (sup of (suppliers() || []); track sup.id) { <option [value]="sup.id">{{ sup.name }}</option> }
+              @for (sup of suppliers(); track sup.id) { <option [value]="sup.id">{{ sup.name }}</option> }
             </select>
           </div>
         </div>
@@ -161,22 +122,49 @@
       </div>
     </ng-template>
 
-    <!-- 2. THE TOP FILTERS / ADD BUTTON GO HERE AS NORMAL -->
     <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
-      <!-- (Keep your existing search bar and filters here, don't change them) -->
+      <!-- TOP ROW: Search & Add -->
+      <div class="flex gap-2 items-center">
+        <div class="flex-1 flex items-center bg-panel border border-line rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+          <span class="text-lg text-muted mr-2">🔍</span>
+          <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-primary placeholder:text-muted" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+          @if (searchQuery()) { <button class="text-muted hover:text-red-500 font-bold focus:outline-none" (click)="searchQuery.set('')">✖</button> }
+        </div>
+        <button (click)="prepareNewProduct()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
+      </div>
+      
+      <!-- BOTTOM ROW: Filters -->
+      <div class="flex flex-wrap gap-3 items-center w-full py-1">
+        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
+          <option value="active">🟢 Active Items</option>
+          <option value="inactive">🔴 Inactive Items</option>
+          <option value="all">⚪ All Items</option>
+        </select>
+        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
+          <option value="ALL">📁 All Categories</option>
+          @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
+        </select>
+        <button (click)="filterLowStock.set(!filterLowStock())" 
+                class="py-2 px-4 rounded-lg font-bold text-sm transition-colors border"
+                [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-panel text-primary border-line hover:bg-hover'">
+          📦 Low Stock
+        </button>
+        <div class="flex items-center bg-panel border border-line rounded-lg pr-2 focus-within:border-blue-500 transition-colors">
+          <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-primary outline-none bg-transparent" title="Filter by expiration date" />
+          @if (expireFilterDate()) { 
+            <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> 
+          }
+        </div>
+      </div>
     </div>
       
     <div class="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">      
-      
-      <!-- 3. THE "NEW" BOX -->
       @if (editingProductId === 'NEW') {
         <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm border-t-4 border-t-green-600 transition-colors duration-300">
           <div class="p-4 font-extrabold text-green-700 border-b border-dashed border-line bg-green-50/20">✨ Register New Item</div>
           <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
         </div>
       }
-
-      <!-- 4. YOUR PRODUCT LOOP -->
       @for (prod of filteredProducts(); track prod.id) {
         <div [id]="'prod-card-' + prod.id" class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingProductId === prod.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
           <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleEdit(prod)">
@@ -197,6 +185,8 @@
         <div class="text-center p-10 font-bold text-muted bg-hover rounded-xl border-2 border-dashed border-line">No products found.</div>
       }
     </div>
+  }
+
   <!-- ========================================== -->
   <!-- TAB 2: SUPPLIERS -->
   <!-- ========================================== -->
