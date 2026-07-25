@@ -520,6 +520,7 @@ export class ReportsComponent {
           isLoss: trueProfit < 0
         };
       })
+      .filter(item => item.qtyWasted > 0)
       .sort((a, b) => a.trueProfit - b.trueProfit); // Sort so the biggest losses show up first!
   });
 
