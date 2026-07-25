@@ -306,4 +306,33 @@ export class InventoryComponent {
       alert("Sync failed. Check your connection.");
     }
   }
+
+  public promptLogWaste(product: any): void {
+    const qtyStr = window.prompt(`🗑️ LOG WASTE: ${product.name}\n\nEnter the quantity wasted/lost:`);
+    if (!qtyStr) return;
+    
+    const quantity = parseFloat(qtyStr.replace(',', '.'));
+    if (isNaN(quantity) || quantity <= 0) return;
+
+    // Make sure we don't waste more than we actually have in stock
+    const currentStock = Number(product.stockQuantity || 0);
+    if (quantity > currentStock) {
+      alert(`Error: You only have ${currentStock} in stock. You cannot log ${quantity} as waste.`);
+      return;
+    }
+
+    const reason = window.prompt('Enter the reason (e.g., Dropped, Expired, Rotten):') || 'Unspecified Spoilage';
+
+    // 1. Log it to our new shrinkage tracker
+    this.salesService.logSpoilage(product, quantity, reason);
+
+    // 2. Safely deduct it from the actual physical inventory
+    product.stockQuantity = currentStock - quantity;
+    
+    // (Optional) If you have a saveProduct function in your service to update the main product list, call it here:
+    // this.salesService.updateProduct(product);
+
+    alert(`✅ Logged ${quantity} of ${product.name} as waste.`);
+  }
+
 }

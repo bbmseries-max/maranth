@@ -13,11 +13,24 @@ const firebaseConfig = {
   appId: "1:71739745426:web:cf0dbdcfbdf29fe10ef24b"
 };
 
+export interface SpoilageLog {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  buyingPrice: number; // We lock in the cost at the time it was wasted
+  reason: string;
+  timestamp: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class SalesService {
   private db: any;
+
+  // The live memory bank for all wasted items
+  public spoilageLogs = signal<SpoilageLog[]>([]);
 
   public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier', isApproved?: boolean}[]>([]);
   public transactions = signal<TransactionRecord[]>([]);
@@ -34,6 +47,8 @@ export class SalesService {
       localStorage.removeItem('maranth_transactions');
     }
   }
+
+  
 
   public products = signal<Product[]>([]);
   public categories = signal<Category[]>([]);
@@ -515,6 +530,28 @@ public scanBarcodeExact(query: string): boolean {
   public closeModal(): void {
     this.activeModal.set(null);
     setTimeout(() => this.activeModal.set(null), 10);
+  }
+
+  // The function to log a new waste event
+  public logSpoilage(product: any, quantity: number, reason: string): void {
+    const cost = Number(product.costPrice || product.wholesalePrice || 0);
+    
+    const newLog: SpoilageLog = {
+      id: Date.now().toString(),
+      productId: product.id,
+      productName: product.name,
+      quantity: quantity,
+      buyingPrice: cost, // 👈 Here is where we grab the Buying Price!
+      reason: reason,
+      timestamp: new Date().toISOString()
+    };
+
+    // Update the signal
+   this.spoilageLogs.update(logs => {
+      const updatedLogs = [...logs, newLog];
+      localStorage.setItem('maranth_spoilage_logs', JSON.stringify(updatedLogs));
+      return updatedLogs;
+    });
   }
 
 }
