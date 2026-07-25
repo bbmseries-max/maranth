@@ -327,28 +327,114 @@
           </div>
         </div>
 
-        <!-- ALERTS WIDGET -->
-        <div class="bg-panel rounded-xl p-5 shadow-sm border flex flex-col transition-colors"
-             [ngClass]="systemAlerts().length > 0 ? 'border-red-500/50 bg-red-500/5' : 'border-line'">
-          <div class="text-sm font-black uppercase tracking-wider mb-4"
-               [ngClass]="systemAlerts().length > 0 ? 'text-red-500' : 'text-green-500'">
-            {{ systemAlerts().length > 0 ? '⚠️ System Alerts (' + systemAlerts().length + ')' : '✅ System Healthy' }}
-          </div>
+<!-- WIDGET 1: CATEGORY BREAKDOWN -->
+        <div class="bg-panel rounded-xl p-5 shadow-sm border border-line flex flex-col h-[400px] transition-colors">
+          <div class="text-sm font-black text-primary uppercase tracking-wider mb-4 border-b border-line pb-2">📦 Dept. Performance</div>
           
-          <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
-            @for (alert of systemAlerts(); track alert.msg) {
-              <div class="text-xs font-bold p-2.5 rounded-lg border"
-                   [ngClass]="alert.type === 'danger' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30'">
-                {{ alert.msg }}
+          <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-3">
+            @for (cat of categoryBreakdown(); track cat.name) {
+              <div class="bg-base border border-line p-3 rounded-lg flex justify-between items-center">
+                <span class="font-bold text-primary text-sm">{{ cat.name }}</span>
+                <div class="flex flex-col items-end">
+                  <span class="font-black text-blue-500">{{ formatMoney(cat.revenue) }}</span>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+                    +{{ formatMoney(cat.profit) }} profit
+                  </span>
+                </div>
               </div>
+            } @empty {
+              <div class="text-center text-muted font-bold italic py-4 text-xs">No categories sold today.</div>
             }
           </div>
         </div>
 
-      </div>
-    }
-  </div>
-</div>
+        <!-- WIDGET 2: STAFF LEADERBOARD -->
+        <div class="bg-panel rounded-xl p-5 shadow-sm border border-line flex flex-col h-[400px] transition-colors">
+          <div class="text-sm font-black text-primary uppercase tracking-wider mb-4 border-b border-line pb-2">🏆 Cashier Leaderboard</div>
+          
+          <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-3">
+            @for (staff of staffPerformance(); track staff.name; let i = $index) {
+              <div class="bg-base border border-line p-3 rounded-lg flex items-center gap-3">
+                <div class="text-2xl w-8 text-center">
+                  {{ i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '👤' }}
+                </div>
+                <div class="flex-1 flex flex-col">
+                  <span class="font-bold text-primary text-sm">{{ staff.name }}</span>
+                  <span class="text-[10px] font-bold text-muted">{{ staff.tickets }} customers served</span>
+                </div>
+                <div class="flex flex-col items-end">
+                  <span class="font-black text-primary">{{ formatMoney(staff.revenue) }}</span>
+                  <span class="text-xs font-bold text-muted">Avg: <span class="text-blue-500">{{ formatMoney(staff.avgTicket) }}</span></span>
+                </div>
+              </div>
+            } @empty {
+              <div class="text-center text-muted font-bold italic py-4 text-xs">No staff sales today.</div>
+            }
+          </div>
+        </div>
+
+        <!-- WIDGET 3: INVENTORY CAPITAL -->
+        <div class="bg-panel rounded-xl p-5 shadow-sm border border-line flex flex-col justify-center transition-colors">
+          <div class="text-sm font-black text-primary uppercase tracking-wider mb-1">🏦 Asset Valuation</div>
+          <div class="text-xs font-bold text-muted mb-5">Total capital locked in physical stock</div>
+          
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-base border border-line p-3 rounded-lg">
+              <div class="text-[10px] font-bold text-muted uppercase">Paid to Suppliers</div>
+              <div class="text-xl font-black text-amber-500">{{ formatMoney(inventoryValuation().totalWholesaleValue) }}</div>
+            </div>
+            <div class="bg-base border border-line p-3 rounded-lg">
+              <div class="text-[10px] font-bold text-muted uppercase">Retail Worth</div>
+              <div class="text-xl font-black text-blue-500">{{ formatMoney(inventoryValuation().totalRetailValue) }}</div>
+            </div>
+          </div>
+          
+          <div class="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-lg flex justify-between items-center">
+            <span class="text-xs font-bold text-emerald-600">Expected Total Profit:</span>
+            <span class="font-black text-emerald-600">{{ formatMoney(inventoryValuation().expectedProfit) }}</span>
+          </div>
+        </div>
+
+        <!-- WIDGET 4: SECURITY AUDITOR -->
+        <div class="bg-panel rounded-xl p-5 shadow-sm flex flex-col transition-colors border"
+             [ngClass]="securityAuditor().refundCount > 0 ? 'border-red-500/50 bg-red-500/5' : 'border-line'">
+          <div class="text-sm font-black uppercase tracking-wider mb-4 border-b border-line pb-2"
+               [ngClass]="securityAuditor().refundCount > 0 ? 'text-red-500' : 'text-primary'">
+            🚨 Security & Refunds
+          </div>
+          
+          @if (securityAuditor().refundCount === 0) {
+            <div class="flex-1 flex flex-col items-center justify-center text-center">
+              <span class="text-4xl mb-2">✅</span>
+              <span class="text-sm font-bold text-primary">No Suspicious Activity</span>
+              <span class="text-xs text-muted font-semibold">0 refunds or voids today.</span>
+            </div>
+          } @else {
+            <div class="flex justify-between items-center mb-4 bg-red-500/10 border border-red-500/30 p-3 rounded-lg">
+              <span class="text-xs font-bold text-red-600">Total Refunded:</span>
+              <span class="font-black text-red-600">{{ formatMoney(securityAuditor().refundTotal) }}</span>
+            </div>
+            <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-2">
+              <div class="text-[10px] font-black text-muted uppercase">Refund Receipts ({{ securityAuditor().refundCount }})</div>
+              @for (tx of securityAuditor().sketchyTxns; track tx.id) {
+                <div class="bg-base border border-line p-2 rounded-lg flex justify-between items-center text-xs cursor-pointer hover:bg-hover"
+                     (click)="selectTxn(tx.id); activeTab.set('zreport')">
+                  <div class="flex flex-col">
+                    <span class="font-bold text-primary">{{ tx.id.slice(-6) }}</span>
+                    <span class="font-semibold text-muted">{{ tx.timestamp | date:'HH:mm' }} - {{ $any(tx).cashier || 'Unknown' }}</span>
+                  </div>
+                  <span class="font-black text-red-500">-{{ formatMoney(Math.abs(tx.grandTotal)) }}</span>
+                </div>
+              }
+            </div>
+         }
+        </div>
+
+      </div> <!-- 👈 CLOSES THE DASHBOARD GRID -->
+    } <!-- 👈 THIS IS THE MISSING BRACKET! Closes activeTab() === 'dashboard' -->
+    
+  </div> <!-- 👈 CLOSES REPORTS WRAPPER -->
+</div> <!-- 👈 CLOSES MAIN APP CONTAINER -->
 
 <!-- MODAL (Unified styling with POS) -->
 @if (salesService.activeModal(); as modal) {

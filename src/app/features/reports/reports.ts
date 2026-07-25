@@ -21,6 +21,7 @@ export interface CashLog {
 })
 export class ReportsComponent {
   public salesService = inject(SalesService);
+  public Math = Math;
 
   // ⭐ TAB CONTROLLER
   public activeTab = signal<string>('zreport');
@@ -346,4 +347,112 @@ export class ReportsComponent {
     const parsed = Number(val);
     return isNaN(parsed) ? 0 : parsed;
   }
+
+  // 1. CATEGORY BREAKDOWN ENGINE
+  public categoryBreakdown = computed(() => {
+    const categoryMap = new Map<string, { revenue: number, profit: number }>();
+    
+    this.filteredTransactions().forEach(tx => {
+      tx.items.forEach((item: any) => {
+        // Fallback to 'Uncategorized' if the product has no category
+        const cat = item.product.categoryId || item.product.category || 'Uncategorized';
+        const sellPrice = this.safeNumber(item.product.price);
+        const costPrice = this.safeNumber(item.product.costPrice || item.product.wholesalePrice || 0);
+        const qty = this.safeNumber(item.quantity);
+        
+        if (!categoryMap.has(cat)) {
+          categoryMap.set(cat, { revenue: 0, profit: 0 });
+        }
+        
+        const data = categoryMap.get(cat)!;
+        data.revenue += (sellPrice * qty);
+        data.profit += ((sellPrice - costPrice) * qty);
+      });
+    });
+    
+    return Array.from(categoryMap.entries())
+      .map(([name, stats]) => ({ name, ...stats }))
+      .sort((a, b) => b.revenue - a.revenue); // Sort by highest revenue
+  });
+
+  // 2. STAFF PERFORMANCE LEADERBOARD
+  public staffPerformance = computed(() => {
+    const staffMap = new Map<string, { revenue: number, tickets: number }>();
+    
+    this.filteredTransactions().forEach(tx => {
+      const cashier = (tx as any).cashierId || (tx as any).cashierName || (tx as any).cashier || 'Unknown';
+      const total = this.safeNumber(tx.grandTotal);
+      
+      if (!staffMap.has(cashier)) {
+        staffMap.set(cashier, { revenue: 0, tickets: 0 });
+      }
+      
+      const data = staffMap.get(cashier)!;
+      data.revenue += total;
+      
+      // Only count positive tickets for average size (ignore refunds)
+      if (total > 0) data.tickets += 1; 
+    });
+    
+    return Array.from(staffMap.entries())
+      .map(([name, stats]) => ({ 
+        name, 
+        revenue: stats.revenue, 
+        tickets: stats.tickets,
+        avgTicket: stats.tickets > 0 ? stats.revenue / stats.tickets : 0
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+  });
+
+  // 3. INVENTORY VALUATION & DEAD STOCK
+  public inventoryValuation = computed(() => {
+    let totalWholesaleValue = 0;
+    let totalRetailValue = 0;
+    let lowMoversCount = 0;
+    
+    const prods = this.salesService.products() || [];
+    const soldTodayIds = this.topSellingProducts().map(p => p.id); 
+
+    prods.forEach(p => {
+      if (!p) return;
+      const qty = this.safeNumber(p.stockQuantity);
+      if (qty > 0) {
+        const cost = this.safeNumber(p.costPrice || (p as any).wholesalePrice || 0);
+        const retail = this.safeNumber(p.price);
+        totalWholesaleValue += (cost * qty);
+        totalRetailValue += (retail * qty);
+
+        // If it's in stock but hasn't sold today, flag it
+        if (!soldTodayIds.includes(p.id)) {
+           lowMoversCount++;
+        }
+      }
+    });
+    
+    return { 
+      totalWholesaleValue, 
+      totalRetailValue, 
+      expectedProfit: totalRetailValue - totalWholesaleValue,
+      lowMoversCount
+    };
+  });
+
+  // 4. SECURITY & VOID AUDITOR
+  public securityAuditor = computed(() => {
+    let refundTotal = 0;
+    let refundCount = 0;
+    const sketchyTxns: any[] = [];
+
+    this.filteredTransactions().forEach(tx => {
+      const total = this.safeNumber(tx.grandTotal);
+      // Track any receipt that resulted in a negative total (Refunds)
+      if (total < 0 || (tx as any).isRefund) {
+        refundTotal += Math.abs(total);
+        refundCount++;
+        sketchyTxns.push(tx);
+      }
+    });
+
+    return { refundTotal, refundCount, sketchyTxns };
+  });
 }
