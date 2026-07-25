@@ -348,23 +348,34 @@ export class ReportsComponent {
     return isNaN(parsed) ? 0 : parsed;
   }
 
-  // 1. CATEGORY BREAKDOWN ENGINE
+ // 1. CATEGORY BREAKDOWN ENGINE (Now with real names!)
   public categoryBreakdown = computed(() => {
     const categoryMap = new Map<string, { revenue: number, profit: number }>();
     
+    // Grab all your store categories so we can look up the real names
+    const allCategories = this.salesService.categories() || [];
+    
     this.filteredTransactions().forEach(tx => {
       tx.items.forEach((item: any) => {
-        // Fallback to 'Uncategorized' if the product has no category
-        const cat = item.product.categoryId || item.product.category || 'Uncategorized';
+        
+        // 1. Get the raw ID saved on the product
+        const rawCatId = item.product.categoryId || item.product.category;
+        
+        // 2. Find the matching category in your database
+        const matchedCategory = allCategories.find((c: any) => c.id === rawCatId);
+        
+        // 3. Use the real name, or fallback to Uncategorized if it was deleted
+        const catName = matchedCategory ? matchedCategory.name : 'Uncategorized';
+        
         const sellPrice = this.safeNumber(item.product.price);
-        const costPrice = this.safeNumber(item.product.costPrice || item.product.wholesalePrice || 0);
+        const costPrice = this.safeNumber((item.product as any).costPrice || (item.product as any).wholesalePrice || 0);
         const qty = this.safeNumber(item.quantity);
         
-        if (!categoryMap.has(cat)) {
-          categoryMap.set(cat, { revenue: 0, profit: 0 });
+        if (!categoryMap.has(catName)) {
+          categoryMap.set(catName, { revenue: 0, profit: 0 });
         }
         
-        const data = categoryMap.get(cat)!;
+        const data = categoryMap.get(catName)!;
         data.revenue += (sellPrice * qty);
         data.profit += ((sellPrice - costPrice) * qty);
       });
