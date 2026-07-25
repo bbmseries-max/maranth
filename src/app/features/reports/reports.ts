@@ -114,6 +114,43 @@ export class ReportsComponent {
   // ========================================================
   // ⭐ TAB 2: ANALYTICS (HEATMAP)
   // ========================================================
+  public hourlyHeatmapMetrics = computed(() => {
+      const txs = this.salesService.transactions() || [];
+      const hourlyData = new Array(24).fill(null).map((_, i) => ({
+          hour: i,
+          hourLabel: `${i.toString().padStart(2, '0')}:00`,
+          revenue: 0,
+          ticketCount: 0,
+          intensityPercentage: 0,
+          averageTicketSize: 0
+      }));
+
+      txs.forEach(tx => {
+          if(tx && tx.timestamp) {
+              const hour = new Date(tx.timestamp).getHours();
+              hourlyData[hour].revenue += this.safeNumber(tx.grandTotal);
+              hourlyData[hour].ticketCount += 1;
+          }
+      });
+
+      const maxRev = Math.max(...hourlyData.map(d => d.revenue), 1);
+      
+      hourlyData.forEach(d => {
+          d.intensityPercentage = (d.revenue / maxRev) * 100;
+          d.averageTicketSize = d.ticketCount > 0 ? d.revenue / d.ticketCount : 0;
+      });
+
+      return hourlyData;
+  });
+
+  public getHeatmapBg(percentage: number): string {
+      if (percentage === 0) return 'transparent';
+      if (percentage < 20) return 'rgba(59, 130, 246, 0.1)'; // Light blue
+      if (percentage < 50) return 'rgba(59, 130, 246, 0.3)'; // Medium blue
+      if (percentage < 80) return 'rgba(37, 99, 235, 0.7)'; // Strong blue
+      return 'rgba(30, 64, 175, 1)'; // Deep blue
+  }
+
   // 3. LAST 7 DAYS PERFORMANCE TREND
   public weeklyPerformanceMetrics = computed(() => {
       const txs = this.salesService.transactions() || [];
