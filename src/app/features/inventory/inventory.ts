@@ -335,4 +335,34 @@ export class InventoryComponent {
     alert(`✅ Logged ${quantity} of ${product.name} as waste.`);
   }
 
+  public exportCatalogToCSV(): void {
+    const products = this.salesService.products();
+    if (!products || products.length === 0) {
+      alert('No products to export.');
+      return;
+    }
+
+    let csvContent = "Category,Product Name,Barcode,Cost Price,Retail Price,Current Stock\n";
+
+    products.forEach(p => {
+      const cleanName = p.name ? `"${p.name.replace(/"/g, '""')}"` : '""';
+      const category = (p as any).categoryName || p.categoryId || 'Uncategorized';
+      const cost = p.costPrice || (p as any).wholesalePrice || (p as any).buyingPrice || 0;
+      
+      csvContent += `"${category}",${cleanName},"${p.barcode || ''}",${cost},${p.price || 0},${p.stockQuantity || 0}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `maranth_accountant_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
 }
