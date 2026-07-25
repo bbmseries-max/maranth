@@ -287,6 +287,7 @@
     <!-- 1. REUSABLE FORM -->
     <ng-template #categoryFormTemplate>
       <div class="p-4 bg-base border-t border-line flex flex-col gap-4 transition-colors duration-300">
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col">
             <label class="text-xs font-bold text-muted uppercase mb-1">Category ID</label>
@@ -297,19 +298,12 @@
             <input type="text" [(ngModel)]="categoryForm.name" class="px-3 py-2 border border-line bg-panel text-primary rounded-lg text-sm font-semibold outline-none focus:border-blue-500" />
           </div>
         </div>
+
         <div class="flex justify-end gap-3 mt-2 pt-4 border-t border-line">
-          <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-line">
-          <!-- WIDGET: LOG WASTE BUTTON -->
-          <button type="button" (click)="promptLogWaste(editForm)" class="mr-auto px-4 py-2 rounded-lg font-bold bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors border border-amber-500/30 active:scale-95">
-            🗑️ Log Waste
-          </button>
           <button class="px-5 py-2 rounded-lg font-bold text-muted hover:bg-hover transition-colors" (click)="cancelAllEdits()">Cancel</button>
           <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveCategoryChanges()">💾 Save Category</button>
-        <button (click)="promptLogWaste(editForm)" 
-        class="text-[11px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/30 px-2 py-1 rounded hover:bg-amber-500/20 transition-colors">
-  🗑️ Log Waste
-</button>
         </div>
+        
       </div>
     </ng-template>
 
