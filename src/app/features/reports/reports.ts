@@ -114,42 +114,41 @@ export class ReportsComponent {
   // ========================================================
   // ⭐ TAB 2: ANALYTICS (HEATMAP)
   // ========================================================
-  public hourlyHeatmapMetrics = computed(() => {
+  // 3. LAST 7 DAYS PERFORMANCE TREND
+  public weeklyPerformanceMetrics = computed(() => {
       const txs = this.salesService.transactions() || [];
-      const hourlyData = new Array(24).fill(null).map((_, i) => ({
-          hour: i,
-          hourLabel: `${i.toString().padStart(2, '0')}:00`,
-          revenue: 0,
-          ticketCount: 0,
-          intensityPercentage: 0,
-          averageTicketSize: 0
-      }));
+      
+      // 1. Create 7 buckets for the last 7 days (including today)
+      const last7Days = Array.from({ length: 7 }).map((_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i)); // Counts backwards from today
+          return {
+              dateStr: d.toDateString(),
+              label: d.toLocaleDateString('en-US', { weekday: 'short' }), // e.g., "Mon", "Tue"
+              revenue: 0,
+              intensityPercentage: 0
+          };
+      });
 
+      // 2. Loop through all transactions and drop them in the right bucket
       txs.forEach(tx => {
-          if(tx && tx.timestamp) {
-              const hour = new Date(tx.timestamp).getHours();
-              hourlyData[hour].revenue += this.safeNumber(tx.grandTotal);
-              hourlyData[hour].ticketCount += 1;
+          if (tx && tx.timestamp) {
+              const txDateStr = new Date(tx.timestamp).toDateString();
+              const dayBucket = last7Days.find(d => d.dateStr === txDateStr);
+              if (dayBucket) {
+                  dayBucket.revenue += this.safeNumber(tx.grandTotal);
+              }
           }
       });
 
-      const maxRev = Math.max(...hourlyData.map(d => d.revenue), 1);
-      
-      hourlyData.forEach(d => {
+      // 3. Calculate heights for the bar chart
+      const maxRev = Math.max(...last7Days.map(d => d.revenue), 1);
+      last7Days.forEach(d => {
           d.intensityPercentage = (d.revenue / maxRev) * 100;
-          d.averageTicketSize = d.ticketCount > 0 ? d.revenue / d.ticketCount : 0;
       });
 
-      return hourlyData;
+      return last7Days;
   });
-
-  public getHeatmapBg(percentage: number): string {
-      if (percentage === 0) return 'transparent';
-      if (percentage < 20) return 'rgba(59, 130, 246, 0.1)'; // Light blue
-      if (percentage < 50) return 'rgba(59, 130, 246, 0.3)'; // Medium blue
-      if (percentage < 80) return 'rgba(37, 99, 235, 0.7)'; // Strong blue
-      return 'rgba(30, 64, 175, 1)'; // Deep blue
-  }
 
   // ========================================================
   // ⭐ TAB 3: LIVE DASHBOARD WIDGETS

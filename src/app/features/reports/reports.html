@@ -226,52 +226,35 @@
     }
 
     <!-- ================== TAB 2: ANALYTICS ================== -->
-    @if (activeTab() === 'analytics') {
-      <div class="bg-panel p-6 rounded-xl shadow-sm border border-line mb-6 transition-colors">
-        <div class="mb-6">
-          <h3 class="m-0 text-lg font-black text-primary">⏰ Hourly Performance Heatmap</h3>
-          <p class="m-0 mt-1 text-sm font-semibold text-muted">Identify peak velocity sales windows.</p>
-        </div>
-
-        <div class="overflow-x-auto hide-scrollbar pb-2">
-          <div class="grid grid-cols-[repeat(24,1fr)] gap-1.5 items-end min-h-[140px] border-b-2 border-line pb-2 mb-2 min-w-[600px]">
-            @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
-              <div [title]="slot.hourLabel + '\nRevenue: ' + formatMoney(slot.revenue) + '\nTickets: ' + slot.ticketCount" 
-                   class="flex flex-col justify-end h-full cursor-pointer group">
-                <div [style.height.%]="slot.intensityPercentage" 
-                     [style.background]="getHeatmapBg(slot.intensityPercentage)" 
-                     class="rounded-t-md transition-all duration-300 w-full min-h-[4px] group-hover:opacity-80"></div>
+   <!-- LAST 7 DAYS TREND CHART -->
+        <div class="mt-8 pt-6 border-t border-dashed border-line">
+          <div class="mb-6">
+            <h4 class="m-0 text-sm font-black text-primary uppercase tracking-wider">📅 7-Day Revenue Trend</h4>
+            <p class="m-0 mt-1 text-xs font-semibold text-muted">Your daily performance over the past week.</p>
+          </div>
+          
+          <!-- Bar Chart Container -->
+          <div class="flex items-end h-[160px] gap-2 sm:gap-4 w-full px-2">
+            @for (day of weeklyPerformanceMetrics(); track day.dateStr) {
+              <div class="flex-1 flex flex-col justify-end h-full group relative cursor-crosshair">
+                
+                <!-- Hover Tooltip -->
+                <div class="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-primary text-base font-bold py-1 px-2.5 rounded-md pointer-events-none transition-all whitespace-nowrap z-10 shadow-md transform group-hover:-translate-y-1">
+                  {{ formatMoney(day.revenue) }}
+                </div>
+                
+                <!-- The Visual Bar -->
+                <div class="w-full bg-blue-500/20 hover:bg-blue-500/40 border-t-2 border-l border-r border-blue-500/30 rounded-t-lg transition-all duration-300 min-h-[4px]"
+                     [style.height.%]="day.intensityPercentage"
+                     [ngClass]="day.dateStr === (selectedDate() | date:'EEE MMM dd yyyy') ? 'bg-blue-500/40 border-blue-500' : ''">
+                </div>
+                
+                <!-- Day Label -->
+                <div class="text-center mt-3 text-xs font-extrabold text-muted uppercase">{{ day.label }}</div>
               </div>
             }
           </div>
-          <div class="grid grid-cols-[repeat(24,1fr)] gap-1.5 text-center text-[10px] font-extrabold text-muted min-w-[600px]">
-            @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
-              <div>{{ slot.hour % 2 === 0 ? slot.hour : '' }}</div>
-            }
-          </div>
         </div>
-
-        <div class="mt-8 pt-6 border-t border-dashed border-line">
-          <h4 class="m-0 mb-4 text-xs font-extrabold uppercase tracking-wider text-muted">High-Velocity Windows</h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            @for (slot of hourlyHeatmapMetrics(); track slot.hour) {
-              @if (slot.ticketCount > 0) {
-                <div class="bg-base border border-line p-3 rounded-lg flex justify-between items-center shadow-sm">
-                  <div class="flex flex-col gap-0.5">
-                    <span class="font-black text-primary text-sm">{{ slot.hourLabel }}</span>
-                    <span class="font-bold text-muted text-[11px]">{{ slot.ticketCount }} sales</span>
-                  </div>
-                  <div class="flex flex-col items-end gap-0.5">
-                    <span class="font-black text-blue-500 text-sm">{{ formatMoney(slot.revenue) }}</span>
-                    <span class="font-bold text-emerald-500 text-[11px]">Avg: {{ formatMoney(slot.averageTicketSize) }}</span>
-                  </div>
-                </div>
-              }
-            }
-          </div>
-        </div>
-      </div>
-    }
 
     <!-- ================== TAB 3: LIVE DASHBOARD ================== -->
     @if (activeTab() === 'dashboard') {
