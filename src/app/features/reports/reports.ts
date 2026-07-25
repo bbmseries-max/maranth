@@ -25,6 +25,9 @@ export class ReportsComponent {
 
   // ⭐ TAB CONTROLLER
   public activeTab = signal<string>('zreport');
+  public analyticsDate = signal<string>(new Date().toISOString().split('T')[0]);
+  
+  
 
   // ========================================================
   // ⭐ TAB 1: Z-REPORT & SALES LEDGER
@@ -451,6 +454,75 @@ export class ReportsComponent {
       .sort((a, b) => b.revenue - a.revenue);
   });
 
+// 5. TRUE PROFIT & SHRINKAGE REPORT
+  public trueProfitReport = computed(() => {
+    const reportMap = new Map<string, any>();
+    const targetDateStr = new Date(this.analyticsDate()).toDateString();
+    
+    // 1. Process all sold items from today's receipts
+    this.filteredTransactions().forEach(tx => {
+      tx.items.forEach((item: any) => {
+        const pId = item.product.id;
+        if (!reportMap.has(pId)) {
+          reportMap.set(pId, {
+            name: item.product.name,
+            qtySold: 0,
+            revenue: 0,
+            qtyWasted: 0,
+            costOfWasted: 0,
+            costOfSold: 0,
+            buyingPrice: this.safeNumber(item.product.costPrice || item.product.wholesalePrice || 0)
+          });
+        }
+        
+        const data = reportMap.get(pId)!;
+        const qty = this.safeNumber(item.quantity);
+        const sellPrice = this.safeNumber(item.product.price);
+        
+        data.qtySold += qty;
+        data.revenue += (sellPrice * qty);
+        data.costOfSold += (data.buyingPrice * qty);
+      });
+    });
+
+    // 2. Process today's spoilage/waste logs
+    // (Checks if spoilageLogs exists to prevent errors while you are updating the service)
+    const allWaste = this.salesService.spoilageLogs ? this.salesService.spoilageLogs() : [];
+    
+    allWaste.forEach(log => {
+      if (new Date(log.timestamp).toDateString() === targetDateStr) {
+        if (!reportMap.has(log.productId)) {
+          reportMap.set(log.productId, {
+            name: log.productName,
+            qtySold: 0,
+            revenue: 0,
+            qtyWasted: 0,
+            costOfWasted: 0,
+            costOfSold: 0,
+            buyingPrice: this.safeNumber(log.buyingPrice)
+          });
+        }
+        
+        const data = reportMap.get(log.productId)!;
+        const qty = this.safeNumber(log.quantity);
+        data.qtyWasted += qty;
+        data.costOfWasted += (data.buyingPrice * qty);
+      }
+    });
+
+    // 3. Calculate True Profit and format the array
+    return Array.from(reportMap.values())
+      .map(data => {
+        const trueProfit = data.revenue - (data.costOfSold + data.costOfWasted);
+        return {
+          ...data,
+          trueProfit,
+          isLoss: trueProfit < 0
+        };
+      })
+      .sort((a, b) => a.trueProfit - b.trueProfit); // Sort so the biggest losses show up first!
+  });
+
   // 3. INVENTORY VALUATION & DEAD STOCK
   public inventoryValuation = computed(() => {
     let totalWholesaleValue = 0;
@@ -464,12 +536,12 @@ export class ReportsComponent {
       if (!p) return;
       const qty = this.safeNumber(p.stockQuantity);
       if (qty > 0) {
-        const cost = this.safeNumber(p.costPrice || (p as any).wholesalePrice || 0);
+        // Safe casting to handle strict TS
+        const cost = this.safeNumber((p as any).costPrice || (p as any).wholesalePrice || 0);
         const retail = this.safeNumber(p.price);
         totalWholesaleValue += (cost * qty);
         totalRetailValue += (retail * qty);
 
-        // If it's in stock but hasn't sold today, flag it
         if (!soldTodayIds.includes(p.id)) {
            lowMoversCount++;
         }
@@ -492,7 +564,6 @@ export class ReportsComponent {
 
     this.filteredTransactions().forEach(tx => {
       const total = this.safeNumber(tx.grandTotal);
-      // Track any receipt that resulted in a negative total (Refunds)
       if (total < 0 || (tx as any).isRefund) {
         refundTotal += Math.abs(total);
         refundCount++;
