@@ -130,68 +130,71 @@
       </div> <!-- 👈 This is the bracket that went missing! -->
     </ng-template>
 
-   <!-- 2. SEARCH AND FILTERS ROW -->
-    <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
-      <div class="flex gap-2 items-center">
-        <div class="flex-1 flex items-center bg-panel border border-line rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-          <span class="text-lg text-muted mr-2">🔍</span>
-          <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-primary placeholder:text-muted" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-          @if (searchQuery()) { <button class="text-muted hover:text-red-500 font-bold focus:outline-none" (click)="searchQuery.set('')">✖</button> }
-        </div>
-        
-        <!-- ✨ EXCEL EXPORT BUTTON ✨ -->
-        <button (click)="exportCatalogToCSV()" class="bg-panel border border-line text-blue-600 hover:bg-blue-50 px-4 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">
-          📥 Export Excel
-        </button>
-        
-        <button (click)="prepareNewProduct()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">
-          ➕ Add
-        </button>
-      </div>
+  <!-- ✨ NEW CENTERED DESKTOP WRAPPER ✨ -->
+    <div class="flex flex-col flex-1 min-h-0 w-full max-w-6xl mx-auto">
       
-      <!-- Existing Filters (Active, Categories, Low Stock, Expire) go here -->
-      <div class="flex flex-wrap gap-3 items-center w-full py-1">
-        <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
-          <option value="active">🟢 Active Items</option>
-          <option value="inactive">🔴 Inactive Items</option>
-          <option value="all">⚪ All Items</option>
-        </select>
-        <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
-          <option value="ALL">📁 All Categories</option>
-          @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
-        </select>
-        <button (click)="filterLowStock.set(!filterLowStock())" class="py-2 px-4 rounded-lg font-bold text-sm transition-colors border" [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-panel text-primary border-line hover:bg-hover'">
-          📦 Low Stock
-        </button>
-        <div class="flex items-center bg-panel border border-line rounded-lg pr-2 focus-within:border-blue-500 transition-colors">
-          <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-primary outline-none bg-transparent" title="Filter by expiration date" />
-          @if (expireFilterDate()) { <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> }
-        </div>
-      </div>
-    </div>
-      
-    <!-- 3. MAIN PRODUCT LIST -->
-    <div class="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">      
-      @for (prod of filteredProducts(); track prod.id) {
-        <div [id]="'prod-card-' + prod.id" class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingProductId === prod.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
-          <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleEdit(prod)">
-            <div class="flex flex-col gap-1">
-              <div class="font-bold text-primary">{{ prod.name }}</div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold px-2 py-0.5 rounded-md" [ngClass]="prod.stockQuantity <= (prod.minStockWarning || 5) ? 'bg-red-100 text-red-700' : 'bg-hover text-muted'">📦 {{ prod.stockQuantity }}</span>
-                <span class="text-xs font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{{ formatMoney(prod.price) }}</span>
-              </div>
-            </div>
-            <div class="text-lg text-muted">{{ editingProductId === prod.id ? '🔼' : '✏️' }}</div>
+      <!-- 2. SEARCH AND FILTERS ROW -->
+      <div class="flex flex-col gap-3 p-3 bg-base border-b border-line flex-shrink-0 z-10 transition-colors duration-300">
+        <div class="flex gap-2 items-center">
+          <div class="flex-1 flex items-center bg-panel border border-line rounded-lg px-3 h-12 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+            <span class="text-lg text-muted mr-2">🔍</span>
+            <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-primary placeholder:text-muted" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
+            @if (searchQuery()) { <button class="text-muted hover:text-red-500 font-bold focus:outline-none" (click)="searchQuery.set('')">✖</button> }
           </div>
-          @if (editingProductId === prod.id) {
-            <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
-          }
+          
+          <button (click)="exportCatalogToCSV()" class="bg-panel border border-line text-blue-600 hover:bg-blue-50 px-4 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">
+            📥 Export Excel
+          </button>
+          
+          <button (click)="prepareNewProduct()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">
+            ➕ Add
+          </button>
         </div>
-      } @empty {
-        <div class="text-center p-10 font-bold text-muted bg-hover rounded-xl border-2 border-dashed border-line">No products found.</div>
-      }
-    </div>
+        
+        <div class="flex flex-wrap gap-3 items-center w-full py-1">
+          <select [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
+            <option value="active">🟢 Active Items</option>
+            <option value="inactive">🔴 Inactive Items</option>
+            <option value="all">⚪ All Items</option>
+          </select>
+          <select [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)" class="py-2 px-3 border border-line rounded-lg bg-panel text-primary font-semibold text-sm outline-none focus:border-blue-500 cursor-pointer transition-colors">
+            <option value="ALL">📁 All Categories</option>
+            @for (cat of categories(); track cat.id) { <option [value]="cat.id">{{ cat.name }}</option> }
+          </select>
+          <button (click)="filterLowStock.set(!filterLowStock())" class="py-2 px-4 rounded-lg font-bold text-sm transition-colors border" [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-panel text-primary border-line hover:bg-hover'">
+            📦 Low Stock
+          </button>
+          <div class="flex items-center bg-panel border border-line rounded-lg pr-2 focus-within:border-blue-500 transition-colors">
+            <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-primary outline-none bg-transparent" title="Filter by expiration date" />
+            @if (expireFilterDate()) { <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> }
+          </div>
+        </div>
+      </div>
+        
+      <!-- 3. MAIN PRODUCT LIST -->
+      <div class="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-3">      
+        @for (prod of filteredProducts(); track prod.id) {
+          <div [id]="'prod-card-' + prod.id" class="bg-panel border rounded-xl overflow-hidden shadow-sm transition-all shrink-0" [ngClass]="editingProductId === prod.id ? 'border-blue-400 ring-1 ring-blue-400' : 'border-line'">
+            <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-hover transition-colors" (click)="toggleEdit(prod)">
+              <div class="flex flex-col gap-1">
+                <div class="font-bold text-primary">{{ prod.name }}</div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold px-2 py-0.5 rounded-md" [ngClass]="prod.stockQuantity <= (prod.minStockWarning || 5) ? 'bg-red-100 text-red-700' : 'bg-hover text-muted'">📦 {{ prod.stockQuantity }}</span>
+                  <span class="text-xs font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">{{ formatMoney(prod.price) }}</span>
+                </div>
+              </div>
+              <div class="text-lg text-muted">{{ editingProductId === prod.id ? '🔼' : '✏️' }}</div>
+            </div>
+            @if (editingProductId === prod.id) {
+              <ng-container *ngTemplateOutlet="productFormTemplate"></ng-container>
+            }
+          </div>
+        } @empty {
+          <div class="text-center p-10 font-bold text-muted bg-hover rounded-xl border-2 border-dashed border-line">No products found.</div>
+        }
+      </div>
+
+    </div> <!-- ✨ CLOSES THE CENTERED WRAPPER ✨ -->
 
     <!-- 4. ✨ THE NEW MODAL ✨ -->
     @if (editingProductId === 'NEW') {
