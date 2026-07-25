@@ -272,6 +272,50 @@
         </div>
       </div>
     }
+
+    <!-- LAST 7 DAYS TREND CHART -->
+        <div class="mt-8 pt-6 border-t border-dashed border-line">
+          <div class="mb-6">
+            <h4 class="m-0 text-sm font-black text-primary uppercase tracking-wider">📅 7-Day Revenue Trend</h4>
+            <p class="m-0 mt-1 text-xs font-semibold text-muted">Your daily performance over the past week.</p>
+          </div>
+          
+        <!-- WIDGET: 7-DAY REVENUE TREND -->
+        <div class="w-full mb-8">
+          <div class="mb-4">
+            <h4 class="m-0 text-sm font-black text-primary uppercase tracking-wider">📅 7-Day Revenue Trend</h4>
+            <p class="m-0 mt-1 text-xs font-semibold text-muted">Daily sales performance over the last week.</p>
+          </div>
+          
+          <!-- The Chart Container -->
+          <div class="bg-panel border border-line rounded-xl p-6 shadow-sm h-72 flex items-end gap-2 md:gap-4 relative pt-12">
+            @for (day of weeklyPerformanceMetrics(); track day.dateStr) {
+              
+              <div class="flex-1 flex flex-col items-center justify-end h-full gap-3 group relative cursor-pointer">
+                
+                <!-- Floating Revenue Label (Appears on Hover) -->
+                <div class="text-[11px] font-black text-primary absolute -top-8 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:-translate-y-1 bg-base px-2 py-1 rounded-md border border-line shadow-sm z-10 whitespace-nowrap">
+                  {{ formatMoney(day.revenue) }}
+                </div>
+
+                <!-- The Vertical Bar -->
+                <!-- The highest day automatically turns Green! -->
+                <div class="w-full max-w-[50px] rounded-t-lg transition-all duration-500 group-hover:brightness-110 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                     [ngClass]="day.intensityPercentage === 100 ? 'bg-gradient-to-t from-green-600 to-green-400' : 'bg-gradient-to-t from-blue-700 to-blue-400'"
+                     [style.height.%]="day.intensityPercentage > 0 ? day.intensityPercentage : 2">
+                </div>
+
+                <!-- Day Name (e.g., Mon, Tue) -->
+                <div class="text-xs font-extrabold text-muted group-hover:text-primary transition-colors uppercase tracking-wider">
+                  {{ day.label }}
+                </div>
+                
+              </div>
+            }
+          </div>
+        </div>
+        </div>
+
     <!-- ================== TAB 3: LIVE DASHBOARD ================== -->
     @if (activeTab() === 'dashboard') {
       <div class="mb-6 no-print">
