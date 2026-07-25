@@ -132,6 +132,7 @@
           <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm font-semibold text-primary placeholder:text-muted" placeholder="Search products..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
           @if (searchQuery()) { <button class="text-muted hover:text-red-500 font-bold focus:outline-none" (click)="searchQuery.set('')">✖</button> }
         </div>
+       <button (click)="exportCatalogToCSV()" class="bg-panel border border-line text-blue-600 hover:bg-hover px-4 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">📥 Export Excel</button>
         <button (click)="prepareNewProduct()" class="bg-green-600 hover:bg-green-700 text-white px-5 h-12 rounded-lg font-bold shadow-sm active:scale-95 transition-all">➕ Add</button>
       </div>
       
@@ -297,6 +298,11 @@
           </div>
         </div>
         <div class="flex justify-end gap-3 mt-2 pt-4 border-t border-line">
+          <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-line">
+          <!-- WIDGET: LOG WASTE BUTTON -->
+          <button type="button" (click)="promptLogWaste(editForm)" class="mr-auto px-4 py-2 rounded-lg font-bold bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-colors border border-amber-500/30 active:scale-95">
+            🗑️ Log Waste
+          </button>
           <button class="px-5 py-2 rounded-lg font-bold text-muted hover:bg-hover transition-colors" (click)="cancelAllEdits()">Cancel</button>
           <button class="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md active:scale-95 transition-all" (click)="saveCategoryChanges()">💾 Save Category</button>
         <button (click)="promptLogWaste(editForm)" 
