@@ -35,7 +35,7 @@ export class ReportsComponent {
   public selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
   public selectedTxnId = signal<string | null>(null);
 
-  public cashLogs = signal<CashLog[]>(this.loadSavedLogs());
+ public get cashLogs() { return this.salesService.cashLogs; }
 
   public filteredTransactions = computed(() => {
     const targetDate = new Date(this.selectedDate()).toDateString();
@@ -328,7 +328,7 @@ export class ReportsComponent {
     return alerts;
   });
 
-  public addManualCash(): void {
+public async addManualCash(): Promise<void> {
     const amountStr = window.prompt('🟢 ADD CASH\n\nEnter the amount (€):');
     if (!amountStr) return;
     
@@ -338,16 +338,27 @@ export class ReportsComponent {
     const reason = window.prompt('Enter the reason (e.g., Starting Float, Change from safe):');
     if (!reason) return;
 
-    this.cashLogs.update(logs => [...logs, {
+    const newLog = {
       id: Date.now().toString(),
       type: 'IN',
       amount: amount,
       reason: reason,
-      timestamp: new Date()
-    }]);
+      timestamp: new Date().toISOString()
+    };
+
+    // Update the global service signal
+    this.salesService.cashLogs.update((logs: any) => [...logs, newLog]);
+
+    try {
+      const { doc, setDoc } = await import('firebase/firestore'); 
+      // 👇 Fixed: this.salesService.db 👇
+      await setDoc(doc(this.salesService.db, 'cashLogs', newLog.id), newLog);
+    } catch (error) {
+      console.error("Failed to sync cash drawer to Firebase:", error);
+    }
   }
 
-  public removeManualCash(): void {
+ public async removeManualCash(): Promise<void> {
     const amountStr = window.prompt('🔴 PAYOUT / REMOVE CASH\n\nEnter the amount (€):');
     if (!amountStr) return;
     
@@ -357,17 +368,28 @@ export class ReportsComponent {
     const reason = window.prompt('Enter the reason (e.g., Supplier payment):');
     if (!reason) return;
 
-    this.cashLogs.update(logs => [...logs, {
+    const newLog = {
       id: Date.now().toString(),
       type: 'OUT',
       amount: amount,
       reason: reason,
-      timestamp: new Date()
-    }]);
+      timestamp: new Date().toISOString()
+    };
+
+    // Update the global service signal
+    this.salesService.cashLogs.update((logs: any) => [...logs, newLog]);
+
+    try {
+      const { doc, setDoc } = await import('firebase/firestore'); 
+      // 👇 Fixed: this.salesService.db 👇
+      await setDoc(doc(this.salesService.db, 'cashLogs', newLog.id), newLog);
+    } catch (error) {
+      console.error("Failed to sync cash payout to Firebase:", error);
+    }
   }
 
   public resetDrawer(): void {
-    this.cashLogs.set([]);
+    this.salesService.cashLogs.set([]);
   }
 
   // ========================================================
@@ -574,4 +596,7 @@ export class ReportsComponent {
 
     return { refundTotal, refundCount, sketchyTxns };
   });
+
+
+  
 }

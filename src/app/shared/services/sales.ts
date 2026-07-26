@@ -27,7 +27,7 @@ export interface SpoilageLog {
   providedIn: 'root'
 })
 export class SalesService {
-  private db: any;
+  public db: any;
 
   // The live memory bank for all wasted items
   public spoilageLogs = signal<SpoilageLog[]>([]);
@@ -88,6 +88,7 @@ export class SalesService {
   public isRefundMode = signal<boolean>(false);
   public highlightedItemId = signal<string | null>(null);
   public activeModal = signal<POSModal | null>(null);
+  public cashLogs = signal<any[]>([]);
 
   // ⭐ THE MISSING SEARCH FOCUS TRIGGER
   public focusSearchTrigger = signal<number>(0);
@@ -97,21 +98,15 @@ export class SalesService {
 
     const app = initializeApp(firebaseConfig);
     this.db = getFirestore(app);
-
-    this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
-
-    this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
     
     // ⭐ SWAPPED: Use the once-a-day cache for products to save 50k reads!
     this.setupDailyProductCache(); 
     
-    this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
+this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
     this.setupCloudSync('categories', this.categories, 'maranth_categories');
     this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
-
-    this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
-    this.setupCloudSync('categories', this.categories, 'maranth_categories');
-    this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
+    this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
+    this.setupCloudSync('cashLogs', this.cashLogs, 'maranth_cash_logs');
 
     effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
     effect(() => localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket())));
