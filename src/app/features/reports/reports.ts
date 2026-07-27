@@ -581,35 +581,40 @@ export class ReportsComponent {
 public async onCloseShiftSubmit(event: Event) {
   event.preventDefault();
 
-  const form = event.target as HTMLFormElement;
-  const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
-  const countAmount = Number(amountInput?.value || 0);
-
-  // 1. Clear local cash logs so liveCashInDrawer() recalculates to €0.00
-  this.salesService.cashLogs.set([]);
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('maranth_cash_logs');
+  const currentCash = this.liveCashInDrawer();
+  if (currentCash <= 0) {
+    this.isShiftModalOpen.set(false);
+    alert('Το ταμείο είναι μέδη ήδη 0!');
+    return;
   }
 
-  // 2. Optionally sync the reset to Firestore/Firebase if configured
+  // 1. Create a balancing OUT log for the full current cash amount
+  const resetLog: CashLog = {
+    id: Date.now().toString(),
+    type: 'OUT',
+    amount: currentCash,
+    reason: 'Shift Close / Bank Drop',
+    timestamp: new Date()
+  };
+
+  // 2. Add the log to cashLogs so (Sales + In) - (Out + Reset) = 0
+  this.salesService.cashLogs.update((logs: any) => [...logs, resetLog]);
+
+  // 3. Optional: Sync to Firestore
   try {
     if (this.salesService.db) {
       const { doc, setDoc } = await import('firebase/firestore');
-      const resetLog = {
-        id: Date.now().toString(),
-        type: 'RESET',
-        amount: countAmount,
-        reason: 'Shift Close & Cash Drawer Reset',
-        timestamp: new Date().toISOString()
-      };
-      await setDoc(doc(this.salesService.db, 'cashLogs', 'latest_reset'), resetLog);
+      await setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), {
+        ...resetLog,
+        timestamp: resetLog.timestamp.toISOString()
+      });
     }
   } catch (error) {
-    console.error("Failed to sync shift reset to Firebase:", error);
+    console.error("Failed to sync shift reset log to Firebase:", error);
   }
 
-  // 3. Close modal & inform user
+  // 4. Close modal
   this.isShiftModalOpen.set(false);
-  alert(`Η βάρδια έκλεισε επιτυχώς (€${countAmount}). Το ταμείο μηδενίστηκε!`);
+  alert(`Η βάρδια έκλεισε επιτυχώς (€${currentCash.toFixed(2)}). Το ταμείο μηδενίστηκε!`);
 }
 }
