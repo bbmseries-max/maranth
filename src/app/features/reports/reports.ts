@@ -26,8 +26,6 @@ export class ReportsComponent {
   // ⭐ TAB CONTROLLER
   public activeTab = signal<string>('zreport');
   public analyticsDate = signal<string>(new Date().toISOString().split('T')[0]);
-  
-  public isShiftModalOpen = signal<boolean>(false);
 
   // ========================================================
   // ⭐ TAB 1: Z-REPORT & SALES LEDGER
@@ -35,7 +33,7 @@ export class ReportsComponent {
   public selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
   public selectedTxnId = signal<string | null>(null);
 
- public get cashLogs() { return this.salesService.cashLogs; }
+  public get cashLogs() { return this.salesService.cashLogs; }
 
   public filteredTransactions = computed(() => {
     const targetDate = new Date(this.selectedDate()).toDateString();
@@ -148,29 +146,27 @@ export class ReportsComponent {
 
   public getHeatmapBg(percentage: number): string {
       if (percentage === 0) return 'transparent';
-      if (percentage < 20) return 'rgba(59, 130, 246, 0.1)'; // Light blue
-      if (percentage < 50) return 'rgba(59, 130, 246, 0.3)'; // Medium blue
-      if (percentage < 80) return 'rgba(37, 99, 235, 0.7)'; // Strong blue
-      return 'rgba(30, 64, 175, 1)'; // Deep blue
+      if (percentage < 20) return 'rgba(59, 130, 246, 0.1)'; 
+      if (percentage < 50) return 'rgba(59, 130, 246, 0.3)'; 
+      if (percentage < 80) return 'rgba(37, 99, 235, 0.7)'; 
+      return 'rgba(30, 64, 175, 1)'; 
   }
 
   // 3. LAST 7 DAYS PERFORMANCE TREND
   public weeklyPerformanceMetrics = computed(() => {
       const txs = this.salesService.transactions() || [];
       
-      // 1. Create 7 buckets for the last 7 days (including today)
       const last7Days = Array.from({ length: 7 }).map((_, i) => {
           const d = new Date();
-          d.setDate(d.getDate() - (6 - i)); // Counts backwards from today
+          d.setDate(d.getDate() - (6 - i)); 
           return {
               dateStr: d.toDateString(),
-              label: d.toLocaleDateString('en-US', { weekday: 'short' }), // e.g., "Mon", "Tue"
+              label: d.toLocaleDateString('en-US', { weekday: 'short' }), 
               revenue: 0,
               intensityPercentage: 0
           };
       });
 
-      // 2. Loop through all transactions and drop them in the right bucket
       txs.forEach(tx => {
           if (tx && tx.timestamp) {
               const txDateStr = new Date(tx.timestamp).toDateString();
@@ -181,7 +177,6 @@ export class ReportsComponent {
           }
       });
 
-      // 3. Calculate heights for the bar chart
       const maxRev = Math.max(...last7Days.map(d => d.revenue), 1);
       last7Days.forEach(d => {
           d.intensityPercentage = (d.revenue / maxRev) * 100;
@@ -328,7 +323,7 @@ export class ReportsComponent {
     return alerts;
   });
 
-public async addManualCash(): Promise<void> {
+  public async addManualCash(): Promise<void> {
     const amountStr = window.prompt('🟢 ADD CASH\n\nEnter the amount (€):');
     if (!amountStr) return;
     
@@ -346,19 +341,17 @@ public async addManualCash(): Promise<void> {
       timestamp: new Date().toISOString()
     };
 
-    // Update the global service signal
     this.salesService.cashLogs.update((logs: any) => [...logs, newLog]);
 
     try {
       const { doc, setDoc } = await import('firebase/firestore'); 
-      // 👇 Fixed: this.salesService.db 👇
       await setDoc(doc(this.salesService.db, 'cashLogs', newLog.id), newLog);
     } catch (error) {
       console.error("Failed to sync cash drawer to Firebase:", error);
     }
   }
 
- public async removeManualCash(): Promise<void> {
+  public async removeManualCash(): Promise<void> {
     const amountStr = window.prompt('🔴 PAYOUT / REMOVE CASH\n\nEnter the amount (€):');
     if (!amountStr) return;
     
@@ -376,12 +369,10 @@ public async addManualCash(): Promise<void> {
       timestamp: new Date().toISOString()
     };
 
-    // Update the global service signal
     this.salesService.cashLogs.update((logs: any) => [...logs, newLog]);
 
     try {
       const { doc, setDoc } = await import('firebase/firestore'); 
-      // 👇 Fixed: this.salesService.db 👇
       await setDoc(doc(this.salesService.db, 'cashLogs', newLog.id), newLog);
     } catch (error) {
       console.error("Failed to sync cash payout to Firebase:", error);
@@ -402,30 +393,20 @@ public async addManualCash(): Promise<void> {
     return '€' + parsed.toFixed(2);
   }
 
-  // 🚀 REPLACED: Safe, blazing-fast number parser that doesn't hit localStorage
   private safeNumber(val: any): number {
     if (val === null || val === undefined) return 0;
     const parsed = Number(val);
     return isNaN(parsed) ? 0 : parsed;
   }
 
- // 1. CATEGORY BREAKDOWN ENGINE (Now with real names!)
   public categoryBreakdown = computed(() => {
     const categoryMap = new Map<string, { revenue: number, profit: number }>();
-    
-    // Grab all your store categories so we can look up the real names
     const allCategories = this.salesService.categories() || [];
     
     this.filteredTransactions().forEach(tx => {
       tx.items.forEach((item: any) => {
-        
-        // 1. Get the raw ID saved on the product
         const rawCatId = item.product.categoryId || item.product.category;
-        
-        // 2. Find the matching category in your database
         const matchedCategory = allCategories.find((c: any) => c.id === rawCatId);
-        
-        // 3. Use the real name, or fallback to Uncategorized if it was deleted
         const catName = matchedCategory ? matchedCategory.name : 'Uncategorized';
         
         const sellPrice = this.safeNumber(item.product.price);
@@ -444,10 +425,9 @@ public async addManualCash(): Promise<void> {
     
     return Array.from(categoryMap.entries())
       .map(([name, stats]) => ({ name, ...stats }))
-      .sort((a, b) => b.revenue - a.revenue); // Sort by highest revenue
+      .sort((a, b) => b.revenue - a.revenue);
   });
 
-  // 2. STAFF PERFORMANCE LEADERBOARD
   public staffPerformance = computed(() => {
     const staffMap = new Map<string, { revenue: number, tickets: number }>();
     
@@ -462,7 +442,6 @@ public async addManualCash(): Promise<void> {
       const data = staffMap.get(cashier)!;
       data.revenue += total;
       
-      // Only count positive tickets for average size (ignore refunds)
       if (total > 0) data.tickets += 1; 
     });
     
@@ -476,12 +455,10 @@ public async addManualCash(): Promise<void> {
       .sort((a, b) => b.revenue - a.revenue);
   });
 
-// 5. TRUE PROFIT & SHRINKAGE REPORT
   public trueProfitReport = computed(() => {
     const reportMap = new Map<string, any>();
     const targetDateStr = new Date(this.analyticsDate()).toDateString();
     
-    // 1. Process all sold items from today's receipts
     this.filteredTransactions().forEach(tx => {
       tx.items.forEach((item: any) => {
         const pId = item.product.id;
@@ -507,8 +484,6 @@ public async addManualCash(): Promise<void> {
       });
     });
 
-    // 2. Process today's spoilage/waste logs
-    // (Checks if spoilageLogs exists to prevent errors while you are updating the service)
     const allWaste = this.salesService.spoilageLogs ? this.salesService.spoilageLogs() : [];
     
     allWaste.forEach(log => {
@@ -532,7 +507,6 @@ public async addManualCash(): Promise<void> {
       }
     });
 
-    // 3. Calculate True Profit and format the array
     return Array.from(reportMap.values())
       .map(data => {
         const trueProfit = data.revenue - (data.costOfSold + data.costOfWasted);
@@ -543,10 +517,9 @@ public async addManualCash(): Promise<void> {
         };
       })
       .filter(item => item.qtyWasted > 0)
-      .sort((a, b) => a.trueProfit - b.trueProfit); // Sort so the biggest losses show up first!
+      .sort((a, b) => a.trueProfit - b.trueProfit);
   });
 
-  // 3. INVENTORY VALUATION & DEAD STOCK
   public inventoryValuation = computed(() => {
     let totalWholesaleValue = 0;
     let totalRetailValue = 0;
@@ -559,7 +532,6 @@ public async addManualCash(): Promise<void> {
       if (!p) return;
       const qty = this.safeNumber(p.stockQuantity);
       if (qty > 0) {
-        // Safe casting to handle strict TS
         const cost = this.safeNumber((p as any).costPrice || (p as any).wholesalePrice || 0);
         const retail = this.safeNumber(p.price);
         totalWholesaleValue += (cost * qty);
@@ -579,7 +551,6 @@ public async addManualCash(): Promise<void> {
     };
   });
 
-  // 4. SECURITY & VOID AUDITOR
   public securityAuditor = computed(() => {
     let refundTotal = 0;
     let refundCount = 0;
@@ -596,7 +567,8 @@ public async addManualCash(): Promise<void> {
 
     return { refundTotal, refundCount, sketchyTxns };
   });
-  // Track cash drawer balance (initialize from local storage or default)
+
+  // Track cash drawer balance (persistent with local storage fallback)
   public cashDrawerBalance = signal<number>(
     Number(localStorage.getItem('cash_drawer_balance')) || 230
   );
@@ -609,15 +581,14 @@ public async addManualCash(): Promise<void> {
     const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
     const countAmount = Number(amountInput?.value || 0);
 
-    // 1. Reset drawer balance to 0 (or your standard starting float, e.g. 0)
+    // 1. Reset drawer balance to 0
     const newStartingFloat = 0;
     this.cashDrawerBalance.set(newStartingFloat);
 
     // 2. Persist the reset balance
     localStorage.setItem('cash_drawer_balance', newStartingFloat.toString());
 
-    // 3. Optional: Alert confirmation
+    // 3. Confirmation alert
     alert(`Η βάρδια έκλεισε επιτυχώς. Αφαιρέθηκαν €${countAmount}. Το ταμείο μηδενίστηκε!`);
   }
-  
 }
