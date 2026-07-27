@@ -27,7 +27,7 @@ export class ReportsComponent {
   public activeTab = signal<string>('zreport');
   public analyticsDate = signal<string>(new Date().toISOString().split('T')[0]);
   
-  
+  public isShiftModalOpen = signal<boolean>(false);
 
   // ========================================================
   // ⭐ TAB 1: Z-REPORT & SALES LEDGER
