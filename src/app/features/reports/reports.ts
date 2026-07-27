@@ -34,6 +34,7 @@ export class ReportsComponent {
   public selectedTxnId = signal<string | null>(null);
 
   public get cashLogs() { return this.salesService.cashLogs; }
+  public isShiftModalOpen = signal<boolean>(false);
 
   public filteredTransactions = computed(() => {
     const targetDate = new Date(this.selectedDate()).toDateString();
@@ -573,22 +574,42 @@ export class ReportsComponent {
     Number(localStorage.getItem('cash_drawer_balance')) || 230
   );
 
-  // Called when submitting the Close Shift form
-  public onCloseShiftSubmit(event: Event) {
-    event.preventDefault();
+// Inside ReportsComponent class in reports.ts
 
-    const form = event.target as HTMLFormElement;
-    const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
-    const countAmount = Number(amountInput?.value || 0);
+// Inside ReportsComponent class in reports.ts
 
-    // 1. Reset drawer balance to 0
-    const newStartingFloat = 0;
-    this.cashDrawerBalance.set(newStartingFloat);
+public async onCloseShiftSubmit(event: Event) {
+  event.preventDefault();
 
-    // 2. Persist the reset balance
-    localStorage.setItem('cash_drawer_balance', newStartingFloat.toString());
+  const form = event.target as HTMLFormElement;
+  const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
+  const countAmount = Number(amountInput?.value || 0);
 
-    // 3. Confirmation alert
-    alert(`Η βάρδια έκλεισε επιτυχώς. Αφαιρέθηκαν €${countAmount}. Το ταμείο μηδενίστηκε!`);
+  // 1. Clear local cash logs so liveCashInDrawer() recalculates to €0.00
+  this.salesService.cashLogs.set([]);
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('maranth_cash_logs');
   }
+
+  // 2. Optionally sync the reset to Firestore/Firebase if configured
+  try {
+    if (this.salesService.db) {
+      const { doc, setDoc } = await import('firebase/firestore');
+      const resetLog = {
+        id: Date.now().toString(),
+        type: 'RESET',
+        amount: countAmount,
+        reason: 'Shift Close & Cash Drawer Reset',
+        timestamp: new Date().toISOString()
+      };
+      await setDoc(doc(this.salesService.db, 'cashLogs', 'latest_reset'), resetLog);
+    }
+  } catch (error) {
+    console.error("Failed to sync shift reset to Firebase:", error);
+  }
+
+  // 3. Close modal & inform user
+  this.isShiftModalOpen.set(false);
+  alert(`Η βάρδια έκλεισε επιτυχώς (€${countAmount}). Το ταμείο μηδενίστηκε!`);
+}
 }
