@@ -25,6 +25,11 @@ export class PosComponent implements OnInit, AfterViewInit {
   public searchQuery = signal<string>('');
   public selectedCategoryId = signal<string>('ALL');
 
+  // 1. Daily Note State (Loads saved note for today or starts fresh)
+  public dailyNote = signal<string>(
+    typeof window !== 'undefined' ? (localStorage.getItem(`maranth_pos_note_${new Date().toISOString().split('T')[0]}`) || '') : ''
+  );
+
   // 👇 PASTE THIS MISSING FUNCTION RIGHT HERE 👇
   public selectCategory(categoryId: string): void {
     this.selectedCategoryId.set(categoryId);
@@ -179,7 +184,15 @@ export class PosComponent implements OnInit, AfterViewInit {
         }, 50);
       }
     });
-  
+
+    // Auto-save note to localStorage whenever it changes
+    effect(() => {
+      if (typeof window !== 'undefined') {
+        const todayKey = `maranth_pos_note_${new Date().toISOString().split('T')[0]}`;
+        localStorage.setItem(todayKey, this.dailyNote());
+      }
+    });
+    
     effect(() => {
       const bsk = this.salesService.basket() || [];
       if (bsk.length === 0) {
@@ -193,6 +206,8 @@ export class PosComponent implements OnInit, AfterViewInit {
       }
     }, { allowSignalWrites: true });
   }
+
+  
 
   ngOnInit() {}
 
@@ -310,6 +325,64 @@ public handleProductClick(prod: Product): void {
       
       // ⭐ Keeps the cursor in the search box after you click, so you can keep typing or scanning!
       this.salesService.triggerSearchFocus(); 
+    }
+  }
+
+// 2. Print / PDF Export Handler
+  public printDailyNote(): void {
+    const noteText = this.dailyNote().trim();
+    if (!noteText) {
+      alert('Δεν υπάρχουν σημειώσεις για εκτύπωση/PDF.');
+      return;
+    }
+
+    const todayStr = new Date().toLocaleDateString('el-GR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const timeStr = new Date().toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
+
+    // Open clean print window
+    const printWin = window.open('', '_blank', 'width=600,height=700');
+    if (!printWin) return;
+
+    printWin.document.write(`
+      <html>
+        <head>
+          <title>Maranth POS - Σημειώσεις Βάρδιας (${todayStr})</title>
+          <style>
+            body { font-family: system-ui, sans-serif; padding: 40px; color: #111; line-height: 1.6; }
+            .header { border-bottom: 2px solid #222; padding-bottom: 12px; margin-bottom: 24px; }
+            .title { font-size: 22px; font-weight: bold; margin: 0; }
+            .meta { font-size: 13px; color: #666; margin-top: 4px; }
+            .content { font-size: 15px; white-space: pre-wrap; font-family: inherit; }
+            .footer { margin-top: 40px; border-top: 1px solid #ddd; padding-top: 12px; font-size: 11px; color: #888; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 class="title">📝 Maranth POS — Σημειώσεις Βάρδιας</h1>
+            <div class="meta">Ημερομηνία: <strong>${todayStr}</strong> | Ώρα Εκτύπωσης: <strong>${timeStr}</strong></div>
+          </div>
+          <div class="content">${noteText}</div>
+          <div class="footer">Maranth POS Store System</div>
+        </body>
+      </html>
+    `);
+
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => {
+      printWin.print();
+      printWin.close();
+    }, 250);
+  }
+
+  public clearDailyNote(): void {
+    if (confirm('Θέλετε να διαγράψετε τις σημειώσεις της σημερινής ημέρας;')) {
+      this.dailyNote.set('');
     }
   }
 }
