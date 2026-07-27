@@ -596,7 +596,28 @@ public async addManualCash(): Promise<void> {
 
     return { refundTotal, refundCount, sketchyTxns };
   });
+  // Track cash drawer balance (initialize from local storage or default)
+  public cashDrawerBalance = signal<number>(
+    Number(localStorage.getItem('cash_drawer_balance')) || 230
+  );
 
+  // Called when submitting the Close Shift form
+  public onCloseShiftSubmit(event: Event) {
+    event.preventDefault();
 
+    const form = event.target as HTMLFormElement;
+    const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
+    const countAmount = Number(amountInput?.value || 0);
+
+    // 1. Reset drawer balance to 0 (or your standard starting float, e.g. 0)
+    const newStartingFloat = 0;
+    this.cashDrawerBalance.set(newStartingFloat);
+
+    // 2. Persist the reset balance
+    localStorage.setItem('cash_drawer_balance', newStartingFloat.toString());
+
+    // 3. Optional: Alert confirmation
+    alert(`Η βάρδια έκλεισε επιτυχώς. Αφαιρέθηκαν €${countAmount}. Το ταμείο μηδενίστηκε!`);
+  }
   
 }
