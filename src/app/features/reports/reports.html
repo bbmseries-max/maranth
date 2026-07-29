@@ -1,3 +1,4 @@
+<!-- STREAMING_CHUNK: Main layout container and header -->
 <div class="flex flex-col h-screen bg-base font-sans transition-colors duration-300">
   
   <!-- HEADER -->
@@ -31,10 +32,10 @@
     </button>
   </div>
 
-  <!-- REPORTS WRAPPER -->
+  <!-- STREAMING_CHUNK: Reports content wrapper and global trend bar -->
   <div class="flex-1 overflow-y-auto p-4 md:p-6 transition-colors duration-300">
     
-    <!-- ✨ GLOBAL WIDGET: SHOWS ON ALL 3 TABS ✨ -->
+    <!-- GLOBAL WIDGET: SHOWS ON ALL 3 TABS -->
     <div class="w-full mb-8 no-print">
       <div class="mb-4">
         <h4 class="m-0 text-sm font-black text-primary uppercase tracking-wider">📅 7-Day Revenue Trend</h4>
@@ -59,12 +60,7 @@
       </div>
     </div>
     
-    <!-- ================== TAB 1: Z-REPORT & SALES LEDGER ================== -->
-
-  <!-- REPORTS WRAPPER -->
-  <div class="flex-1 overflow-y-auto p-4 md:p-6 transition-colors duration-300">
-    
-    <!-- ================== TAB 1: Z-REPORT & SALES LEDGER ================== -->
+    <!-- STREAMING_CHUNK: Tab 1 Z-Report & Sales Ledger -->
     @if (activeTab() === 'zreport') {
       
       <!-- Date Picker & Print Header -->
@@ -255,7 +251,7 @@
       </div>
     }
 
-    <!-- ================== TAB 2: ANALYTICS ================== -->
+    <!-- STREAMING_CHUNK: Tab 2 Sales Analytics -->
     @if (activeTab() === 'analytics') {
       <div class="bg-panel p-6 rounded-xl shadow-sm border border-line mb-6 transition-colors">
         <div class="mb-6">
@@ -303,7 +299,7 @@
       </div>
     }
 
-    <!-- ================== TAB 3: LIVE DASHBOARD ================== -->
+    <!-- STREAMING_CHUNK: Tab 3 Live Dashboard Widgets -->
     @if (activeTab() === 'dashboard') {
       <div class="mb-6 no-print">
         <h1 class="m-0 text-2xl text-primary font-extrabold tracking-tight">Live Dashboard Widgets</h1>
@@ -323,77 +319,80 @@
         </div>
 
         <!-- CASH DRAWER WIDGET -->
-       <div class="bg-panel rounded-xl p-5 shadow-sm border border-line flex flex-col h-[400px] transition-colors relative">
-  
-  <!-- Header with Shift Close Trigger -->
-  <div class="flex justify-between items-center mb-4">
-    <span class="text-sm font-black text-primary uppercase tracking-wider">💵 Cash Drawer Control</span>
-    <button 
-      class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-2 py-1 text-[11px] rounded font-bold transition-colors focus:outline-none" 
-      (click)="isShiftModalOpen.set(true)">
-      🔒 Close Shift
-    </button>
-  </div>
-
-  <!-- Expected Cash Display -->
-  <div class="bg-base border border-line rounded-xl p-4 flex justify-between items-baseline mb-4">
-    <span class="text-sm font-bold text-muted">Expected Cash:</span>
-    <span class="text-3xl font-black text-emerald-500 tracking-tight">{{ formatMoney(liveCashInDrawer()) }}</span>
-  </div>
-
-  <!-- Cash Activity Log -->
-  <div class="flex-1 overflow-y-auto border border-line rounded-xl p-2 bg-base mb-4 pr-1">
-    <div class="text-[10px] font-extrabold text-muted uppercase tracking-wider mb-2 ml-1">Today's Activity</div>
-    @for (log of cashLogs(); track log.id) {
-      <div class="flex justify-between items-center p-1.5 border-b border-line text-xs">
-        <div class="flex items-center gap-2">
-          <span *ngIf="log.type === 'IN'" class="text-green-500 font-black">+{{ formatMoney(log.amount) }}</span>
-          <span *ngIf="log.type === 'OUT'" class="text-red-500 font-black">-{{ formatMoney(log.amount) }}</span>
-          <span class="text-primary font-bold">{{ log.reason }}</span>
-        </div>
-        <span class="text-[10px] font-bold text-muted">{{ log.timestamp | date:'HH:mm' }}</span>
-      </div>
-    } @empty {
-      <div class="text-center text-muted font-bold italic py-4 text-xs">No cash movements yet today.</div>
-    }
-  </div>
-
-  <!-- Action Buttons -->
-  <div class="flex gap-2 mt-auto">
-    <button class="flex-1 py-2.5 rounded-lg border-none bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors active:scale-95 shadow-sm" (click)="addManualCash()">+ Add Cash</button>
-    <button class="flex-1 py-2.5 rounded-lg border-none bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors active:scale-95 shadow-sm" (click)="removeManualCash()">- Payout</button>
-  </div>
-
-  <!-- Properly Floating Shift Reset Modal Backdrop -->
-  @if (isShiftModalOpen()) {
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-surface border border-theme-border rounded-3xl p-6 shadow-2xl max-w-sm w-full text-main">
-        <div class="flex justify-between items-center mb-3 border-b border-theme-border pb-2">
-          <h3 class="font-black text-lg">🔒 Κλείσιμο Βάρδιας & Ταμείου</h3>
-          <button (click)="isShiftModalOpen.set(false)" class="text-main/50 hover:text-main font-bold">✕</button>
-        </div>
-
-        <p class="text-xs text-main/70 mb-4">
-          Τρέχον Υπόλοιπο Ταμείου: <strong class="text-brand">{{ formatMoney(liveCashInDrawer()) }}</strong>
-        </p>
-
-        <form (submit)="onCloseShiftSubmit($event); isShiftModalOpen.set(false)" class="space-y-3">
-          <div>
-            <label class="text-xs font-bold text-main/70 block mb-1">Ποσό αφαίρεσης / Καταμέτρησης (€)</label>
-            <input type="number" id="drawerAmount" [value]="liveCashInDrawer()" class="w-full px-3 py-2 rounded-xl bg-base border border-theme-border text-sm font-medium focus:outline-none focus:border-brand" required />
+        <div class="bg-panel rounded-xl p-5 shadow-sm border border-line flex flex-col h-[400px] transition-colors relative">
+          
+          <!-- Header with Shift Close Trigger -->
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-sm font-black text-primary uppercase tracking-wider">💵 Cash Drawer Control</span>
+            <button 
+              class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-2 py-1 text-[11px] rounded font-bold transition-colors focus:outline-none" 
+              (click)="isShiftModalOpen.set(true)">
+              🔒 Close Shift
+            </button>
           </div>
 
-          <button type="submit" class="w-full py-3 rounded-xl bg-brand text-white font-bold text-sm hover:bg-brand/90 transition-colors">
-            Μηδενισμός & Νέα Βάρδια
-          </button>
-        </form>
-      </div>
-    </div>
-  }
+          <!-- Expected Cash Display -->
+          <div class="bg-base border border-line rounded-xl p-4 flex justify-between items-baseline mb-4">
+            <span class="text-sm font-bold text-muted">Expected Cash:</span>
+            <span class="text-3xl font-black text-emerald-500 tracking-tight">{{ formatMoney(liveCashInDrawer()) }}</span>
+          </div>
 
-</div>
+          <!-- Cash Activity Log -->
+          <div class="flex-1 overflow-y-auto border border-line rounded-xl p-2 bg-base mb-4 pr-1">
+            <div class="text-[10px] font-extrabold text-muted uppercase tracking-wider mb-2 ml-1">Today's Activity</div>
+            @for (log of cashLogs(); track log.id) {
+              <div class="flex justify-between items-center p-1.5 border-b border-line text-xs">
+                <div class="flex items-center gap-2">
+                  @if (log.type === 'IN') {
+                    <span class="text-green-500 font-black">+{{ formatMoney(log.amount) }}</span>
+                  }
+                  @if (log.type === 'OUT') {
+                    <span class="text-red-500 font-black">-{{ formatMoney(log.amount) }}</span>
+                  }
+                  <span class="text-primary font-bold">{{ log.reason }}</span>
+                </div>
+                <span class="text-[10px] font-bold text-muted">{{ log.timestamp | date:'HH:mm' }}</span>
+              </div>
+            } @empty {
+              <div class="text-center text-muted font-bold italic py-4 text-xs">No cash movements yet today.</div>
+            }
+          </div>
 
-<!-- WIDGET 1: CATEGORY BREAKDOWN -->
+          <!-- Action Buttons -->
+          <div class="flex gap-2 mt-auto">
+            <button class="flex-1 py-2.5 rounded-lg border-none bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-colors active:scale-95 shadow-sm" (click)="addManualCash()">+ Add Cash</button>
+            <button class="flex-1 py-2.5 rounded-lg border-none bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors active:scale-95 shadow-sm" (click)="removeManualCash()">- Payout</button>
+          </div>
+
+          <!-- Floating Shift Reset Modal -->
+          @if (isShiftModalOpen()) {
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div class="bg-surface border border-theme-border rounded-3xl p-6 shadow-2xl max-w-sm w-full text-main">
+                <div class="flex justify-between items-center mb-3 border-b border-theme-border pb-2">
+                  <h3 class="font-black text-lg">🔒 Κλείσιμο Βάρδιας & Ταμείου</h3>
+                  <button (click)="isShiftModalOpen.set(false)" class="text-main/50 hover:text-main font-bold">✕</button>
+                </div>
+
+                <p class="text-xs text-main/70 mb-4">
+                  Τρέχον Υπόλοιπο Ταμείου: <strong class="text-brand">{{ formatMoney(liveCashInDrawer()) }}</strong>
+                </p>
+
+                <form (submit)="onCloseShiftSubmit($event); isShiftModalOpen.set(false)" class="space-y-3">
+                  <div>
+                    <label class="text-xs font-bold text-main/70 block mb-1">Ποσό αφαίρεσης / Καταμέτρησης (€)</label>
+                    <input type="number" id="drawerAmount" [value]="liveCashInDrawer()" class="w-full px-3 py-2 rounded-xl bg-base border border-theme-border text-sm font-medium focus:outline-none focus:border-brand" required />
+                  </div>
+
+                  <button type="submit" class="w-full py-3 rounded-xl bg-brand text-white font-bold text-sm hover:bg-brand/90 transition-colors">
+                    Μηδενισμός & Νέα Βάρδια
+                  </button>
+                </form>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- WIDGET 1: CATEGORY BREAKDOWN -->
         <div class="bg-panel rounded-xl p-5 shadow-sm border border-line flex flex-col h-[400px] transition-colors">
           <div class="text-sm font-black text-primary uppercase tracking-wider mb-4 border-b border-line pb-2">📦 Dept. Performance</div>
           
@@ -489,13 +488,14 @@
                     <span class="font-bold text-primary">{{ tx.id.slice(-6) }}</span>
                     <span class="font-semibold text-muted">{{ tx.timestamp | date:'HH:mm' }} - {{ $any(tx).cashier || 'Unknown' }}</span>
                   </div>
-                  <span class="font-black text-red-500">-{{ formatMoney(Math.abs(tx.grandTotal)) }}</span>
+                  <span class="font-black text-red-500">-{{ formatMoney(tx.grandTotal < 0 ? -tx.grandTotal : tx.grandTotal) }}</span>
                 </div>
               }
             </div>
-         }
+          }
         </div>
-       <!-- WIDGET 5: TRUE PROFIT & SHRINKAGE REPORT -->
+
+        <!-- WIDGET 5: TRUE PROFIT & SHRINKAGE REPORT -->
         <div class="col-span-full mt-8 pt-6 border-t border-dashed border-line w-full">
           <div class="mb-6">
             <h4 class="m-0 text-sm font-black text-primary uppercase tracking-wider">🗑️ Spoilage & True Profit Analysis</h4>
@@ -503,11 +503,8 @@
           </div>
           
           <div class="bg-panel border border-line rounded-xl overflow-hidden shadow-sm w-full">
-            <!-- 👇 Added max-h-[320px] and overflow-y-auto to create the 6-line scroll box -->
             <div class="overflow-x-auto overflow-y-auto custom-scrollbar max-h-[320px]">
               <table class="w-full border-collapse text-left text-sm whitespace-nowrap relative">
-                
-                <!-- 👇 Added sticky, top-0, and z-10 so the header stays visible when scrolling -->
                 <thead class="bg-base border-b border-line sticky top-0 z-10 shadow-sm">
                   <tr class="text-xs text-muted font-extrabold uppercase tracking-wider">
                     <th class="py-3 px-4">Product</th>
@@ -549,13 +546,13 @@
           </div>
         </div>
 
-      </div> <!-- 👈 CLOSES THE DASHBOARD GRID -->
-    } <!-- 👈 THIS IS THE MISSING BRACKET! Closes activeTab() === 'dashboard' -->
+      </div>
+    }
     
-  </div> <!-- 👈 CLOSES REPORTS WRAPPER -->
-</div> <!-- 👈 CLOSES MAIN APP CONTAINER -->
+  </div>
+</div>
 
-<!-- MODAL (Unified styling with POS) -->
+<!-- STREAMING_CHUNK: Global modal overlay -->
 @if (salesService.activeModal(); as modal) {
   <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-200">
     <div class="bg-panel border border-line rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transition-colors">

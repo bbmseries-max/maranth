@@ -38,6 +38,15 @@ export class SalesService {
   public activeModal = signal<POSModal | null>(null);
   public focusSearchTrigger = signal<number>(0);
 
+   /**
+   * 🏆 Computed signal to guarantee transactions are ALWAYS sorted newest-first (descending timestamp)
+   */
+  public sortedTransactions = computed(() => {
+    return [...this.transactions()].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  });
+
   constructor() {
     if (typeof window !== 'undefined') {
       const app = initializeApp(firebaseConfig);
@@ -117,6 +126,11 @@ export class SalesService {
         }
       }
       const data = snapshot.docs.map(doc => doc.data());
+
+        // 🎯 Automatically sort transaction snapshots newest-first
+      if (collectionName === 'transactions') {
+        data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      }
       targetSignal.set(data);
     });
   }
