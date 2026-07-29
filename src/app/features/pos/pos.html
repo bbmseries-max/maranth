@@ -168,25 +168,25 @@
       }
     </div>
   </details>
-<!-- 📝 DAILY SHIFT NOTES GADGET -->
-<div class="bg-panel rounded-xl p-4 shadow-sm border border-line mb-6 transition-colors">
-  <div class="flex justify-between items-center mb-2">
-    <div class="flex items-center gap-2">
-      <span class="text-sm font-black text-primary uppercase tracking-wider">📝 Σημειώσεις Βάρδιας / Ημέρας</span>
-      <span class="text-[10px] bg-emerald-500/10 text-emerald-600 font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">Auto-saved</span>
+<!-- 📝 DAILY SHIFT NOTES GADGET (Hidden on phones, taller view, larger text) -->
+<div class="hidden md:block mobile-hide bg-panel rounded-xl p-5 shadow-sm border border-line mb-6 transition-colors">
+  <div class="flex justify-between items-center mb-3">
+    <div class="flex items-center gap-3">
+      <span class="text-base font-black text-primary uppercase tracking-wider">📝 Σημειώσεις Βάρδιας / Ημέρας</span>
+      <span class="text-xs bg-emerald-500/10 text-emerald-600 font-bold px-2.5 py-1 rounded-full border border-emerald-500/20">Auto-saved</span>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
       <button 
         (click)="clearDailyNote()" 
-        class="text-xs font-bold text-red-500/70 hover:text-red-500 px-2 py-1 transition-colors"
+        class="text-sm font-bold text-red-500/70 hover:text-red-500 px-3 py-1.5 transition-colors"
         title="Καθαρισμός">
         Clear
       </button>
 
       <button 
         (click)="printDailyNote()" 
-        class="bg-sky-400 text-white hover:bg-sky-600/90 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
+        class="bg-sky-400 text-white hover:bg-sky-600/90 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
         PDF
       </button>
     </div>
@@ -196,7 +196,8 @@
     [ngModel]="dailyNote()" 
     (ngModelChange)="dailyNote.set($event)"
     placeholder="Γράψτε σημειώσεις για τη σημερινή βάρδια (π.χ. παραγγελίες προμηθευτών, ελλείψεις, υπενθυμίσεις)..."
-    class="w-full h-24 bg-base border border-line rounded-xl p-3 text-xs text-primary focus:outline-none focus:border-brand resize-none font-medium leading-relaxed placeholder:text-muted">
+    class="w-full h-48 bg-base border border-line rounded-xl p-4 text-base text-primary focus:outline-none focus:border-brand resize-none font-medium leading-relaxed placeholder:text-muted"
+    style="min-height: 180px;">
   </textarea>
 </div>
 
