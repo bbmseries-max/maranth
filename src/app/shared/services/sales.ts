@@ -66,7 +66,6 @@ export class SalesService {
   }
 
   public async setupDailyProductCache(): Promise<void> {
-    // Ensures product local cache is ready for operations
     return Promise.resolve();
   }
 
@@ -176,11 +175,27 @@ export class SalesService {
     }, 0);
   });
 
+  /**
+   * Normalizes any input tax rate format (e.g. 0.24, 1.24, or 24) to the standard divisor (e.g. 1.24)
+   */
+  private getTaxDivisor(taxRate?: number): number {
+    if (taxRate === undefined || taxRate === null || isNaN(taxRate) || taxRate <= 0) {
+      return 1.24; // Default 24% Greek VAT
+    }
+    if (taxRate > 10) { // e.g. 24 or 13
+      return 1 + (taxRate / 100);
+    }
+    if (taxRate < 1) { // e.g. 0.24 or 0.13
+      return 1 + taxRate;
+    }
+    return taxRate; // Already in 1.24 or 1.13 format
+  }
+
   public netSubtotal = computed(() => {
     return this.basket().reduce((acc, item) => {
-      const taxRate = item.product.taxRate || 1.24; 
+      const taxDivisor = this.getTaxDivisor(item.product.taxRate); 
       const lineGross = item.product.price * item.quantity;
-      const lineNet = lineGross / taxRate;
+      const lineNet = lineGross / taxDivisor;
       return acc + (item.isRefund ? -lineNet : lineNet);
     }, 0);
   });
