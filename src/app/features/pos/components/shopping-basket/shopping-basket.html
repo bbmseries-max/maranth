@@ -42,14 +42,14 @@
 
             <!-- Quantity Controls -->
             <div class="flex items-center gap-1 bg-hover p-1 rounded-lg flex-shrink-0">
-              <button type="button" class="w-7 h-7 flex items-center justify-center bg-white rounded shadow-sm text-primary hover:bg-base font-bold active:scale-95 transition-transform focus:outline-none" 
+              <button type="button" class="w-7 h-7 flex items-center justify-center bg-panel rounded shadow-sm text-primary hover:bg-base font-bold active:scale-95 transition-transform focus:outline-none" 
                       (click)="salesService.removeFromBasket(item.product, item.isRefund)">➖</button>
               
               <span class="text-xs font-bold w-12 text-center text-primary">
                 {{ item.product.isWeighted ? item.quantity + ' kg' : item.quantity + ' pcs' }}
               </span>
               
-              <button type="button" class="w-7 h-7 flex items-center justify-center bg-white rounded shadow-sm text-primary hover:bg-base font-bold active:scale-95 transition-transform focus:outline-none" 
+              <button type="button" class="w-7 h-7 flex items-center justify-center bg-panel rounded shadow-sm text-primary hover:bg-base font-bold active:scale-95 transition-transform focus:outline-none" 
                       (click)="salesService.addToBasket(item.product, item.isRefund)">➕</button>
             </div>
 
