@@ -38,7 +38,7 @@ export class SalesService {
   public activeModal = signal<POSModal | null>(null);
   public focusSearchTrigger = signal<number>(0);
 
-   /**
+  /**
    * 🏆 Computed signal to guarantee transactions are ALWAYS sorted newest-first (descending timestamp)
    */
   public sortedTransactions = computed(() => {
@@ -126,11 +126,11 @@ export class SalesService {
         }
       }
       const data = snapshot.docs.map(doc => doc.data());
-
-        // 🎯 Automatically sort transaction snapshots newest-first
+      
       if (collectionName === 'transactions') {
         data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       }
+
       targetSignal.set(data);
     });
   }
@@ -189,20 +189,17 @@ export class SalesService {
     }, 0);
   });
 
-  /**
-   * Normalizes any input tax rate format (e.g. 0.24, 1.24, or 24) to the standard divisor (e.g. 1.24)
-   */
   private getTaxDivisor(taxRate?: number): number {
     if (taxRate === undefined || taxRate === null || isNaN(taxRate) || taxRate <= 0) {
-      return 1.24; // Default 24% Greek VAT
+      return 1.24;
     }
-    if (taxRate > 10) { // e.g. 24 or 13
+    if (taxRate > 10) {
       return 1 + (taxRate / 100);
     }
-    if (taxRate < 1) { // e.g. 0.24 or 0.13
+    if (taxRate < 1) {
       return 1 + taxRate;
     }
-    return taxRate; // Already in 1.24 or 1.13 format
+    return taxRate;
   }
 
   public netSubtotal = computed(() => {
@@ -302,6 +299,11 @@ export class SalesService {
     const currentBasket = this.basket();
     if (currentBasket.length === 0) return;
 
+    // Fetch active cashier name or fallback to stored value
+    const activeCashier = this.currentCashier() || 
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('maranth_active_cashier') : null) || 
+      'Admin';
+
     const receipt: TransactionRecord = {
       id: 'TX-' + Math.random().toString(36).substring(2, 11).toUpperCase(),
       timestamp: new Date().toISOString(),
@@ -309,13 +311,14 @@ export class SalesService {
       subtotal: parseFloat(this.netSubtotal().toFixed(2)),
       taxAmount: parseFloat(this.taxAmount().toFixed(2)),
       grandTotal: parseFloat(this.grandTotal().toFixed(2)),
-      paymentMethod: method
+      paymentMethod: method,
+      cashierId: activeCashier
     };
 
     currentBasket.forEach(item => {
       const productIdStr = String(item.product.id);
       if (!productIdStr.startsWith('MISC-')) {
-        const product = this.products().find(p => String(p.id) === productIdStr);
+        const product = this.products().find(p => String(p.id) === String(productIdStr));
         if (product && this.db) {
           const currentStock = parseFloat(product.stockQuantity as any) || 0;
           const change = item.isRefund ? item.quantity : -item.quantity;
@@ -379,7 +382,7 @@ export class SalesService {
       const isScaled = found.isWeighted === true || String(found.isWeighted).toLowerCase() === 'true';
       if (isScaled) {
         this.activeModal.set({
-          type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${found.name}:`, value: '1.000',
+          type: 'prompt', title: '秤 Scale Weight (kg)', message: `Enter the measured weight for ${found.name}:`, value: '1.000',
           onConfirm: (val) => {
             const weight = parseFloat(val);
             if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
