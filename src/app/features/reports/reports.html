@@ -569,9 +569,14 @@
       <div class="p-5 text-primary whitespace-pre-line bg-panel text-sm font-medium">
         <p class="m-0">{{ modal.message }}</p>
         @if (modal.type === 'prompt') {
-          <input #promptInput type="number" step="0.01" 
+          <input #promptInput 
+                 [type]="modal.title?.includes('Reason') || modal.title?.includes('Excuse') || modal.title?.includes('Notes') ? 'text' : 'number'" 
+                 step="0.01" 
                  class="w-full mt-3 px-4 py-3 border-2 border-line bg-base rounded-xl text-lg font-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-primary" 
-                 [value]="modal.value" (input)="modal.value = promptInput.value" (keyup.enter)="modal.onConfirm(modal.value)" autofocus />
+                 [value]="modal.value" 
+                 (input)="modal.value = promptInput.value" 
+                 (keyup.enter)="modal.onConfirm(modal.value)" 
+                 autofocus />
         }
       </div>
       

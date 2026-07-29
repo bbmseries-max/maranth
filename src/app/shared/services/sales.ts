@@ -299,7 +299,7 @@ export class SalesService {
     const currentBasket = this.basket();
     if (currentBasket.length === 0) return;
 
-    // Fetch active cashier name or fallback to stored value
+    // Retrieve active cashier username
     const activeCashier = this.currentCashier() || 
       (typeof localStorage !== 'undefined' ? localStorage.getItem('maranth_active_cashier') : null) || 
       'Admin';
@@ -312,7 +312,8 @@ export class SalesService {
       taxAmount: parseFloat(this.taxAmount().toFixed(2)),
       grandTotal: parseFloat(this.grandTotal().toFixed(2)),
       paymentMethod: method,
-      cashierId: activeCashier
+      cashierId: activeCashier,
+      cashier: activeCashier
     };
 
     currentBasket.forEach(item => {
@@ -382,7 +383,7 @@ export class SalesService {
       const isScaled = found.isWeighted === true || String(found.isWeighted).toLowerCase() === 'true';
       if (isScaled) {
         this.activeModal.set({
-          type: 'prompt', title: '秤 Scale Weight (kg)', message: `Enter the measured weight for ${found.name}:`, value: '1.000',
+          type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${found.name}:`, value: '1.000',
           onConfirm: (val) => {
             const weight = parseFloat(val);
             if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);

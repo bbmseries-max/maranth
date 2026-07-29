@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { TransactionRecord } from '../../shared/services/pos-data.models';
+import { doc, setDoc } from 'firebase/firestore';
 
 @Component({
   selector: 'app-reports',
@@ -153,6 +154,86 @@ export class ReportsComponent {
     return cashIn + manualAdjustments;
   });
 
+  public addManualCash() {
+    this.salesService.activeModal.set({
+      type: 'prompt', 
+      title: '💵 Add Cash (Step 1 of 2)', 
+      message: 'Enter amount of cash added to drawer (€):', 
+      value: '',
+      onConfirm: (amountVal) => {
+        const amt = parseFloat(amountVal);
+        if (!isNaN(amt) && amt > 0) {
+          // Trigger Step 2: Ask for reason/excuse
+          setTimeout(() => {
+            this.salesService.activeModal.set({
+              type: 'prompt',
+              title: '📝 Reason for Cash In (Step 2 of 2)',
+              message: `Enter reason / excuse for adding €${amt.toFixed(2)}:`,
+              value: 'Manual Top-up',
+              onConfirm: (reasonVal) => {
+                const log = { 
+                  id: 'CASH-' + Date.now(), 
+                  type: 'IN', 
+                  amount: amt, 
+                  reason: reasonVal?.trim() || 'Manual Top-up', 
+                  timestamp: new Date().toISOString() 
+                };
+                
+                this.salesService.cashLogs.update(logs => [...logs, log]);
+                if (this.salesService.db) {
+                  setDoc(doc(this.salesService.db, 'cashLogs', log.id), log);
+                }
+                this.salesService.closeModal();
+              }
+            });
+          }, 100);
+        } else {
+          this.salesService.closeModal();
+        }
+      }
+    });
+  }
+
+  public removeManualCash() {
+    this.salesService.activeModal.set({
+      type: 'prompt', 
+      title: '📤 Cash Payout (Step 1 of 2)', 
+      message: 'Enter payout amount removed from drawer (€):', 
+      value: '',
+      onConfirm: (amountVal) => {
+        const amt = parseFloat(amountVal);
+        if (!isNaN(amt) && amt > 0) {
+          // Trigger Step 2: Ask for reason/excuse
+          setTimeout(() => {
+            this.salesService.activeModal.set({
+              type: 'prompt',
+              title: '📝 Reason for Payout (Step 2 of 2)',
+              message: `Enter reason / excuse for removing €${amt.toFixed(2)}:`,
+              value: 'Supplier Payout',
+              onConfirm: (reasonVal) => {
+                const log = { 
+                  id: 'CASH-' + Date.now(), 
+                  type: 'OUT', 
+                  amount: amt, 
+                  reason: reasonVal?.trim() || 'Supplier Payout', 
+                  timestamp: new Date().toISOString() 
+                };
+                
+                this.salesService.cashLogs.update(logs => [...logs, log]);
+                if (this.salesService.db) {
+                  setDoc(doc(this.salesService.db, 'cashLogs', log.id), log);
+                }
+                this.salesService.closeModal();
+              }
+            });
+          }, 100);
+        } else {
+          this.salesService.closeModal();
+        }
+      }
+    });
+  }
+
   public categoryBreakdown = computed(() => {
     const catMap = new Map<string, { name: string, revenue: number, profit: number }>();
     this.filteredTransactions().forEach(tx => {
@@ -287,34 +368,6 @@ export class ReportsComponent {
     if (intensityPercentage <= 50) return '#3b82f6';
     if (intensityPercentage <= 75) return '#2563eb';
     return '#1d4ed8';
-  }
-
-  public addManualCash() {
-    this.salesService.activeModal.set({
-      type: 'prompt', title: '💵 Add Cash to Drawer', message: 'Enter cash float amount added:', value: '',
-      onConfirm: (val) => {
-        const amt = parseFloat(val);
-        if (!isNaN(amt) && amt > 0) {
-          const log = { id: 'CASH-' + Date.now(), type: 'IN', amount: amt, reason: 'Manual Top-up', timestamp: new Date().toISOString() };
-          this.salesService.cashLogs.update(logs => [...logs, log]);
-        }
-        this.salesService.closeModal();
-      }
-    });
-  }
-
-  public removeManualCash() {
-    this.salesService.activeModal.set({
-      type: 'prompt', title: '📤 Cash Payout', message: 'Enter cash payout amount removed:', value: '',
-      onConfirm: (val) => {
-        const amt = parseFloat(val);
-        if (!isNaN(amt) && amt > 0) {
-          const log = { id: 'CASH-' + Date.now(), type: 'OUT', amount: amt, reason: 'Supplier Payout', timestamp: new Date().toISOString() };
-          this.salesService.cashLogs.update(logs => [...logs, log]);
-        }
-        this.salesService.closeModal();
-      }
-    });
   }
 
   public onCloseShiftSubmit(event: Event) {

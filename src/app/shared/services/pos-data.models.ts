@@ -55,6 +55,7 @@ export interface TransactionRecord {
   grandTotal: number;
   paymentMethod: 'Cash' | 'Card' | 'Debit';
   cashierId?: string;
+  cashier?: string;
 }
 
 export interface POSModal {
