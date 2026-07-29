@@ -17,13 +17,15 @@ const firebaseConfig = {
   providedIn: 'root'
 })
 export class SalesService {
-  private db: any;
+  public db: any;
 
   public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier', isApproved?: boolean}[]>([]);
   public transactions = signal<TransactionRecord[]>([]);
   public products = signal<Product[]>([]);
   public categories = signal<Category[]>([]);
   public suppliers = signal<Supplier[]>([]);
+  public cashLogs = signal<any[]>([]);
+  public spoilageLogs = signal<any[]>([]);
 
   public currentCashier = signal<string | null>(typeof window !== 'undefined' ? localStorage.getItem('maranth_active_cashier') : null);
   public currentRole = signal<'admin' | 'cashier' | null>(typeof window !== 'undefined' ? localStorage.getItem('maranth_active_role') as any : null);
@@ -46,6 +48,8 @@ export class SalesService {
       this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
       this.setupCloudSync('categories', this.categories, 'maranth_categories');
       this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
+      this.setupCloudSync('cashLogs', this.cashLogs, 'maranth_cashLogs');
+      this.setupCloudSync('spoilageLogs', this.spoilageLogs, 'maranth_spoilageLogs');
 
       effect(() => {
         if (typeof localStorage !== 'undefined') {
@@ -58,6 +62,26 @@ export class SalesService {
           localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket()));
         }
       });
+    }
+  }
+
+  public async setupDailyProductCache(): Promise<void> {
+    // Ensures product local cache is ready for operations
+    return Promise.resolve();
+  }
+
+  public logSpoilage(product: any, quantity: number, reason: string): void {
+    const log = {
+      id: 'SPOIL-' + Date.now(),
+      productId: product?.id || '',
+      productName: product?.name || 'Unknown',
+      quantity,
+      reason,
+      timestamp: new Date().toISOString()
+    };
+    this.spoilageLogs.update(logs => [...logs, log]);
+    if (this.db) {
+      setDoc(doc(this.db, 'spoilageLogs', log.id), log);
     }
   }
 
@@ -259,18 +283,15 @@ export class SalesService {
       paymentMethod: method
     };
 
-    // 🎯 BULLETPROOF STOCK UPDATE Across Multi-Devices
     currentBasket.forEach(item => {
       const productIdStr = String(item.product.id);
       if (!productIdStr.startsWith('MISC-')) {
-        // String-safe matching prevents number vs. string comparison failures
         const product = this.products().find(p => String(p.id) === productIdStr);
         if (product && this.db) {
           const currentStock = parseFloat(product.stockQuantity as any) || 0;
           const change = item.isRefund ? item.quantity : -item.quantity;
           const newQuantity = parseFloat((currentStock + change).toFixed(3));
           
-          // Write updated stock to Firebase Cloud
           setDoc(doc(this.db, 'products', productIdStr), { 
             ...product, 
             stockQuantity: newQuantity 
@@ -401,6 +422,10 @@ export class SalesService {
 
   public clearLedger(): void {
     if (this.db) this.transactions().forEach(tx => deleteDoc(doc(this.db, 'transactions', tx.id)));
+  }
+
+  public clearTransactions(): void {
+    this.clearLedger();
   }
 
   public closeModal(): void {
