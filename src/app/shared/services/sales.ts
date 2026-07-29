@@ -2,7 +2,7 @@ import { Injectable, signal, computed, effect } from '@angular/core';
 import { Product, BasketItem, Category, Supplier, TransactionRecord, POSModal } from './pos-data.models';
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVlkxyVZIPEgXSukJxPEWK3WLnjoujsjU",
@@ -13,168 +13,60 @@ const firebaseConfig = {
   appId: "1:71739745426:web:cf0dbdcfbdf29fe10ef24b"
 };
 
-export interface SpoilageLog {
-  id: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  buyingPrice: number; // We lock in the cost at the time it was wasted
-  reason: string;
-  timestamp: string;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class SalesService {
-  public db: any;
-
-  // The live memory bank for all wasted items
-  public spoilageLogs = signal<SpoilageLog[]>([]);
+  private db: any;
 
   public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier', isApproved?: boolean}[]>([]);
   public transactions = signal<TransactionRecord[]>([]);
-
-  public clearTransactions(): void {
-    // 1. Empty the live Angular signal
-    this.transactions.set([]);
-    
-    // 2. Wipe it from the browser's local storage memory
-    if (typeof window !== 'undefined') {
-      // Overwriting the common keys used to store the ledger
-      localStorage.setItem('maranth_transactions', '[]');
-      localStorage.setItem('pos_transactions', '[]');
-      localStorage.removeItem('maranth_transactions');
-    }
-  }
-
-  
-
   public products = signal<Product[]>([]);
   public categories = signal<Category[]>([]);
   public suppliers = signal<Supplier[]>([]);
 
-  // ==========================================
-  // DARK MODE ENGINE
-  // ==========================================
-  public isDarkMode = signal<boolean>(
-    typeof localStorage !== 'undefined' && localStorage.getItem('maranth_theme') === 'dark'
-  );
-
-  public toggleTheme(): void {
-    const newTheme = this.isDarkMode() ? 'light' : 'dark';
-    this.isDarkMode.set(newTheme === 'dark');
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('maranth_theme', newTheme);
-    }
-    this.applyThemeToBody();
-  }
-
-  public applyThemeToBody(): void {
-    if (typeof document !== 'undefined') {
-      if (this.isDarkMode()) {
-        document.body.classList.add('dark-theme');
-      } else {
-        document.body.classList.remove('dark-theme');
-      }
-    }
-  }
-
-  public currentCashier = signal<string | null>(localStorage.getItem('maranth_active_cashier') || null);
-  public currentRole = signal<'admin' | 'cashier' | null>(localStorage.getItem('maranth_active_role') as any || null);
+  public currentCashier = signal<string | null>(typeof window !== 'undefined' ? localStorage.getItem('maranth_active_cashier') : null);
+  public currentRole = signal<'admin' | 'cashier' | null>(typeof window !== 'undefined' ? localStorage.getItem('maranth_active_role') as any : null);
+  
   public basket = signal<BasketItem[]>(this.loadLocalData('maranth_basket', []));
   public suspendedBasket = signal<BasketItem[] | null>(this.loadLocalData('maranth_suspended', null));
   
   public isRefundMode = signal<boolean>(false);
   public highlightedItemId = signal<string | null>(null);
   public activeModal = signal<POSModal | null>(null);
-  public cashLogs = signal<any[]>([]);
-
-  // ⭐ THE MISSING SEARCH FOCUS TRIGGER
   public focusSearchTrigger = signal<number>(0);
 
   constructor() {
-    this.applyThemeToBody();
+    if (typeof window !== 'undefined') {
+      const app = initializeApp(firebaseConfig);
+      this.db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    this.db = getFirestore(app);
-    
-    // ⭐ SWAPPED: Use the once-a-day cache for products to save 50k reads!
-    this.setupDailyProductCache(); 
-    
-this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
-    this.setupCloudSync('categories', this.categories, 'maranth_categories');
-    this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
-    this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
-    this.setupCloudSync('cashLogs', this.cashLogs, 'maranth_cash_logs');
+      this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
+      this.setupCloudSync('products', this.products, 'maranth_products');
+      this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
+      this.setupCloudSync('categories', this.categories, 'maranth_categories');
+      this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
 
-    effect(() => localStorage.setItem('maranth_basket', JSON.stringify(this.basket())));
-    effect(() => localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket())));
-  }
-
-  // ==========================================
-  // LOCAL CACHING ENGINE
-  // ==========================================
-
-  public async setupDailyProductCache() {
-    const today = new Date().toDateString(); // e.g., "Sun Jul 19 2026"
-    const cachedDate = localStorage.getItem('maranth_products_date');
-    const cachedProducts = localStorage.getItem('maranth_products');
-
-    // If we already downloaded today, load instantly from browser memory (0 Firebase Reads!)
-    if (cachedDate === today && cachedProducts) {
-      this.products.set(JSON.parse(cachedProducts));
-    } else {
-      // Download from Firebase (Costs reads, but only happens ONCE per day per device)
-      const snapshot = await getDocs(collection(this.db, 'products'));
-      const data = snapshot.docs.map(doc => doc.data() as Product);
+      effect(() => {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('maranth_basket', JSON.stringify(this.basket()));
+        }
+      });
       
-      this.products.set(data);
-      localStorage.setItem('maranth_products', JSON.stringify(data));
-      localStorage.setItem('maranth_products_date', today);
+      effect(() => {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket()));
+        }
+      });
     }
   }
 
-  // Forces the local cache to update when you edit a product or make a sale
-  public updateLocalProduct(updatedProduct: Product): void {
-    this.products.update(prods => {
-      const index = prods.findIndex(p => p.id === updatedProduct.id);
-      if (index > -1) {
-        prods[index] = updatedProduct;
-      } else {
-        prods.push(updatedProduct);
-      }
-      
-      // Save it back to memory so a page refresh doesn't erase the change
-      localStorage.setItem('maranth_products', JSON.stringify(prods));
-      return [...prods];
-    });
-  }
-
-  // ⭐ THE MISSING TRIGGER FUNCTION
   public triggerSearchFocus(): void {
     this.focusSearchTrigger.update(v => v + 1);
   }
 
-  public playScanBeep(): void {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(850, ctx.currentTime); // 850Hz scanner tone
-      gain.gain.setValueAtTime(0.1, ctx.currentTime); // Gentle volume
-      osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1); // 100ms duration
-      osc.stop(ctx.currentTime + 0.1);
-    } catch (e) {
-      console.log('Audio not supported', e);
-    }
-  }
-
   private loadLocalData(key: string, fallback: any): any {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return fallback;
     const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : fallback;
   }
@@ -209,16 +101,12 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
   public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier'): boolean {
     const existingUsers = this.registeredCashiers();
     if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
-    
-    // Auto-approve the very first admin
     const isApproved = existingUsers.length === 0 ? true : false;
-
     this.registeredCashiers.update(users => [...users, { username, pin, role, isApproved }]);
     setDoc(doc(this.db, 'cashiers', username), { username, pin, role, isApproved });
     return true; 
   }
 
-  // ⭐ THE MISSING STAFF APPROVAL TOGGLE
   public toggleCashierApproval(username: string, isApproved: boolean): void {
     const users = this.registeredCashiers();
     const targetUser = users.find(u => u.username === username);
@@ -235,15 +123,19 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
 
     this.currentCashier.set(finalName);
     this.currentRole.set(role);
-    localStorage.setItem('maranth_active_cashier', finalName);
-    localStorage.setItem('maranth_active_role', role);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('maranth_active_cashier', finalName);
+      localStorage.setItem('maranth_active_role', role);
+    }
   }
 
   public logoutCashier(): void {
     this.currentCashier.set(null);
     this.currentRole.set(null);
-    localStorage.removeItem('maranth_active_cashier');
-    localStorage.removeItem('maranth_active_role');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('maranth_active_cashier');
+      localStorage.removeItem('maranth_active_role');
+    }
   }
 
   public getCategoryName(categoryId: string | undefined): string {
@@ -276,15 +168,14 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
   public totalItems = computed(() => this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0));
 
   public addToBasket(product: Product, forceRefundState?: boolean, customQty?: number): void {
-    this.playScanBeep();
     this.highlightedItemId.set(product.id);
     setTimeout(() => this.highlightedItemId.set(null), 500);
 
     const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
 
     if (!isRef) {
-      const liveProduct = this.products().find(p => p.id === product.id) || product;
-      const currentQtyInBasket = this.basket().find(item => item.product.id === product.id && !item.isRefund)?.quantity || 0;
+      const liveProduct = this.products().find(p => String(p.id) === String(product.id)) || product;
+      const currentQtyInBasket = this.basket().find(item => String(item.product.id) === String(product.id) && !item.isRefund)?.quantity || 0;
       
       let intendedQty = 0;
       if (currentQtyInBasket > 0) {
@@ -296,8 +187,7 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
 
       const availableStock = parseFloat(liveProduct.stockQuantity as any) || 0;
 
-      // Allow Misc charges to bypass stock checks
-      if (!product.id.startsWith('MISC-')) {
+      if (!String(product.id).startsWith('MISC-')) {
         if (availableStock <= 0 || intendedQty > availableStock) {
           this.activeModal.set({
             type: 'warning',
@@ -307,7 +197,6 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
             onConfirm: () => {
               this.closeModal();
               this.triggerSearchFocus();
-              this.triggerSearchFocus();
             }
           });
           return; 
@@ -316,7 +205,7 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
     }
 
     this.basket.update((currentBasket) => {
-      const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRef);
+      const existingIndex = currentBasket.findIndex(item => String(item.product.id) === String(product.id) && !!item.isRefund === !!isRef);
       const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
 
       if (existingIndex > -1) {
@@ -333,7 +222,7 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
 
   public removeFromBasket(product: Product, isRefund: boolean = false): void {
     this.basket.update((currentBasket) => {
-      const existingIndex = currentBasket.findIndex(item => item.product.id === product.id && !!item.isRefund === !!isRefund);
+      const existingIndex = currentBasket.findIndex(item => String(item.product.id) === String(product.id) && !!item.isRefund === !!isRefund);
       if (existingIndex === -1) return currentBasket;
 
       const updatedBasket = [...currentBasket];
@@ -367,27 +256,30 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
       subtotal: parseFloat(this.netSubtotal().toFixed(2)),
       taxAmount: parseFloat(this.taxAmount().toFixed(2)),
       grandTotal: parseFloat(this.grandTotal().toFixed(2)),
-      paymentMethod: method,
-      cashierId: this.currentCashier() || 'Unknown'
+      paymentMethod: method
     };
 
-   currentBasket.forEach(item => {
-      // Don't deduct stock for MISC open charges
-      if (!item.product.id.startsWith('MISC-')) {
-        const product = this.products().find(p => p.id === item.product.id);
-        if (product) {
+    // 🎯 BULLETPROOF STOCK UPDATE Across Multi-Devices
+    currentBasket.forEach(item => {
+      const productIdStr = String(item.product.id);
+      if (!productIdStr.startsWith('MISC-')) {
+        // String-safe matching prevents number vs. string comparison failures
+        const product = this.products().find(p => String(p.id) === productIdStr);
+        if (product && this.db) {
+          const currentStock = parseFloat(product.stockQuantity as any) || 0;
           const change = item.isRefund ? item.quantity : -item.quantity;
-          const newQuantity = parseFloat((product.stockQuantity + change).toFixed(3));
+          const newQuantity = parseFloat((currentStock + change).toFixed(3));
           
-          // ⭐ Create the updated product object and sync it locally & to cloud
-          const updatedProduct = { ...product, stockQuantity: newQuantity };
-          setDoc(doc(this.db, 'products', product.id.toString()), updatedProduct);
-          this.updateLocalProduct(updatedProduct); 
+          // Write updated stock to Firebase Cloud
+          setDoc(doc(this.db, 'products', productIdStr), { 
+            ...product, 
+            stockQuantity: newQuantity 
+          });
         }
       }
     });
 
-    setDoc(doc(this.db, 'transactions', receipt.id), receipt);
+    if (this.db) setDoc(doc(this.db, 'transactions', receipt.id), receipt);
 
     this.clearBasket();
     this.isRefundMode.set(false);
@@ -408,7 +300,7 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
         this.closeModal();
         this.triggerSearchFocus();
       }
-    }, 1500);
+    }, 2000);
   }
 
   public suspendOrder(): void {
@@ -426,27 +318,20 @@ this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
     }
   }
 
-  // ⭐ THE MISSING EXACT SCANNER LOGIC
-public scanBarcodeExact(query: string): boolean {
+  public scanBarcodeExact(query: string): boolean {
     const queryLower = query.toLowerCase().trim();
     const found = this.products().find(p => 
       (p.barcode && p.barcode.toLowerCase() === queryLower) || 
-      (p.id && p.id.toString().toLowerCase() === queryLower) ||
-      (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase() === queryLower)) // <-- ADDED THIS LINE
+      (p.id && p.id.toString().toLowerCase() === queryLower)
     );
 
     if (found) {
       const isScaled = found.isWeighted === true || String(found.isWeighted).toLowerCase() === 'true';
       if (isScaled) {
         this.activeModal.set({
-          type: 'prompt',
-          title: '⚖️ Scale Weight (kg)',
-          message: `Enter the measured weight for ${found.name}:`,
-          value: '1.000',
+          type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${found.name}:`, value: '1.000',
           onConfirm: (val) => {
-            // Added your safe comma swap here just to be safe like in your click handler!
-            const safeVal = String(val).replace(',', '.');
-            const weight = parseFloat(safeVal);
+            const weight = parseFloat(val);
             if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
             this.closeModal();
             this.triggerSearchFocus();
@@ -464,10 +349,11 @@ public scanBarcodeExact(query: string): boolean {
     const itemsMap = new Map<string, { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number }>();
     this.transactions().forEach(tx => {
       tx.items.forEach(item => {
-        if (!itemsMap.has(item.product.id)) {
-          itemsMap.set(item.product.id, { id: item.product.id, name: item.product.name, unitsSold: 0, totalRevenue: 0, stockQuantity: item.product.stockQuantity || 0 });
+        const pIdStr = String(item.product.id);
+        if (!itemsMap.has(pIdStr)) {
+          itemsMap.set(pIdStr, { id: pIdStr, name: item.product.name, unitsSold: 0, totalRevenue: 0, stockQuantity: item.product.stockQuantity || 0 });
         }
-        const stats = itemsMap.get(item.product.id)!;
+        const stats = itemsMap.get(pIdStr)!;
         const effectiveQuantity = item.isRefund ? -item.quantity : item.quantity;
         stats.unitsSold += effectiveQuantity;
         stats.totalRevenue += (item.product.price * effectiveQuantity);
@@ -493,60 +379,32 @@ public scanBarcodeExact(query: string): boolean {
   });
 
   public linkCloudFolder() {
-    this.activeModal.set({
-      type: 'success', title: '✅ Live Cloud Sync Active', message: 'The system is successfully linked to Google Firebase!', value: '', onConfirm: () => this.closeModal()
-    });
+    this.activeModal.set({ type: 'success', title: '✅ Live Cloud Sync Active', message: 'The system is successfully linked to Google Firebase!', value: '', onConfirm: () => this.closeModal() });
   }
 
   public updateProductExpiry(productId: string, newDate: string): void {
-    const product = this.products().find(p => p.id?.toString() === productId.toString());
-    if (product) {
-      setDoc(doc(this.db, 'products', productId.toString()), { ...product, expire: newDate });
-    }
+    const product = this.products().find(p => String(p.id) === String(productId));
+    if (product && this.db) setDoc(doc(this.db, 'products', productId.toString()), { ...product, expire: newDate });
   }
 
   public saveProduct(productId: string, payload: Product): void {
-    setDoc(doc(this.db, 'products', productId.toString()), payload);
-    this.updateLocalProduct(payload); // ⭐ Keep local cache in sync!
+    if (this.db) setDoc(doc(this.db, 'products', productId.toString()), payload);
   }
 
   public saveCategory(payload: Category): void {
-    setDoc(doc(this.db, 'categories', payload.id.toString()), payload);
+    if (this.db) setDoc(doc(this.db, 'categories', payload.id.toString()), payload);
   }
 
   public saveSupplier(payload: Supplier): void {
-    setDoc(doc(this.db, 'suppliers', payload.id.toString()), payload);
+    if (this.db) setDoc(doc(this.db, 'suppliers', payload.id.toString()), payload);
   }
 
   public clearLedger(): void {
-    this.transactions().forEach(tx => deleteDoc(doc(this.db, 'transactions', tx.id)));
+    if (this.db) this.transactions().forEach(tx => deleteDoc(doc(this.db, 'transactions', tx.id)));
   }
 
   public closeModal(): void {
     this.activeModal.set(null);
     setTimeout(() => this.activeModal.set(null), 10);
   }
-
-  // The function to log a new waste event
-  public logSpoilage(product: any, quantity: number, reason: string): void {
-    const cost = Number(product.costPrice || product.wholesalePrice || 0);
-    
-    const newLog: SpoilageLog = {
-      id: Date.now().toString(),
-      productId: product.id,
-      productName: product.name,
-      quantity: quantity,
-      buyingPrice: cost, // 👈 Here is where we grab the Buying Price!
-      reason: reason,
-      timestamp: new Date().toISOString()
-    };
-
-    // Update the signal
-   this.spoilageLogs.update(logs => {
-      const updatedLogs = [...logs, newLog];
-      localStorage.setItem('maranth_spoilage_logs', JSON.stringify(updatedLogs));
-      return updatedLogs;
-    });
-  }
-
 }
