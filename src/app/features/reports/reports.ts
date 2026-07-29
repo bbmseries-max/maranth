@@ -372,8 +372,35 @@ export class ReportsComponent {
 
   public onCloseShiftSubmit(event: Event) {
     event.preventDefault();
+    const form = event.target as HTMLFormElement;
+    const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
+    const amountToRemove = parseFloat(amountInput?.value || '0');
+
+    if (!isNaN(amountToRemove) && amountToRemove > 0) {
+      const resetLog = {
+        id: 'CASH-' + Date.now(),
+        type: 'OUT',
+        amount: amountToRemove,
+        reason: '🔒 Shift Close & Cash Reset',
+        timestamp: new Date().toISOString()
+      };
+
+      // Add to local signal state
+      this.salesService.cashLogs.update(logs => [...logs, resetLog]);
+
+      // Sync reset record directly to Firestore
+      if (this.salesService.db) {
+        setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), resetLog);
+      }
+    }
+
+    this.isShiftModalOpen.set(false);
+    
     this.salesService.activeModal.set({
-      type: 'success', title: '🔒 Shift Closed', message: 'Drawer balance reset successfully for the new shift.', value: '',
+      type: 'success', 
+      title: '🔒 Shift Closed', 
+      message: `Shift closed successfully!\n\n€${amountToRemove.toFixed(2)} deducted as shift cash drop. Drawer reset for next shift.`, 
+      value: '',
       onConfirm: () => this.salesService.closeModal()
     });
   }
