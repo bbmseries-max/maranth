@@ -52,10 +52,10 @@ export class InventoryComponent {
   // ==========================================
   // VAT / TAX NORMALIZATION HELPERS
   // ==========================================
-  public normalizeTaxRate(rate: any): number {
-    if (rate === undefined || rate === null || rate === '') return 0.24;
+  public normalizeTaxRate(rate: any): number | undefined {
+    if (rate === undefined || rate === null || rate === '') return undefined;
     let num = Number(rate);
-    if (isNaN(num)) return 0.24;
+    if (isNaN(num)) return undefined;
     if (num > 1) num = num / 100; // e.g. 13 -> 0.13, 24 -> 0.24
     return num;
   }
@@ -122,7 +122,7 @@ export class InventoryComponent {
       const rawRate = prod.taxRate ?? (prod as any).vatRate ?? (prod as any).FPA;
       this.editForm = { 
         ...prod, 
-        taxRate: rawRate !== undefined ? this.normalizeTaxRate(rawRate) : 0.24 
+        taxRate: this.normalizeTaxRate(rawRate) 
       };
       setTimeout(() => {
         const el = document.getElementById('prod-card-' + prod.id);
