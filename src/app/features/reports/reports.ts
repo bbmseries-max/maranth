@@ -31,7 +31,7 @@ export class ReportsComponent {
     return '€' + num.toFixed(2);
   }
 
-  // Filter transactions strictly by selected date
+  // Filter transactions by selected date
   public filteredTransactions = computed(() => {
     const dateFilter = this.selectedDate();
     return this.salesService.sortedTransactions().filter(tx => {
@@ -44,24 +44,15 @@ export class ReportsComponent {
     return this.filteredTransactions().reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
-  // Physical Cash Sales
   public cashRevenue = computed(() => {
     return this.filteredTransactions()
       .filter(tx => tx.paymentMethod === 'Cash')
       .reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
-  // Card Settlements (POS Terminal)
   public cardRevenue = computed(() => {
     return this.filteredTransactions()
-      .filter(tx => tx.paymentMethod === 'Card')
-      .reduce((sum, tx) => sum + tx.grandTotal, 0);
-  });
-
-  // Customer Tabs / Store Credit / Τεφτέρι (Owed)
-  public debitRevenue = computed(() => {
-    return this.filteredTransactions()
-      .filter(tx => tx.paymentMethod === 'Debit')
+      .filter(tx => tx.paymentMethod === 'Card' || tx.paymentMethod === 'Debit')
       .reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
@@ -103,9 +94,53 @@ export class ReportsComponent {
     return this.salesService.transactions().find(tx => tx.id === id) || null;
   });
 
+  public weeklyPerformanceMetrics = computed(() => {
+    const days: { dateStr: string, label: string, revenue: number, intensityPercentage: number }[] = [];
+    const today = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
+
+      const dayRevenue = this.salesService.transactions()
+        .filter(tx => new Date(tx.timestamp).toISOString().split('T')[0] === dateStr)
+        .reduce((sum, tx) => sum + tx.grandTotal, 0);
+
+      days.push({ dateStr, label: dayLabel, revenue: dayRevenue, intensityPercentage: 0 });
+    }
+
+    const maxRev = Math.max(...days.map(d => d.revenue));
+    if (maxRev > 0) {
+      days.forEach(d => { d.intensityPercentage = Math.round((d.revenue / maxRev) * 100); });
+    }
+    return days;
+  });
+
+  public hourlyHeatmapMetrics = computed(() => {
+    const hours = Array.from({ length: 24 }, (_, i) => ({
+      hour: i, hourLabel: `${i.toString().padStart(2, '0')}:00`, revenue: 0, ticketCount: 0, intensityPercentage: 0, averageTicketSize: 0
+    }));
+
+    this.filteredTransactions().forEach(tx => {
+      const hour = new Date(tx.timestamp).getHours();
+      hours[hour].revenue += tx.grandTotal;
+      hours[hour].ticketCount += 1;
+    });
+
+    const maxRev = Math.max(...hours.map(h => h.revenue));
+    hours.forEach(h => {
+      if (maxRev > 0) h.intensityPercentage = Math.round((h.revenue / maxRev) * 100);
+      h.averageTicketSize = h.ticketCount > 0 ? h.revenue / h.ticketCount : 0;
+    });
+
+    return hours;
+  });
+
   public todayProfit = computed(() => this.zReportStats().totalProfit);
 
-  // ⭐ CASH DRAWER CALCULATOR (Isolated strictly by Cash + Cash Logs for selectedDate)
+  // 🎯 CRITICAL FIX: Cash Logs are now isolated strictly by selectedDate()!
   public liveCashInDrawer = computed(() => {
     let cashIn = 0;
     this.filteredTransactions()
@@ -127,6 +162,131 @@ export class ReportsComponent {
     return Math.round(rawTotal * 100) / 100;
   });
 
+  public categoryBreakdown = computed(() => {
+    const catMap = new Map<string, { name: string, revenue: number, profit: number }>();
+    this.filteredTransactions().forEach(tx => {
+      tx.items.forEach(item => {
+        const catName = this.salesService.getCategoryName(item.product.categoryId);
+        if (!catMap.has(catName)) {
+          catMap.set(catName, { name: catName, revenue: 0, profit: 0 });
+        }
+        const entry = catMap.get(catName)!;
+        const qty = item.isRefund ? -item.quantity : item.quantity;
+        const rev = item.product.price * qty;
+        const cost = (item.product.purchasePrice || 0) * qty;
+
+        entry.revenue += rev;
+        entry.profit += (rev - cost);
+      });
+    });
+    return Array.from(catMap.values());
+  });
+
+  public staffPerformance = computed(() => {
+    const staffMap = new Map<string, { name: string, tickets: number, revenue: number, avgTicket: number }>();
+    this.filteredTransactions().forEach(tx => {
+      const cashierName = (tx as any).cashierId || (tx as any).cashierName || (tx as any).cashier || 'Admin';
+      if (!staffMap.has(cashierName)) {
+        staffMap.set(cashierName, { name: cashierName, tickets: 0, revenue: 0, avgTicket: 0 });
+      }
+      const entry = staffMap.get(cashierName)!;
+      entry.tickets += 1;
+      entry.revenue += tx.grandTotal;
+      entry.avgTicket = entry.revenue / entry.tickets;
+    });
+    return Array.from(staffMap.values());
+  });
+
+  public inventoryValuation = computed(() => {
+    let totalWholesaleValue = 0;
+    let totalRetailValue = 0;
+
+    this.salesService.products().forEach(p => {
+      const stock = p.stockQuantity || 0;
+      totalWholesaleValue += stock * (p.purchasePrice || 0);
+      totalRetailValue += stock * (p.price || 0);
+    });
+
+    return {
+      totalWholesaleValue,
+      totalRetailValue,
+      expectedProfit: totalRetailValue - totalWholesaleValue
+    };
+  });
+
+  public securityAuditor = computed(() => {
+    const sketchyTxns: TransactionRecord[] = [];
+    let refundTotal = 0;
+
+    this.filteredTransactions().forEach(tx => {
+      const isRefundTx = tx.grandTotal < 0 || tx.items.some(i => i.isRefund);
+      if (isRefundTx) {
+        sketchyTxns.push(tx);
+        refundTotal += Math.abs(tx.grandTotal);
+      }
+    });
+
+    return {
+      refundCount: sketchyTxns.length,
+      refundTotal,
+      sketchyTxns
+    };
+  });
+
+  public trueProfitReport = computed(() => {
+    const reportMap = new Map<string, { name: string, qtySold: number, qtyWasted: number, revenue: number, costOfSold: number, costOfWasted: number, trueProfit: number, isLoss: boolean }>();
+
+    this.filteredTransactions().forEach(tx => {
+      tx.items.forEach(item => {
+        const name = item.product.name;
+        if (!reportMap.has(name)) {
+          reportMap.set(name, { name, qtySold: 0, qtyWasted: 0, revenue: 0, costOfSold: 0, costOfWasted: 0, trueProfit: 0, isLoss: false });
+        }
+        const entry = reportMap.get(name)!;
+        const qty = item.isRefund ? -item.quantity : item.quantity;
+        const rev = item.product.price * qty;
+        const cost = (item.product.purchasePrice || 0) * qty;
+
+        entry.qtySold += qty;
+        entry.revenue += rev;
+        entry.costOfSold += cost;
+      });
+    });
+
+    const targetDate = this.selectedDate();
+    const wasteLogs = this.salesService.spoilageLogs ? this.salesService.spoilageLogs() : [];
+    wasteLogs.forEach((log: any) => {
+      if (log.timestamp && log.timestamp.split('T')[0] === targetDate) {
+        const name = log.productName || 'Unknown';
+        if (!reportMap.has(name)) {
+          reportMap.set(name, { name, qtySold: 0, qtyWasted: 0, revenue: 0, costOfSold: 0, costOfWasted: 0, trueProfit: 0, isLoss: false });
+        }
+        const entry = reportMap.get(name)!;
+        entry.qtyWasted += log.quantity;
+
+        const prod = this.salesService.products().find(p => p.name === name);
+        const wholesaleCost = prod?.purchasePrice || 0;
+        entry.costOfWasted += (log.quantity * wholesaleCost);
+      }
+    });
+
+    let results = Array.from(reportMap.values()).map(entry => {
+      const totalCost = entry.costOfSold + entry.costOfWasted;
+      const trueProfit = entry.revenue - totalCost;
+      return {
+        ...entry,
+        trueProfit,
+        isLoss: trueProfit < 0
+      };
+    });
+
+    if (this.showOnlySpoiled()) {
+      results = results.filter(r => r.qtyWasted > 0);
+    }
+
+    return results;
+  });
+
   // --- ACTIONS ---
   public selectTxn(id: string) {
     this.selectedTxnId.set(id);
@@ -142,6 +302,84 @@ export class ReportsComponent {
     if (intensityPercentage <= 50) return '#3b82f6';
     if (intensityPercentage <= 75) return '#2563eb';
     return '#1d4ed8';
+  }
+
+  public addManualCash() {
+    this.salesService.activeModal.set({
+      type: 'prompt', 
+      title: '💵 Add Cash (Step 1 of 2)', 
+      message: 'Enter amount of cash added to drawer (€):', 
+      value: '',
+      onConfirm: (amountVal) => {
+        const amt = parseFloat(amountVal);
+        if (!isNaN(amt) && amt > 0) {
+          setTimeout(() => {
+            this.salesService.activeModal.set({
+              type: 'prompt',
+              title: '📝 Reason for Cash In (Step 2 of 2)',
+              message: `Enter reason / excuse for adding €${amt.toFixed(2)}:`,
+              value: 'Manual Top-up',
+              onConfirm: (reasonVal) => {
+                const log = { 
+                  id: 'CASH-' + Date.now(), 
+                  type: 'IN', 
+                  amount: amt, 
+                  reason: reasonVal?.trim() || 'Manual Top-up', 
+                  timestamp: new Date().toISOString() 
+                };
+                
+                this.salesService.cashLogs.update(logs => [...logs, log]);
+                if (this.salesService.db) {
+                  setDoc(doc(this.salesService.db, 'cashLogs', log.id), log);
+                }
+                this.salesService.closeModal();
+              }
+            });
+          }, 100);
+        } else {
+          this.salesService.closeModal();
+        }
+      }
+    });
+  }
+
+  public removeManualCash() {
+    this.salesService.activeModal.set({
+      type: 'prompt', 
+      title: '📤 Cash Payout (Step 1 of 2)', 
+      message: 'Enter payout amount removed from drawer (€):', 
+      value: '',
+      onConfirm: (amountVal) => {
+        const amt = parseFloat(amountVal);
+        if (!isNaN(amt) && amt > 0) {
+          setTimeout(() => {
+            this.salesService.activeModal.set({
+              type: 'prompt',
+              title: '📝 Reason for Payout (Step 2 of 2)',
+              message: `Enter reason / excuse for removing €${amt.toFixed(2)}:`,
+              value: 'Supplier Payout',
+              onConfirm: (reasonVal) => {
+                const log = { 
+                  id: 'CASH-' + Date.now(), 
+                  type: 'OUT', 
+                  amount: amt, 
+                  reason: reasonVal?.trim() || 'Supplier Payout', 
+                  timestamp: new Date().toISOString() 
+                };
+                
+                this.salesService.cashLogs.update(logs => [...logs, log]);
+                if (this.salesService.db) {
+                  setDoc(doc(this.salesService.db, 'cashLogs', log.id), log);
+                }
+                this.salesService.closeModal();
+              }
+            });
+          }, 100);
+        } else {
+          this.salesService.closeModal();
+        }
+      }
+    });
   }
 
   public onCloseShiftSubmit(event: Event) {
