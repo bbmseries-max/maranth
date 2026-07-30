@@ -1,3 +1,4 @@
+/* STREAMING_CHUNK: Fixing liveCashInDrawer date-filtering to prevent historical shift resets from bleeding into today */
 import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -140,6 +141,7 @@ export class ReportsComponent {
 
   public todayProfit = computed(() => this.zReportStats().totalProfit);
 
+  // 🎯 CRITICAL FIX: Cash Logs are now isolated strictly by selectedDate()!
   public liveCashInDrawer = computed(() => {
     let cashIn = 0;
     this.filteredTransactions()
@@ -147,12 +149,18 @@ export class ReportsComponent {
       .forEach(tx => cashIn += tx.grandTotal);
 
     let manualAdjustments = 0;
+    const targetDate = this.selectedDate();
+
     this.salesService.cashLogs().forEach(log => {
-      if (log.type === 'IN') manualAdjustments += log.amount;
-      if (log.type === 'OUT') manualAdjustments -= log.amount;
+      const logDate = log.timestamp ? log.timestamp.split('T')[0] : '';
+      if (logDate === targetDate) {
+        if (log.type === 'IN') manualAdjustments += log.amount;
+        if (log.type === 'OUT') manualAdjustments -= log.amount;
+      }
     });
 
-    return cashIn + manualAdjustments;
+    const rawTotal = cashIn + manualAdjustments;
+    return Math.round(rawTotal * 100) / 100;
   });
 
   public categoryBreakdown = computed(() => {
@@ -375,46 +383,42 @@ export class ReportsComponent {
     });
   }
 
- public onCloseShiftSubmit(event: Event) {
-  event.preventDefault();
-  const form = event.target as HTMLFormElement;
-  const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
-  
-  // The starting float wanted for the new shift (default 0)
-  const targetFloat = parseFloat(amountInput?.value || '0');
-  const currentCash = this.liveCashInDrawer();
+  public onCloseShiftSubmit(event: Event) {
+    event.preventDefault();
+    const form = event.target as HTMLFormElement;
+    const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
+    
+    const targetFloat = parseFloat(amountInput?.value || '0');
+    const currentCash = this.liveCashInDrawer();
 
-  // Calculate the exact adjustment needed to hit target float
-  const difference = Math.round((targetFloat - currentCash) * 100) / 100;
+    const difference = Math.round((targetFloat - currentCash) * 100) / 100;
 
-  if (difference !== 0) {
-    const resetLog = {
-      id: 'CASH-' + Date.now(),
-      type: difference > 0 ? 'IN' : 'OUT',
-      amount: Math.abs(difference),
-      reason: '🔒 Shift Close & Cash Reset',
-      timestamp: new Date().toISOString()
-    };
+    if (difference !== 0) {
+      const resetLog = {
+        id: 'CASH-' + Date.now(),
+        type: difference > 0 ? 'IN' : 'OUT',
+        amount: Math.abs(difference),
+        reason: '🔒 Shift Close & Cash Reset',
+        timestamp: new Date().toISOString()
+      };
 
-    // Update local state
-    this.salesService.cashLogs.update(logs => [...logs, resetLog]);
+      this.salesService.cashLogs.update(logs => [...logs, resetLog]);
 
-    // Sync to Firestore
-    if (this.salesService.db) {
-      setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), resetLog);
+      if (this.salesService.db) {
+        setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), resetLog);
+      }
     }
-  }
 
-  this.isShiftModalOpen.set(false);
-  
-  this.salesService.activeModal.set({
-    type: 'success', 
-    title: '🔒 Shift Closed', 
-    message: `Shift closed!\n\nDrawer reset from €${currentCash.toFixed(2)} to €${targetFloat.toFixed(2)}.`, 
-    value: '',
-    onConfirm: () => this.salesService.closeModal()
-  });
-}
+    this.isShiftModalOpen.set(false);
+    
+    this.salesService.activeModal.set({
+      type: 'success', 
+      title: '🔒 Shift Closed', 
+      message: `Shift closed!\n\nDrawer reset from €${currentCash.toFixed(2)} to €${targetFloat.toFixed(2)}.`, 
+      value: '',
+      onConfirm: () => this.salesService.closeModal()
+    });
+  }
 
   public clearAllLedgerData() {
     this.salesService.activeModal.set({
