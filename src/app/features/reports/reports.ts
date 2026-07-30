@@ -375,17 +375,17 @@ export class ReportsComponent {
     });
   }
 
-  public onCloseShiftSubmit(event: Event) {
+ public onCloseShiftSubmit(event: Event) {
   event.preventDefault();
   const form = event.target as HTMLFormElement;
   const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
   
-  // The desired target float the cashier wants to leave in drawer (default 0)
+  // The starting float wanted for the new shift (default 0)
   const targetFloat = parseFloat(amountInput?.value || '0');
   const currentCash = this.liveCashInDrawer();
 
-  // Calculate exact adjustment needed to hit target float
-  const difference = targetFloat - currentCash;
+  // Calculate the exact adjustment needed to hit target float
+  const difference = Math.round((targetFloat - currentCash) * 100) / 100;
 
   if (difference !== 0) {
     const resetLog = {
@@ -410,7 +410,7 @@ export class ReportsComponent {
   this.salesService.activeModal.set({
     type: 'success', 
     title: '🔒 Shift Closed', 
-    message: `Shift closed!\n\nDrawer balance reset from €${currentCash.toFixed(2)} to €${targetFloat.toFixed(2)}.`, 
+    message: `Shift closed!\n\nDrawer reset from €${currentCash.toFixed(2)} to €${targetFloat.toFixed(2)}.`, 
     value: '',
     onConfirm: () => this.salesService.closeModal()
   });
