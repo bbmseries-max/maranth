@@ -47,12 +47,31 @@ export class InventoryComponent {
   public editingSupplierId: string | null = null;
   public supplierForm: Partial<Supplier> = {};
 
-  constructor(public themeService: ThemeService, /* ... your other services ... */) {}
+  constructor(public themeService: ThemeService) {}
+
+  // ==========================================
+  // VAT / TAX NORMALIZATION HELPERS
+  // ==========================================
+  public normalizeTaxRate(rate: any): number {
+    if (rate === undefined || rate === null || rate === '') return 0.24;
+    let num = Number(rate);
+    if (isNaN(num)) return 0.24;
+    if (num > 1) num = num / 100; // e.g. 13 -> 0.13, 24 -> 0.24
+    return num;
+  }
+
+  public formatVatLabel(rate: any): string {
+    if (rate === undefined || rate === null || rate === '') return '⚠️ NO VAT';
+    let num = Number(rate);
+    if (isNaN(num)) return '⚠️ NO VAT';
+    if (num > 1) num = num / 100;
+    return Math.round(num * 100) + '%';
+  }
 
   // ==========================================
   // PRODUCTS LOGIC
   // ==========================================
-   public filteredProducts = computed(() => {
+  public filteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const filterDate = this.expireFilterDate();
     const status = this.filterStatus();
@@ -63,7 +82,6 @@ export class InventoryComponent {
 
     // 1. STATUS: Hide inactive by default
     if (status === 'active') {
-      // Treat undefined as active just in case older products don't have the field
       allProds = allProds.filter(p => p.isActive !== false); 
     } else if (status === 'inactive') {
       allProds = allProds.filter(p => p.isActive === false);
@@ -101,7 +119,11 @@ export class InventoryComponent {
       this.editingProductId = null;
     } else {
       this.editingProductId = prod.id;
-      this.editForm = { ...prod };
+      const rawRate = prod.taxRate ?? (prod as any).vatRate ?? (prod as any).FPA;
+      this.editForm = { 
+        ...prod, 
+        taxRate: rawRate !== undefined ? this.normalizeTaxRate(rawRate) : 0.24 
+      };
       setTimeout(() => {
         const el = document.getElementById('prod-card-' + prod.id);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -110,47 +132,42 @@ export class InventoryComponent {
   }
 
   public prepareNewProduct(): void {
-    console.log("Add button was clicked! Setting up new product...");
     if (this.searchQuery()) {
       this.searchQuery.set('');
     }
-  this.editingProductId = 'NEW';
-  this.editForm = { 
-    id: 'PROD-' + Date.now().toString().slice(-6),
-    name: '', 
-    price: 0, 
-    costPrice: 0,
-    taxRate: 0.24,
-    stockQuantity: 0,
-    minStockWarning: 2,  // 👈 Using your original name
-    expire: '',          // 👈 Using your original name
-    categoryId: '',
-    supplierId: undefined, 
-    isActive: true,
-    isWeighted: false,
-    altBarcodes: [],
-    isPinned: false,
-  };
-  setTimeout(() => {
+    this.editingProductId = 'NEW';
+    this.editForm = { 
+      id: 'PROD-' + Date.now().toString().slice(-6),
+      name: '', 
+      price: 0, 
+      costPrice: 0,
+      taxRate: 0.24,
+      stockQuantity: 0,
+      minStockWarning: 2,
+      expire: '',
+      categoryId: '',
+      supplierId: undefined, 
+      isActive: true,
+      isWeighted: false,
+      altBarcodes: [],
+      isPinned: false,
+    };
+    setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 50);
-}
+  }
 
-// ==========================================
+  // ==========================================
   // MULTIPLE BARCODES LOGIC
   // ==========================================
-
-
   public addAltBarcode(): void {
     const code = this.newAltBarcode.trim();
     if (!code) return;
 
-    // Initialize array if it doesn't exist
     if (!this.editForm.altBarcodes) {
       this.editForm.altBarcodes = [];
     }
 
-    // Prevent duplicates of the main barcode or existing alt barcodes
     if (this.editForm.barcode === code) {
       alert("This is already the main barcode!");
       this.newAltBarcode = '';
@@ -162,7 +179,6 @@ export class InventoryComponent {
       return;
     }
 
-    // Add it and clear the input
     this.editForm.altBarcodes.push(code);
     this.newAltBarcode = '';
   }
@@ -200,7 +216,6 @@ export class InventoryComponent {
 
   public saveCategoryChanges(): void {
     if (!this.categoryForm.id || !this.categoryForm.name) return;
-    // ⭐ FIX 2: Removed the extra ID argument
     this.salesService.saveCategory(this.categoryForm as Category);
     this.editingCategoryId = null;
   }
@@ -224,7 +239,6 @@ export class InventoryComponent {
 
   public saveSupplierChanges(): void {
     if (!this.supplierForm.id || !this.supplierForm.name) return;
-    // ⭐ FIX 3: Removed the extra ID argument
     this.salesService.saveSupplier(this.supplierForm as Supplier);
     this.editingSupplierId = null;
   }
@@ -232,7 +246,6 @@ export class InventoryComponent {
   // ==========================================
   // STAFF MANAGEMENT STATE
   // ==========================================
-  
   public prepareNewStaff(): void {
     this.staffForm = { username: '', pin: '', role: 'cashier' };
     this.editingStaffId.set('NEW');
@@ -252,7 +265,7 @@ export class InventoryComponent {
       return;
     }
     
-    this.editingStaffId.set(null); // Close the modal
+    this.editingStaffId.set(null);
   }
 
   // ==========================================
@@ -282,21 +295,18 @@ export class InventoryComponent {
   // ==========================================
   public async syncInventory(): Promise<void> {
     const btn = document.getElementById('sync-btn');
-    if (btn) btn.style.transform = 'rotate(180deg)'; // Little animation
+    if (btn) btn.style.transform = 'rotate(180deg)';
 
     try {
-      // 1. Destroy the old cache
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('maranth_products');
         localStorage.removeItem('maranth_products_date');
       }
 
-      // 2. Re-fetch from Firebase (Using your service's function)
       if (this.salesService.setupDailyProductCache) {
         await this.salesService.setupDailyProductCache();
       }
 
-      // Optional: Give it a split second to finish loading, then reset the button
       setTimeout(() => {
         if (btn) btn.style.transform = 'rotate(0deg)';
       }, 500);
@@ -314,7 +324,6 @@ export class InventoryComponent {
     const quantity = parseFloat(qtyStr.replace(',', '.'));
     if (isNaN(quantity) || quantity <= 0) return;
 
-    // Make sure we don't waste more than we actually have in stock
     const currentStock = Number(product.stockQuantity || 0);
     if (quantity > currentStock) {
       alert(`Error: You only have ${currentStock} in stock. You cannot log ${quantity} as waste.`);
@@ -323,15 +332,9 @@ export class InventoryComponent {
 
     const reason = window.prompt('Enter the reason (e.g., Dropped, Expired, Rotten):') || 'Unspecified Spoilage';
 
-    // 1. Log it to our new shrinkage tracker
     this.salesService.logSpoilage(product, quantity, reason);
-
-    // 2. Safely deduct it from the actual physical inventory
     product.stockQuantity = currentStock - quantity;
     
-    // (Optional) If you have a saveProduct function in your service to update the main product list, call it here:
-    // this.salesService.updateProduct(product);
-
     alert(`✅ Logged ${quantity} of ${product.name} as waste.`);
   }
 
@@ -364,5 +367,4 @@ export class InventoryComponent {
     link.click();
     document.body.removeChild(link);
   }
-
 }
