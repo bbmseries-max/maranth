@@ -419,6 +419,36 @@ export class ReportsComponent {
     });
   }
 
+  // 🎯 Instant 1-Click Zero Out Helper
+  public resetDrawerToZero() {
+    const currentCash = this.liveCashInDrawer();
+    if (currentCash !== 0) {
+      const resetLog = {
+        id: 'CASH-' + Date.now(),
+        type: currentCash > 0 ? 'OUT' : 'IN',
+        amount: Math.abs(currentCash),
+        reason: '🔒 Shift Close & Cash Reset',
+        timestamp: new Date().toISOString()
+      };
+
+      this.salesService.cashLogs.update(logs => [...logs, resetLog]);
+
+      if (this.salesService.db) {
+        setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), resetLog);
+      }
+    }
+
+    this.isShiftModalOpen.set(false);
+    
+    this.salesService.activeModal.set({
+      type: 'success', 
+      title: '🔒 Shift Closed', 
+      message: `Shift closed!\n\nDrawer reset from €${currentCash.toFixed(2)} to €0.00.`, 
+      value: '',
+      onConfirm: () => this.salesService.closeModal()
+    });
+  }
+
   public clearAllLedgerData() {
     this.salesService.activeModal.set({
       type: 'warning', title: '⚠️ Clear Sales Ledger', message: 'Are you sure you want to permanently erase all sales history?', value: '',
