@@ -376,37 +376,45 @@ export class ReportsComponent {
   }
 
   public onCloseShiftSubmit(event: Event) {
-    event.preventDefault();
-    const form = event.target as HTMLFormElement;
-    const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
-    const amountToRemove = parseFloat(amountInput?.value || '0');
+  event.preventDefault();
+  const form = event.target as HTMLFormElement;
+  const amountInput = form.querySelector('#drawerAmount') as HTMLInputElement;
+  
+  // The desired target float the cashier wants to leave in drawer (default 0)
+  const targetFloat = parseFloat(amountInput?.value || '0');
+  const currentCash = this.liveCashInDrawer();
 
-    if (!isNaN(amountToRemove) && amountToRemove > 0) {
-      const resetLog = {
-        id: 'CASH-' + Date.now(),
-        type: 'OUT',
-        amount: amountToRemove,
-        reason: '🔒 Shift Close & Cash Reset',
-        timestamp: new Date().toISOString()
-      };
+  // Calculate exact adjustment needed to hit target float
+  const difference = targetFloat - currentCash;
 
-      this.salesService.cashLogs.update(logs => [...logs, resetLog]);
+  if (difference !== 0) {
+    const resetLog = {
+      id: 'CASH-' + Date.now(),
+      type: difference > 0 ? 'IN' : 'OUT',
+      amount: Math.abs(difference),
+      reason: '🔒 Shift Close & Cash Reset',
+      timestamp: new Date().toISOString()
+    };
 
-      if (this.salesService.db) {
-        setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), resetLog);
-      }
+    // Update local state
+    this.salesService.cashLogs.update(logs => [...logs, resetLog]);
+
+    // Sync to Firestore
+    if (this.salesService.db) {
+      setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), resetLog);
     }
-
-    this.isShiftModalOpen.set(false);
-    
-    this.salesService.activeModal.set({
-      type: 'success', 
-      title: '🔒 Shift Closed', 
-      message: `Shift closed successfully!\n\n€${amountToRemove.toFixed(2)} deducted as shift cash drop. Drawer reset for next shift.`, 
-      value: '',
-      onConfirm: () => this.salesService.closeModal()
-    });
   }
+
+  this.isShiftModalOpen.set(false);
+  
+  this.salesService.activeModal.set({
+    type: 'success', 
+    title: '🔒 Shift Closed', 
+    message: `Shift closed!\n\nDrawer balance reset from €${currentCash.toFixed(2)} to €${targetFloat.toFixed(2)}.`, 
+    value: '',
+    onConfirm: () => this.salesService.closeModal()
+  });
+}
 
   public clearAllLedgerData() {
     this.salesService.activeModal.set({
