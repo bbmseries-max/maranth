@@ -23,6 +23,25 @@ export class ReportsComponent {
   public selectedTxnId = signal<string | null>(null);
   public showOnlySpoiled = signal<boolean>(false);
 
+  // --- VAT DIVISOR HELPER ---
+  private getTaxDivisor(product: any): number {
+    if (!product) return 1.24;
+    const rawRate = product.taxRate ?? product.vatRate ?? product.FPA ?? product.vat ?? product.fpa ?? product.tax 
+                 ?? product.vat_rate ?? product.tax_rate ?? product.vatPercent ?? product.taxPercent 
+                 ?? product.fpa_rate ?? product.fpaRate ?? product.vat_percent ?? product.vatPercent 
+                 ?? product.FPA_RATE ?? product.VAT ?? product.TAX;
+
+    if (rawRate === undefined || rawRate === null) return 1.24;
+    let str = String(rawRate).trim().replace('%', '');
+    let num = Number(str);
+    if (isNaN(num)) return 1.24;
+
+    if (num >= 1.0 && num <= 1.5) return num; // Already divisor e.g. 1.24
+    if (num > 1.5) return 1 + (num / 100);    // Percentage e.g. 24 -> 1.24
+    if (num > 0) return 1 + num;             // Decimal e.g. 0.24 -> 1.24
+    return 1.0;                              // 0% VAT
+  }
+
   // --- GETTERS & COMPUTED SIGNALS ---
   public get cashLogs() { return this.salesService.cashLogs; }
 
@@ -31,7 +50,6 @@ export class ReportsComponent {
     return '€' + num.toFixed(2);
   }
 
-  // Filter transactions by selected date
   public filteredTransactions = computed(() => {
     const dateFilter = this.selectedDate();
     return this.salesService.sortedTransactions().filter(tx => {
@@ -63,9 +81,11 @@ export class ReportsComponent {
     this.filteredTransactions().forEach(tx => {
       tx.items.forEach(item => {
         const wholesale = item.product.purchasePrice || 0;
-        const retail = item.product.price || 0;
+        const grossRetail = item.product.price || 0;
+        const divisor = this.getTaxDivisor(item.product);
+        const netRetail = grossRetail / divisor;
         const qty = item.isRefund ? -item.quantity : item.quantity;
-        totalProfit += (retail - wholesale) * qty;
+        totalProfit += (netRetail - wholesale) * qty;
       });
     });
     return { totalProfit };
@@ -140,7 +160,6 @@ export class ReportsComponent {
 
   public todayProfit = computed(() => this.zReportStats().totalProfit);
 
-  // 🎯 CRITICAL FIX: Cash Logs are now isolated strictly by selectedDate()!
   public liveCashInDrawer = computed(() => {
     let cashIn = 0;
     this.filteredTransactions()
@@ -172,11 +191,13 @@ export class ReportsComponent {
         }
         const entry = catMap.get(catName)!;
         const qty = item.isRefund ? -item.quantity : item.quantity;
-        const rev = item.product.price * qty;
+        const grossRev = item.product.price * qty;
+        const divisor = this.getTaxDivisor(item.product);
+        const netRev = grossRev / divisor;
         const cost = (item.product.purchasePrice || 0) * qty;
 
-        entry.revenue += rev;
-        entry.profit += (rev - cost);
+        entry.revenue += grossRev;
+        entry.profit += (netRev - cost);
       });
     });
     return Array.from(catMap.values());
@@ -200,17 +221,24 @@ export class ReportsComponent {
   public inventoryValuation = computed(() => {
     let totalWholesaleValue = 0;
     let totalRetailValue = 0;
+    let totalNetRetailValue = 0;
 
     this.salesService.products().forEach(p => {
       const stock = p.stockQuantity || 0;
-      totalWholesaleValue += stock * (p.purchasePrice || 0);
-      totalRetailValue += stock * (p.price || 0);
+      const wholesale = p.purchasePrice || 0;
+      const grossRetail = p.price || 0;
+      const divisor = this.getTaxDivisor(p);
+      const netRetail = grossRetail / divisor;
+
+      totalWholesaleValue += stock * wholesale;
+      totalRetailValue += stock * grossRetail;
+      totalNetRetailValue += stock * netRetail;
     });
 
     return {
       totalWholesaleValue,
       totalRetailValue,
-      expectedProfit: totalRetailValue - totalWholesaleValue
+      expectedProfit: totalNetRetailValue - totalWholesaleValue
     };
   });
 
@@ -244,11 +272,11 @@ export class ReportsComponent {
         }
         const entry = reportMap.get(name)!;
         const qty = item.isRefund ? -item.quantity : item.quantity;
-        const rev = item.product.price * qty;
+        const grossRev = item.product.price * qty;
         const cost = (item.product.purchasePrice || 0) * qty;
 
         entry.qtySold += qty;
-        entry.revenue += rev;
+        entry.revenue += grossRev;
         entry.costOfSold += cost;
       });
     });
@@ -271,8 +299,11 @@ export class ReportsComponent {
     });
 
     let results = Array.from(reportMap.values()).map(entry => {
+      const prod = this.salesService.products().find(p => p.name === entry.name);
+      const divisor = prod ? this.getTaxDivisor(prod) : 1.24;
+      const netRevenue = entry.revenue / divisor;
       const totalCost = entry.costOfSold + entry.costOfWasted;
-      const trueProfit = entry.revenue - totalCost;
+      const trueProfit = netRevenue - totalCost;
       return {
         ...entry,
         trueProfit,
@@ -419,7 +450,6 @@ export class ReportsComponent {
     });
   }
 
-  // 🎯 Instant 1-Click Zero Out Helper
   public resetDrawerToZero() {
     const currentCash = this.liveCashInDrawer();
     if (currentCash !== 0) {
