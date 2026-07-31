@@ -1,209 +1,52 @@
 import { Component, OnInit, AfterViewInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
-import { doc, setDoc } from 'firebase/firestore';
+import { ThemeService } from '../../shared/services/theme.service';
 
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, ShoppingBasketComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, SlicePipe, ShoppingBasketComponent],
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
 export class PosComponent implements OnInit, AfterViewInit {
   public salesService = inject(SalesService);
+  public themeService = inject(ThemeService);
   public router = inject(Router);
 
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
 
   public searchQuery = signal<string>('');
   public selectedCategoryId = signal<string>('ALL');
-
-  public showWeightedShelf = signal<boolean>(false);
-  public showLooseShelf = signal<boolean>(false);
   public isSidebarMobileOpen = signal<boolean>(false); 
   public isMobileBasketOpen = signal<boolean>(false);
 
+  // Quick edit product modal state
   public editingProduct = signal<Product | null>(null);
   public editForm: Partial<Product> = {};
 
-  // ========================================================
-  // ⭐ UNIFIED CASH TRACKER (Reads from shared Firebase cashLogs)
-  // ========================================================
-  public liveCashInDrawer = computed(() => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // 1. Today's Cash Sales
-    let todaysCashSales = 0;
-    this.salesService.transactions().forEach(tx => {
-      const txDate = new Date(tx.timestamp).toISOString().split('T')[0];
-      if (txDate === today && tx.paymentMethod === 'Cash') {
-        todaysCashSales += (tx.grandTotal || 0);
-      }
-    });
+  // Categories source
+  public categories = this.salesService.categories;
 
-    // 2. Today's Manual Adjustments / Cash Drops
-    let manualAdjustments = 0;
-    this.salesService.cashLogs().forEach(log => {
-      const logDate = log.timestamp ? log.timestamp.split('T')[0] : '';
-      if (logDate === today) {
-        if (log.type === 'IN') manualAdjustments += log.amount;
-        if (log.type === 'OUT') manualAdjustments -= log.amount;
-      }
-    });
-
-    const rawTotal = todaysCashSales + manualAdjustments;
-    return Math.round(rawTotal * 100) / 100;
-  });
-
-  public addManualCash(): void {
-    this.salesService.activeModal.set({
-      type: 'prompt', title: '💵 Add Cash to Drawer', message: 'Enter the amount of cash added (Starting float or top-up):', value: '',
-      onConfirm: (val) => {
-        const amount = parseFloat(val) || 0;
-        if (amount > 0) {
-          const log = {
-            id: 'CASH-' + Date.now(),
-            type: 'IN',
-            amount: Math.round(amount * 100) / 100,
-            reason: 'Starting Float / Top-up',
-            timestamp: new Date().toISOString()
-          };
-          this.salesService.cashLogs.update(logs => [...logs, log]);
-          if (this.salesService.db) {
-            setDoc(doc(this.salesService.db, 'cashLogs', log.id), log);
-          }
-        }
-        this.salesService.closeModal();
-      }
-    });
-  }
-
-  public removeManualCash(): void {
-    this.salesService.activeModal.set({
-      type: 'prompt', title: '📤 Cash Payout', message: 'Enter payout amount removed from drawer:', value: '',
-      onConfirm: (val) => {
-        const amount = parseFloat(val) || 0;
-        if (amount > 0) {
-          const log = {
-            id: 'CASH-' + Date.now(),
-            type: 'OUT',
-            amount: Math.round(amount * 100) / 100,
-            reason: 'Supplier Payout / Cash Drop',
-            timestamp: new Date().toISOString()
-          };
-          this.salesService.cashLogs.update(logs => [...logs, log]);
-          if (this.salesService.db) {
-            setDoc(doc(this.salesService.db, 'cashLogs', log.id), log);
-          }
-        }
-        this.salesService.closeModal();
-      }
-    });
-  }
-
-  public resetDrawer(): void {
-    const currentCash = this.liveCashInDrawer();
-    this.salesService.activeModal.set({
-      type: 'warning', title: '⚠️ Close Shift & Reset Drawer', message: `Reset cash drawer balance from €${currentCash.toFixed(2)} to €0.00?`, value: '',
-      onConfirm: () => {
-        if (currentCash !== 0) {
-          const resetLog = {
-            id: 'CASH-' + Date.now(),
-            type: currentCash > 0 ? 'OUT' : 'IN',
-            amount: Math.abs(currentCash),
-            reason: '🔒 Shift Close & Cash Reset',
-            timestamp: new Date().toISOString()
-          };
-          this.salesService.cashLogs.update(logs => [...logs, resetLog]);
-          if (this.salesService.db) {
-            setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), resetLog);
-          }
-        }
-        this.salesService.closeModal();
-      }
-    });
-  }
-
-  // ========================================================
-  // ⭐ QUICK MISC CHARGE LOGIC
-  // ========================================================
-  public miscAmount = signal<string>('');
-
-  public addMiscCharge(): void {
-    const val = parseFloat(this.miscAmount());
-    if (isNaN(val) || val <= 0) return;
-
-    const miscProduct: Product = {
-      id: 'MISC-' + Date.now(),
-      name: '🏷️ Misc. Open Charge',
-      price: val,
-      stockQuantity: 999,
-      categoryId: 'ALL',
-      isActive: true,
-      taxRate: 1.24,
-      isWeighted: false
-    };
-
-    this.salesService.addToBasket(miscProduct);
-    this.miscAmount.set('');
-    this.salesService.triggerSearchFocus();
-  }
-
-  // ========================================================
-  // ⭐ CATALOG & FILTERING COMPUTEDS
-  // ========================================================
-  public salesTarget = 1000; 
-  
-  public targetProgress = computed(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayRev = this.salesService.transactions()
-      .filter(tx => new Date(tx.timestamp).toISOString().split('T')[0] === today)
-      .reduce((sum, tx) => sum + (tx.grandTotal || 0), 0);
-    
-    const safeRev = todayRev || 0;
-    const percent = Math.min(100, (safeRev / this.salesTarget) * 100) || 0;
-    
-    return { rev: safeRev, percent: percent };
-  });
-
-  public weightedProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true')));
-  public looseProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true'));
-
-  public filteredCatalogProducts = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const categoryId = this.selectedCategoryId();
-    let products = this.salesService.products().filter(p => p.isActive !== false);
-
-    if (categoryId !== 'ALL') products = products.filter(p => p.categoryId === categoryId);
-
-    if (query) {
-      products = products.filter(p => 
-        p.name.toLowerCase().includes(query) || 
-        (p.barcode && p.barcode.toLowerCase().includes(query)) ||
-        (p.id && p.id.toString().toLowerCase().includes(query)) ||
-        (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase().includes(query)))
-      );
-    }
-
-    let currentCat = '';
-    return products.map(p => {
-      const mapped = { ...p, isFirstOfCategory: false, displayCategoryName: '' };
-      const pCat = p.categoryId || 'Unassigned';
-      if (pCat !== currentCat) {
-        mapped.isFirstOfCategory = true;
-        mapped.displayCategoryName = this.salesService.getCategoryName(pCat);
-        currentCat = pCat;
-      }
-      return mapped;
-    });
-  });
+  // Daily Shift Note Signal with automatic LocalStorage persistence
+  public dailyNote = signal<string>(
+    typeof localStorage !== 'undefined' ? localStorage.getItem('maranth_daily_note') || '' : ''
+  );
 
   constructor() {
+    // Auto-save daily note to LocalStorage
+    effect(() => {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('maranth_daily_note', this.dailyNote());
+      }
+    });
+
+    // Auto-focus search input when trigger changes
     effect(() => {
       const trigger = this.salesService.focusSearchTrigger();
       if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {
@@ -215,6 +58,7 @@ export class PosComponent implements OnInit, AfterViewInit {
       }
     });
 
+    // Auto-focus search input when basket becomes empty
     effect(() => {
       if (this.salesService.basket().length === 0) {
         this.isMobileBasketOpen.set(false);
@@ -229,10 +73,143 @@ export class PosComponent implements OnInit, AfterViewInit {
     }, { allowSignalWrites: true });
   }
 
-  ngOnInit() {}
+  ngOnInit(): void {}
 
-  ngAfterViewInit() {
-    setTimeout(() => { if (this.searchInput?.nativeElement) this.searchInput.nativeElement.focus(); }, 100);
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      if (this.searchInput?.nativeElement) this.searchInput.nativeElement.focus();
+    }, 100);
+  }
+
+  public selectCategory(catId: string): void {
+    this.selectedCategoryId.set(catId);
+    this.searchQuery.set('');
+    this.isSidebarMobileOpen.set(false);
+  }
+
+  public openQuickEdit(prod: Product, event: Event): void {
+    event.stopPropagation();
+    this.editingProduct.set(prod);
+    this.editForm = { ...prod };
+  }
+
+  public closeQuickEdit(): void {
+    this.editingProduct.set(null);
+    this.editForm = {};
+  }
+
+  public saveQuickEdit(): void {
+    if (this.editForm.id) {
+      const updatedProduct = {
+        ...this.editingProduct(),
+        ...this.editForm
+      } as Product;
+      this.salesService.saveProduct(this.editForm.id, updatedProduct);
+    }
+    this.closeQuickEdit();
+  }
+
+  public clearDailyNote(): void {
+    this.dailyNote.set('');
+  }
+
+  public printDailyNote(): void {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Σημειώσεις Βάρδιας - ${new Date().toLocaleDateString()}</title>
+            <style>
+              body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+              h2 { border-bottom: 2px solid #333; padding-bottom: 8px; }
+              pre { font-family: inherit; white-space: pre-wrap; font-size: 16px; }
+            </style>
+          </head>
+          <body>
+            <h2>🍊 Maranth POS - Σημειώσεις Βάρδιας / Ημέρας</h2>
+            <p><strong>Ημερομηνία:</strong> ${new Date().toLocaleString('el-GR')}</p>
+            <hr />
+            <pre>${this.dailyNote() || 'Δεν υπάρχουν σημειώσεις.'}</pre>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  }
+
+  public getLiveProduct(prod: Product): Product {
+    return this.salesService.products().find(p => p.id === prod.id) || prod;
+  }
+
+  public getExpireStatus(expireDate?: string): 'danger' | 'warning' | 'safe' | 'none' {
+    if (!expireDate) return 'none';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const exp = new Date(expireDate);
+    exp.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 3600 * 24));
+    if (diffDays <= 0) return 'danger';
+    if (diffDays <= 7) return 'warning';
+    return 'safe';
+  }
+
+  public getProductDisplay(name: string): { icon: string, text: string } {
+    const nameLower = (name || '').toLowerCase();
+    let icon = '📦';
+    if (nameLower.includes('τοματ') || nameLower.includes('tomat')) icon = '🍅';
+    else if (nameLower.includes('μήλ') || nameLower.includes('appl')) icon = '🍎';
+    else if (nameLower.includes('μπαν') || nameLower.includes('banan')) icon = '🍌';
+    else if (nameLower.includes('τυρ') || nameLower.includes('φετ') || nameLower.includes('chees')) icon = '🧀';
+    else if (nameLower.includes('ψωμ') || nameLower.includes('bread')) icon = '🍞';
+    else if (nameLower.includes('καφ') || nameLower.includes('coffe')) icon = '☕';
+    else if (nameLower.includes('νερο') || nameLower.includes('water')) icon = '💧';
+    else if (nameLower.includes('πορτοκ') || nameLower.includes('orang')) icon = '🍊';
+
+    return { icon, text: name };
+  }
+
+  public getPinnedProducts = computed(() => {
+    return this.salesService.products().filter(p => p.isActive !== false && p.isPinned === true);
+  });
+
+  public weightedProducts = computed(() => {
+    return this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true'));
+  });
+
+  public filteredCatalogProducts = computed(() => {
+    const query = this.searchQuery().toLowerCase().trim();
+    const categoryId = this.selectedCategoryId();
+    let products = this.salesService.products().filter(p => p.isActive !== false);
+
+    if (categoryId !== 'ALL') {
+      products = products.filter(p => p.categoryId === categoryId);
+    }
+
+    if (query) {
+      products = products.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        (p.barcode && p.barcode.toLowerCase().includes(query)) ||
+        (p.id && p.id.toString().toLowerCase().includes(query)) ||
+        (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase().includes(query)))
+      );
+    }
+
+    return products;
+  });
+
+  public onSearchEnter(event: Event): void {
+    const inputEl = event.target as HTMLInputElement;
+    const query = inputEl.value.trim();
+    if (!query) return;
+
+    const matchedExact = this.salesService.scanBarcodeExact(query);
+    if (matchedExact) {
+      this.searchQuery.set('');
+      inputEl.value = '';
+    }
   }
 
   public handleProductClick(prod: Product): void {
@@ -242,7 +219,10 @@ export class PosComponent implements OnInit, AfterViewInit {
     const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {
       this.salesService.activeModal.set({
-        type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${prod.name}:`, value: '1.000',
+        type: 'prompt',
+        title: '⚖️ Scale Weight (kg)',
+        message: `Enter the measured weight for ${prod.name}:`,
+        value: '1.000',
         onConfirm: (val) => {
           const weight = parseFloat(val);
           if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
@@ -253,6 +233,11 @@ export class PosComponent implements OnInit, AfterViewInit {
     } else {
       this.salesService.addToBasket(prod);
     }
+  }
+
+  public formatMoney(amount: any): string {
+    const num = Number(amount);
+    return isNaN(num) ? '€0.00' : '€' + num.toFixed(2);
   }
 
   public onLogout(): void {

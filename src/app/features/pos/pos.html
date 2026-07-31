@@ -1,6 +1,3 @@
-<!-- ========================================== -->
-<!-- MODALS -->
-<!-- ========================================== -->
 @if (salesService.activeModal(); as modal) {
   <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
     <div class="bg-panel rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-fade-in-up">
@@ -14,7 +11,7 @@
         <p class="mt-0 mb-2 font-medium">{{ modal.message }}</p>
         @if (modal.type === 'prompt') {
           <input #weightInput [type]="modal.title?.includes('Date') || modal.title?.includes('Data') ? 'date' : 'number'" 
-                 class="w-full mt-3 px-4 py-3 border border-slate-300 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                 class="w-full mt-3 px-4 py-3 border border-slate-300 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-primary bg-base" 
                  [value]="modal.value" (input)="modal.value = weightInput.value" (keyup.enter)="modal.onConfirm(modal.value)" 
                  [attr.step]="modal.title?.includes('Date') ? null : '0.001'" autofocus />
         }
@@ -97,7 +94,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="9" y1="12" x2="16" y2="12"></line>
-          <polyline points="13 9 16 12 13 15"></polyline>
+          <polyline points="13" y1="9" x2="16" y2="12" p2="13" p3="15"></polyline>
         </svg>
       </button>
     </div>
@@ -135,7 +132,6 @@
             <span>Suspend</span>
           </button>
         } @else {
-          <!-- Active Recall State (Solid Color) -->
           <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl uppercase text-xs font-bold transition-all border bg-blue-600 border-blue-600 text-white hover:bg-blue-700 shadow-md"
                   (click)="salesService.recallOrder()">
             <span class="text-base mb-0.5">🔄</span>
@@ -154,73 +150,61 @@
       </div>
 
       <!-- 4. COLLAPSIBLE CATEGORIES CONTENT -->
-     <details class="group border-b border-slate-800">
-    <summary class="flex justify-between items-center w-full p-3 font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer list-none outline-none">
-      <span>📁 Categories</span>
-      <span class="text-xs transition-transform duration-300 group-open:rotate-180">🔽</span>
-    </summary>
+      <details class="group border-b border-slate-800" open>
+        <summary class="flex justify-between items-center w-full p-3 font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer list-none outline-none">
+          <span>📁 Categories</span>
+          <span class="text-xs transition-transform duration-300 group-open:rotate-180">🔽</span>
+        </summary>
 
-    <div class="max-h-[168px] overflow-y-auto flex flex-col bg-slate-950/50 hide-scrollbar shadow-inner">
-      @for (cat of categories(); track cat.id) {
-        <button (click)="selectCategory(cat.id)" class="text-left px-4 py-2.5 text-[16px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border-b border-slate-800/50 last:border-none focus:outline-none">
-      {{ cat.name }}
-    </button>
-      }
-    </div>
-  </details>
-<!-- 📝 DAILY SHIFT NOTES GADGET (Hidden on phones, taller view, larger text) -->
-<div class="hidden md:block mobile-hide bg-panel rounded-xl p-5 shadow-sm border border-line mb-6 transition-colors">
-  <div class="flex justify-between items-center mb-3">
-    <div class="flex items-center gap-3">
-      <span class="text-base font-black text-primary uppercase tracking-wider">📝 Σημειώσεις Βάρδιας / Ημέρας</span>
-      <span class="text-xs bg-emerald-500/10 text-emerald-600 font-bold px-2.5 py-1 rounded-full border border-emerald-500/20">Auto-saved</span>
-    </div>
+        <div class="max-h-[168px] overflow-y-auto flex flex-col bg-slate-950/50 hide-scrollbar shadow-inner">
+          <button (click)="selectCategory('ALL')" class="text-left px-4 py-2.5 text-[15px] font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors border-b border-slate-800/50 focus:outline-none">
+            🌐 Show All Categories
+          </button>
+          @for (cat of categories(); track cat.id) {
+            <button (click)="selectCategory(cat.id)" class="text-left px-4 py-2.5 text-[15px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border-b border-slate-800/50 last:border-none focus:outline-none">
+              📁 {{ cat.name }}
+            </button>
+          }
+        </div>
+      </details>
 
-    <div class="flex items-center gap-3">
-      <button 
-        (click)="clearDailyNote()" 
-        class="text-sm font-bold text-red-500/70 hover:text-red-500 px-3 py-1.5 transition-colors"
-        title="Καθαρισμός">
-        Clear
-      </button>
+      <!-- 📝 DAILY SHIFT NOTES GADGET -->
+      <div class="hidden md:block mobile-hide bg-panel rounded-xl p-4 shadow-sm border border-line m-3 transition-colors flex-1 flex flex-col">
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-black text-primary uppercase tracking-wider">📝 Σημειώσεις</span>
+            <span class="text-[10px] bg-emerald-500/10 text-emerald-600 font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">Auto-saved</span>
+          </div>
 
-      <button 
-        (click)="printDailyNote()" 
-        class="bg-sky-400 text-white hover:bg-sky-600/90 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all">
-        PDF
-      </button>
-    </div>
-  </div>
+          <div class="flex items-center gap-2">
+            <button (click)="clearDailyNote()" class="text-xs font-bold text-red-500/70 hover:text-red-500 transition-colors" title="Καθαρισμός">
+              Clear
+            </button>
+            <button (click)="printDailyNote()" class="bg-sky-500 text-white hover:bg-sky-600 px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm active:scale-95 transition-all">
+              PDF
+            </button>
+          </div>
+        </div>
 
-  <textarea 
-    [ngModel]="dailyNote()" 
-    (ngModelChange)="dailyNote.set($event)"
-    placeholder="Γράψτε σημειώσεις για τη σημερινή βάρδια (π.χ. παραγγελίες προμηθευτών, ελλείψεις, υπενθυμίσεις)..."
-    class="w-full h-96 bg-base border border-line rounded-xl p-4 text-base text-primary focus:outline-none focus:border-brand resize-none font-medium leading-relaxed placeholder:text-muted"
-    style="min-height: 180px;">
-  </textarea>
-</div>
-
- <!-- 3. BEAUTIFUL BOTTOM ANCHOR (Live Dashboard Widget) -->
-  <div class="mt-auto p-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 z-20">
-    
-    <!-- CHANGED: Turned the div into an <a> tag and added routerLink -->
-    <a routerLink="/reports" fragment="live-dashboard" class="bg-gradient-to-r from-indigo-600 to-purple-600 p-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] cursor-pointer hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all active:scale-95 flex items-center justify-between group no-underline outline-none border-none">
-      
-      <div class="flex items-center gap-3">
-        <!-- Pulsing Live Dot -->
-        <span class="relative flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-        </span>
-        <span class="font-bold text-sm text-white tracking-wide">Live Dashboard</span>
+        <textarea [ngModel]="dailyNote()" (ngModelChange)="dailyNote.set($event)"
+                  placeholder="Σημειώσεις βάρδιας..."
+                  class="w-full flex-1 bg-base border border-line rounded-lg p-2.5 text-xs text-primary focus:outline-none focus:border-blue-500 resize-none font-medium placeholder:text-muted min-h-[100px]">
+        </textarea>
       </div>
-      
-      <!-- Animated arrow on hover -->
-      <span class="text-white/80 group-hover:translate-x-1 group-hover:text-white transition-all">➡️</span>
-      
-    </a>
-  </div>
+
+      <!-- 3. BOTTOM ANCHOR (Live Dashboard Widget) -->
+      <div class="mt-auto p-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 z-20">
+        <a routerLink="/reports" class="bg-gradient-to-r from-indigo-600 to-purple-600 p-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] cursor-pointer hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all active:scale-95 flex items-center justify-between group no-underline outline-none border-none">
+          <div class="flex items-center gap-3">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+            </span>
+            <span class="font-bold text-sm text-white tracking-wide">Live Dashboard</span>
+          </div>
+          <span class="text-white/80 group-hover:translate-x-1 group-hover:text-white transition-all">➡️</span>
+        </a>
+      </div>
     </aside>
 
     <section class="flex-1 flex flex-col bg-base relative overflow-hidden">
@@ -237,9 +221,7 @@
 
       <div class="flex-1 overflow-y-auto p-4 md:p-5">
         
-      <!-- ========================================== -->
         <!-- PRIORITY 1: SCALED ITEMS (Always Top) -->
-        <!-- ========================================== -->
         @if (weightedProducts().length > 0 && !searchQuery()) {
           <div class="flex items-center gap-3 mb-4 mt-2">
             <span class="text-2xl bg-panel p-2 rounded-xl shadow-sm border border-slate-100">⚖️</span> 
@@ -252,29 +234,23 @@
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
             @for (prod of weightedProducts(); track prod.id) {
               <div class="bg-panel border-2 border-green-500 rounded-xl p-2 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:bg-green-50 active:scale-95 transition-all h-28 group focus:outline-none" (click)="handleProductClick(prod)">
-                
-               <span class="text-3xl group-hover:scale-110 transition-transform duration-300">
+                <span class="text-3xl group-hover:scale-110 transition-transform duration-300">
                   {{ getProductDisplay(prod.name).icon }}
                 </span>
                 
-                <!-- 2. The Smart Text (Safely cut to 12 characters) -->
                 <span class="text-primary font-bold text-[13px] leading-tight uppercase text-center mt-1">
                   {{ getProductDisplay(prod.name).text.length > 12 ? getProductDisplay(prod.name).text.substring(0, 12) + '..' : getProductDisplay(prod.name).text }}
                 </span>
 
-                <!-- 3. Your awesome green price layout (scaled down slightly to fit) -->
                 <span class="text-green-700 font-black text-sm mt-0.5">
                   {{ formatMoney(prod.price) }}<span class="text-[10px] font-bold">/kg</span>
                 </span>
-                
               </div>
             }
           </div>
         }
 
-        <!-- ========================================== -->
-        <!-- PRIORITY 2: LOOSE ITEMS (Quick Tap) -->
-        <!-- ========================================== -->
+        <!-- PRIORITY 2: LOOSE ITEMS (Quick Tap Pinned) -->
         <div class="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3 mb-8">
           @for (prod of getPinnedProducts(); track prod.id) {
             <button (click)="handleProductClick(prod)" 
@@ -293,15 +269,13 @@
           }
         </div>
 
-      <!-- ========================================== -->
         <!-- PRIORITY 3: STANDARD CATALOG -->
-        <!-- ========================================== -->
         <div class="flex items-center gap-3 mb-4 border-b-2 border-line pb-3 transition-colors">
           <div class="font-black text-lg text-primary">{{ searchQuery() ? 'Search Results' : '📦 Standard Catalog (Max 15)' }}</div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          @for (prod of filteredCatalogProducts() | slice:0:15; track prod.id; let idx = $index) {
+          @for (prod of filteredCatalogProducts() | slice:0:15; track prod.id) {
             
             <div class="bg-panel border border-line rounded-xl p-3 flex flex-col gap-2 cursor-pointer uppercase shadow-sm hover:shadow-md hover:border-blue-500 active:scale-95 transition-all min-h-[110px]" (click)="handleProductClick(prod)">
               
@@ -313,28 +287,26 @@
                 </div>
               </div>
 
-              @let liveProduct = salesService.products().find(p => p.id === prod.id) || prod;
-              @let expStatus = getExpireStatus(liveProduct.expire);
-              
+              <!-- Expiration status badge using component helper -->
               <div class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide self-start mt-1"
                    [ngClass]="{
-                     'bg-red-100 text-red-700': expStatus === 'danger',
-                     'bg-orange-100 text-orange-700': expStatus === 'warning',
-                     'bg-green-100 text-green-700': expStatus === 'safe',
-                     'bg-hover text-muted': expStatus === 'none'
+                     'bg-red-100 text-red-700': getExpireStatus(getLiveProduct(prod).expire) === 'danger',
+                     'bg-orange-100 text-orange-700': getExpireStatus(getLiveProduct(prod).expire) === 'warning',
+                     'bg-green-100 text-green-700': getExpireStatus(getLiveProduct(prod).expire) === 'safe',
+                     'bg-hover text-muted': getExpireStatus(getLiveProduct(prod).expire) === 'none'
                    }">
-                @if (liveProduct.expire) { 📅 Exp: {{ liveProduct.expire | date:'dd/MM/yyyy' }} } @else { 📅 No Exp Date }
+                @if (getLiveProduct(prod).expire) { 📅 Exp: {{ getLiveProduct(prod).expire | date:'dd/MM/yyyy' }} } @else { 📅 No Exp Date }
               </div>
 
-              @let liveStock = liveProduct.stockQuantity;
-              
+              <!-- Stock & Price footer -->
               <div class="flex justify-between items-end mt-auto pt-2 border-t border-line">
-                <div class="text-[11px] font-black px-2 py-1 rounded-lg" [ngClass]="liveStock <= 5 ? 'bg-red-100 text-red-700' : 'bg-hover text-muted'">
-                  📦 {{ liveStock }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
+                <div class="text-[11px] font-black px-2 py-1 rounded-lg" [ngClass]="getLiveProduct(prod).stockQuantity <= 5 ? 'bg-red-100 text-red-700' : 'bg-hover text-muted'">
+                  📦 {{ getLiveProduct(prod).stockQuantity }} {{ (prod.isWeighted === true || $any(prod.isWeighted) === 'true') ? 'kg' : 'pcs' }}
                 </div>
                 <div class="text-[15px] font-black text-blue-700">{{ formatMoney(prod.price) }}</div>
               </div>
             </div>
+
           } @empty {
             <div class="col-span-full p-10 text-center font-bold text-muted bg-hover rounded-2xl border-2 border-dashed border-line">
               ⚠️ No items match your search.
