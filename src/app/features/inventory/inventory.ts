@@ -36,6 +36,9 @@ export class InventoryComponent {
   public filterLowStock = signal<boolean>(false);
   public filterCategory = signal<string>('ALL');
 
+    // 🎯 Filter signal to find items missing a VAT rate
+  public filterMissingVat = signal<boolean>(false);
+
   // Edit states
   public editingProductId: string | null = null;
   public newAltBarcode: string = '';
@@ -68,50 +71,42 @@ export class InventoryComponent {
     return Math.round(num * 100) + '%';
   }
 
-  // ==========================================
-  // PRODUCTS LOGIC
-  // ==========================================
+ // 🎯 Dynamic computed product list for the template
   public filteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
-    const filterDate = this.expireFilterDate();
     const status = this.filterStatus();
-    const lowStock = this.filterLowStock();
     const category = this.filterCategory();
+    const lowStockOnly = this.filterLowStock();
+    const expireDate = this.expireFilterDate();
+    const missingVatOnly = this.filterMissingVat();
 
-    let allProds = this.products() || [];
+    return this.products().filter(prod => {
+      const rawRate = prod.taxRate ?? (prod as any).vatRate ?? (prod as any).FPA ?? (prod as any).vat;
+      const normRate = this.normalizeTaxRate(rawRate);
 
-    // 1. STATUS: Hide inactive by default
-    if (status === 'active') {
-      allProds = allProds.filter(p => p.isActive !== false); 
-    } else if (status === 'inactive') {
-      allProds = allProds.filter(p => p.isActive === false);
-    }
+      // Filter for missing VAT
+      if (missingVatOnly && normRate !== undefined) {
+        return false;
+      }
 
-    // 2. CATEGORY: Filter by specific category
-    if (category !== 'ALL') {
-      allProds = allProds.filter(p => p.categoryId === category);
-    }
+      if (status === 'active' && prod.isActive === false) return false;
+      if (status === 'inactive' && prod.isActive !== false) return false;
 
-    // 3. LOW STOCK: Show only items that need reordering
-    if (lowStock) {
-      allProds = allProds.filter(p => p.stockQuantity <= (p.minStockWarning || 5));
-    }
+      if (category !== 'ALL' && prod.categoryId !== category) return false;
 
-    // 4. EXPIRATION: Show items expiring by this date
-    if (filterDate) {
-      allProds = allProds.filter(p => p.expire && p.expire <= filterDate);
-    }
+      if (lowStockOnly && prod.stockQuantity > (prod.minStockWarning || 5)) return false;
 
-    // 5. SEARCH TEXT
-    if (query) {
-      allProds = allProds.filter(p => 
-        (p.name && p.name.toLowerCase().includes(query)) || 
-        (p.barcode && p.barcode.toLowerCase().includes(query)) ||
-        (p.id && p.id.toString().toLowerCase().includes(query))
-      );
-    }
+      if (expireDate && prod.expire !== expireDate) return false;
 
-    return allProds.slice(0, 100);
+      if (query) {
+        const nameMatch = prod.name.toLowerCase().includes(query);
+        const barcodeMatch = prod.barcode && prod.barcode.toLowerCase().includes(query);
+        const idMatch = prod.id && prod.id.toString().toLowerCase().includes(query);
+        if (!nameMatch && !barcodeMatch && !idMatch) return false;
+      }
+
+      return true;
+    });
   });
 
   public toggleEdit(prod: Product): void {

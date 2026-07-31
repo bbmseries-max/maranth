@@ -165,6 +165,14 @@
           <button (click)="filterLowStock.set(!filterLowStock())" class="py-2 px-4 rounded-lg font-bold text-sm transition-colors border" [ngClass]="filterLowStock() ? 'bg-amber-500 text-white border-amber-500' : 'bg-panel text-primary border-line hover:bg-hover'">
             📦 Low Stock
           </button>
+
+          <!-- ⚠️ TEMPORARY MISSING VAT FILTER BUTTON -->
+          <button (click)="filterMissingVat.set(!filterMissingVat())" 
+                  class="py-2 px-4 rounded-lg font-bold text-sm transition-colors border active:scale-95" 
+                  [ngClass]="filterMissingVat() ? 'bg-red-600 text-white border-red-600 shadow-md ring-2 ring-red-400' : 'bg-panel text-primary border-line hover:bg-hover'">
+            ⚠️ Missing VAT
+          </button>
+
           <div class="flex items-center bg-panel border border-line rounded-lg pr-2 focus-within:border-blue-500 transition-colors">
             <input type="date" [ngModel]="expireFilterDate()" (ngModelChange)="expireFilterDate.set($event)" class="py-2 px-3 border-none rounded-lg font-semibold text-sm text-primary outline-none bg-transparent" title="Filter by expiration date" />
             @if (expireFilterDate()) { <button (click)="expireFilterDate.set('')" class="text-red-500 font-bold text-lg hover:text-red-700 focus:outline-none">✖</button> }
