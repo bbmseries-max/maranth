@@ -1,59 +1,28 @@
 import { Component, OnInit, AfterViewInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
-import { ThemeService } from '../../shared/services/theme.service';
+import { LogoComponent } from '../../shared/components/logo/logo.component'; // Adjust path if logo is in shared/logo/logo.component
+import { doc, setDoc } from 'firebase/firestore';
 
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ShoppingBasketComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, ShoppingBasketComponent, LogoComponent],
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
 export class PosComponent implements OnInit, AfterViewInit {
   public salesService = inject(SalesService);
-  categories = this.salesService.categories;
   public router = inject(Router);
-  isMenuOpen = signal(false);
 
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
 
   public searchQuery = signal<string>('');
   public selectedCategoryId = signal<string>('ALL');
-
-  // 1. Daily Note State (Loads saved note for today or starts fresh)
-  public dailyNote = signal<string>(
-    typeof window !== 'undefined' ? (localStorage.getItem(`maranth_pos_note_${new Date().toISOString().split('T')[0]}`) || '') : ''
-  );
-
-  // 👇 PASTE THIS MISSING FUNCTION RIGHT HERE 👇
-  public selectCategory(categoryId: string): void {
-    this.selectedCategoryId.set(categoryId);
-    this.searchQuery.set('');
-    this.salesService.triggerSearchFocus();
-  }
-
-   public getProductDisplay(name: string): { icon: string, text: string } {
-    if (!name) return { icon: '⚖️', text: 'Unknown' };
-    
-    const cleanName = name.trim();
-    // This checks if the first character is a normal letter/number (English or Greek)
-    const startsWithLetter = /^[a-zA-Z0-9\u0370-\u03FF]/.test(cleanName);
-    
-    if (startsWithLetter) {
-      // If no emoji was typed, return a default scale icon and the full name!
-      return { icon: '⚖️', text: cleanName }; 
-    } else {
-      // If there IS an emoji, safely extract it and separate the text
-      const icon = Array.from(cleanName)[0];
-      const text = cleanName.slice(icon.length).trim();
-      return { icon, text };
-    }
-  }
 
   public showWeightedShelf = signal<boolean>(false);
   public showLooseShelf = signal<boolean>(false);
@@ -63,17 +32,111 @@ export class PosComponent implements OnInit, AfterViewInit {
   public editingProduct = signal<Product | null>(null);
   public editForm: Partial<Product> = {};
 
-  public formatMoney(amount: any): string {
-    if (amount === null || amount === undefined || amount === '') return '€0.00';
-    let parsed = Number(amount);
-    if (isNaN(parsed)) return '€0.00';
-    return '€' + parsed.toFixed(2);
+  // ========================================================
+  // ⭐ UNIFIED CASH TRACKER (Reads from shared Firebase cashLogs)
+  // ========================================================
+  public liveCashInDrawer = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 1. Today's Cash Sales
+    let todaysCashSales = 0;
+    this.salesService.transactions().forEach(tx => {
+      const txDate = new Date(tx.timestamp).toISOString().split('T')[0];
+      if (txDate === today && tx.paymentMethod === 'Cash') {
+        todaysCashSales += (tx.grandTotal || 0);
+      }
+    });
+
+    // 2. Today's Manual Adjustments / Cash Drops
+    let manualAdjustments = 0;
+    this.salesService.cashLogs().forEach(log => {
+      const logDate = log.timestamp ? log.timestamp.split('T')[0] : '';
+      if (logDate === today) {
+        if (log.type === 'IN') manualAdjustments += log.amount;
+        if (log.type === 'OUT') manualAdjustments -= log.amount;
+      }
+    });
+
+    const rawTotal = todaysCashSales + manualAdjustments;
+    return Math.round(rawTotal * 100) / 100;
+  });
+
+  public addManualCash(): void {
+    this.salesService.activeModal.set({
+      type: 'prompt', title: '💵 Add Cash to Drawer', message: 'Enter the amount of cash added (Starting float or top-up):', value: '',
+      onConfirm: (val) => {
+        const amount = parseFloat(val) || 0;
+        if (amount > 0) {
+          const log = {
+            id: 'CASH-' + Date.now(),
+            type: 'IN',
+            amount: Math.round(amount * 100) / 100,
+            reason: 'Starting Float / Top-up',
+            timestamp: new Date().toISOString()
+          };
+          this.salesService.cashLogs.update(logs => [...logs, log]);
+          if (this.salesService.db) {
+            setDoc(doc(this.salesService.db, 'cashLogs', log.id), log);
+          }
+        }
+        this.salesService.closeModal();
+      }
+    });
   }
 
-  // Quick Misc Charge kept here as it's needed for the register
+  public removeManualCash(): void {
+    this.salesService.activeModal.set({
+      type: 'prompt', title: '📤 Cash Payout', message: 'Enter payout amount removed from drawer:', value: '',
+      onConfirm: (val) => {
+        const amount = parseFloat(val) || 0;
+        if (amount > 0) {
+          const log = {
+            id: 'CASH-' + Date.now(),
+            type: 'OUT',
+            amount: Math.round(amount * 100) / 100,
+            reason: 'Supplier Payout / Cash Drop',
+            timestamp: new Date().toISOString()
+          };
+          this.salesService.cashLogs.update(logs => [...logs, log]);
+          if (this.salesService.db) {
+            setDoc(doc(this.salesService.db, 'cashLogs', log.id), log);
+          }
+        }
+        this.salesService.closeModal();
+      }
+    });
+  }
+
+  public resetDrawer(): void {
+    const currentCash = this.liveCashInDrawer();
+    this.salesService.activeModal.set({
+      type: 'warning', title: '⚠️ Close Shift & Reset Drawer', message: `Reset cash drawer balance from €${currentCash.toFixed(2)} to €0.00?`, value: '',
+      onConfirm: () => {
+        if (currentCash !== 0) {
+          const resetLog = {
+            id: 'CASH-' + Date.now(),
+            type: currentCash > 0 ? 'OUT' : 'IN',
+            amount: Math.abs(currentCash),
+            reason: '🔒 Shift Close & Cash Reset',
+            timestamp: new Date().toISOString()
+          };
+          this.salesService.cashLogs.update(logs => [...logs, resetLog]);
+          if (this.salesService.db) {
+            setDoc(doc(this.salesService.db, 'cashLogs', resetLog.id), resetLog);
+          }
+        }
+        this.salesService.closeModal();
+      }
+    });
+  }
+
+  // ========================================================
+  // ⭐ QUICK MISC CHARGE LOGIC
+  // ========================================================
   public miscAmount = signal<string>('');
+
   public addMiscCharge(): void {
-    const val = Number(this.miscAmount());
+    const val = parseFloat(this.miscAmount());
     if (isNaN(val) || val <= 0) return;
 
     const miscProduct: Product = {
@@ -92,39 +155,39 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.salesService.triggerSearchFocus();
   }
 
-  public weightedProducts = computed(() => {
-    const prods = this.salesService.products() || [];
-    return prods.filter(p => p && p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true'));
-  });
+  // ========================================================
+  // ⭐ CATALOG & FILTERING COMPUTEDS
+  // ========================================================
+  public salesTarget = 1000; 
   
-  public looseProducts = computed(() => {
-    const prods = this.salesService.products() || [];
-    return prods.filter(p => p && p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true');
+  public targetProgress = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayRev = this.salesService.transactions()
+      .filter(tx => new Date(tx.timestamp).toISOString().split('T')[0] === today)
+      .reduce((sum, tx) => sum + (tx.grandTotal || 0), 0);
+    
+    const safeRev = todayRev || 0;
+    const percent = Math.min(100, (safeRev / this.salesTarget) * 100) || 0;
+    
+    return { rev: safeRev, percent: percent };
   });
 
-  public getPinnedProducts(): Product[] {
-  // Grab the array from your Signal
-  const allProducts = this.salesService.products();
-  if (!allProducts || allProducts.length === 0) return [];
-  
-  return allProducts
-    .filter(p => p.isPinned === true && p.isActive !== false) // Only active, pinned items
-    .slice(0, 14); // 👈 Forces it to never show more than 14
-}
+  public weightedProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true')));
+  public looseProducts = computed(() => this.salesService.products().filter(p => p.isActive !== false && !p.barcode && p.isWeighted !== true && String(p.isWeighted) !== 'true'));
 
   public filteredCatalogProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const categoryId = this.selectedCategoryId();
-    const allProds = this.salesService.products() || [];
-    let products = allProds.filter(p => p && p.isActive !== false);
+    let products = this.salesService.products().filter(p => p.isActive !== false);
 
     if (categoryId !== 'ALL') products = products.filter(p => p.categoryId === categoryId);
 
     if (query) {
       products = products.filter(p => 
-        (p.name && p.name.toLowerCase().includes(query)) || 
+        p.name.toLowerCase().includes(query) || 
         (p.barcode && p.barcode.toLowerCase().includes(query)) ||
-        (p.id && p.id.toString().toLowerCase().includes(query))
+        (p.id && p.id.toString().toLowerCase().includes(query)) ||
+        (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase().includes(query)))
       );
     }
 
@@ -141,65 +204,25 @@ export class PosComponent implements OnInit, AfterViewInit {
     });
   });
 
-  constructor(public themeService: ThemeService) {
-
-      // ✅ The upgraded focus effect
+  constructor() {
     effect(() => {
-      // Read the signal so the effect knows to track it
-      const triggerTick = this.salesService.focusSearchTrigger();
-      
-      if (triggerTick > 0) {
+      const trigger = this.salesService.focusSearchTrigger();
+      if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {
         setTimeout(() => {
-          
-          // 1. Force the browser to drop focus from the +/- buttons (or any other button)
-          if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-          }
-
-          // 2. Snap focus directly to the search bar
-          if (this.searchInput && this.searchInput.nativeElement) {
-            this.searchInput.nativeElement.focus();
-            this.searchInput.nativeElement.select(); 
-          }
-          
+          this.searchQuery.set('');
+          this.searchInput.nativeElement.value = '';
+          this.searchInput.nativeElement.focus();
         }, 50);
       }
     });
 
     effect(() => {
-      // Read the signal so the effect knows to track it
-      const triggerTick = this.salesService.focusSearchTrigger();
-      
-      if (triggerTick > 0) {
-        // We use a tiny 50ms timeout to ensure Angular has finished updating 
-        // the DOM (like opening a modal or clearing the basket) before we steal focus.
-        setTimeout(() => {
-          if (this.searchInput && this.searchInput.nativeElement) {
-            this.searchInput.nativeElement.focus();
-            
-            // Optional but recommended for barcode scanners: 
-            // Highlight the text so the next scan instantly overwrites it
-            this.searchInput.nativeElement.select(); 
-          }
-        }, 50);
-      }
-    });
-
-    // Auto-save note to localStorage whenever it changes
-    effect(() => {
-      if (typeof window !== 'undefined') {
-        const todayKey = `maranth_pos_note_${new Date().toISOString().split('T')[0]}`;
-        localStorage.setItem(todayKey, this.dailyNote());
-      }
-    });
-    
-    effect(() => {
-      const bsk = this.salesService.basket() || [];
-      if (bsk.length === 0) {
+      if (this.salesService.basket().length === 0) {
         this.isMobileBasketOpen.set(false);
         setTimeout(() => {
-          this.searchQuery.set(''); 
+          this.searchQuery.set('');
           if (this.searchInput?.nativeElement) {
+            this.searchInput.nativeElement.value = '';
             this.searchInput.nativeElement.focus();
           }
         }, 50);
@@ -207,182 +230,34 @@ export class PosComponent implements OnInit, AfterViewInit {
     }, { allowSignalWrites: true });
   }
 
-  
-
   ngOnInit() {}
 
   ngAfterViewInit() {
     setTimeout(() => { if (this.searchInput?.nativeElement) this.searchInput.nativeElement.focus(); }, 100);
   }
 
-  public getExpireStatus(expire?: string): 'safe' | 'warning' | 'danger' | 'none' {
-    if (!expire) return 'none';
-    const expDate = new Date(expire + 'T00:00:00');
-    if (isNaN(expDate.getTime())) return 'none'; 
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffTime = expDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays <= 0) return 'danger'; 
-    if (diffDays <= 6) return 'warning'; 
-    return 'safe'; 
-  }
-
-  public openQuickEdit(prod: Product, event: Event): void {
-    event.stopPropagation();
-    if (this.salesService.currentRole() !== 'admin') {
-      this.salesService.activeModal.set({ type: 'warning', title: '⛔ Access Denied', message: 'Only Store Admins can edit product details from the register.', value: '', onConfirm: () => this.salesService.closeModal() });
-      return;
-    }
-    this.editingProduct.set(prod);
-    this.editForm = { ...prod };
-  }
-
-  public closeQuickEdit(): void {
-    this.editingProduct.set(null);
-    this.salesService.triggerSearchFocus();
-  }
-
-  public saveQuickEdit(): void {
-    if (!this.editForm.name || !this.editForm.price || !this.editForm.id) return;
-    this.salesService.saveProduct(this.editForm.id, this.editForm as Product);
-    this.closeQuickEdit();
-  }
-
-public onSearchEnter(event?: Event): void {
-    // 🛡️ Safety net: Stops the "Enter" key from accidentally causing a browser reload
-    if (event) event.preventDefault();
-
-    const cleanQuery = this.searchQuery().trim();
-    if (!cleanQuery) return;
-
-    // This handles adding the exact barcode to the basket if it finds it
-    const wasBarcode = this.salesService.scanBarcodeExact(cleanQuery);
-    
-    if (wasBarcode) {
-      // ✅ SUCCESSFUL SCAN: 
-      // Clear the search box instantly so the scanner is ready for the next physical scan!
-      this.searchQuery.set('');
-    } else {
-      // ❌ NOT FOUND:
-      // Only fire the error popup if it WAS NOT a recognized barcode, 
-      // AND it looks like a barcode (just numbers)
-      const isNumericBarcode = /^\d{4,20}$/.test(cleanQuery);
-      
-      if (isNumericBarcode) {
-        this.salesService.activeModal.set({ 
-          type: 'warning', 
-          title: '⚠️ Not Found', 
-          message: `The barcode [ ${cleanQuery} ] is not registered in your inventory.`, 
-          value: '', 
-          onConfirm: () => {
-             this.salesService.closeModal();
-             // Clear the bad barcode so they don't get stuck
-             this.searchQuery.set('');
-             this.salesService.triggerSearchFocus();
-          } 
-        });
-      }
-      // If it wasn't a barcode (e.g., they typed "Lays" and hit Enter),
-      // we do NOTHING. The text stays in the box, and the list stays open!
-    }
-  }
-
-  public onLogout(): void {
-    this.salesService.logoutCashier();
-    this.router.navigate(['/login']);
-  }
-
-public handleProductClick(prod: Product): void {
-    // 🚫 REMOVED: this.searchQuery.set(''); 
-    // Now your search list will stay exactly where it is!
+  public handleProductClick(prod: Product): void {
+    this.searchQuery.set('');
+    if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
 
     const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
     if (isScaled) {
       this.salesService.activeModal.set({
-        type: 'prompt', 
-        title: '⚖️ Scale Weight (kg)', 
-        message: `Enter the measured weight for ${prod.name}:`, 
-        value: '1.000',
+        type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${prod.name}:`, value: '1.000',
         onConfirm: (val) => {
-          // ⭐ FIX 1: Safely swap Greek commas to dots so math doesn't fail
-          const safeVal = String(val).replace(',', '.');
-          const weight = parseFloat(safeVal);
-          
-          if (!isNaN(weight) && weight > 0) {
-            // ⭐ FIX 2: Put 'undefined' back in the 2nd slot to satisfy TypeScript
-            this.salesService.addToBasket(prod, undefined, weight); 
-          }
-          
+          const weight = parseFloat(val);
+          if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
           this.salesService.closeModal();
           setTimeout(() => this.salesService.triggerSearchFocus(), 100);
         }
       });
     } else {
       this.salesService.addToBasket(prod);
-      
-      // ⭐ Keeps the cursor in the search box after you click, so you can keep typing or scanning!
-      this.salesService.triggerSearchFocus(); 
     }
   }
 
-// 2. Print / PDF Export Handler
-  public printDailyNote(): void {
-    const noteText = this.dailyNote().trim();
-    if (!noteText) {
-      alert('Δεν υπάρχουν σημειώσεις για εκτύπωση/PDF.');
-      return;
-    }
-
-    const todayStr = new Date().toLocaleDateString('el-GR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    const timeStr = new Date().toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
-
-    // Open clean print window
-    const printWin = window.open('', '_blank', 'width=600,height=700');
-    if (!printWin) return;
-
-    printWin.document.write(`
-      <html>
-        <head>
-          <title>Maranth POS - Σημειώσεις Βάρδιας (${todayStr})</title>
-          <style>
-            body { font-family: system-ui, sans-serif; padding: 40px; color: #111; line-height: 1.6; }
-            .header { border-bottom: 2px solid #222; padding-bottom: 12px; margin-bottom: 24px; }
-            .title { font-size: 22px; font-weight: bold; margin: 0; }
-            .meta { font-size: 13px; color: #666; margin-top: 4px; }
-            .content { font-size: 15px; white-space: pre-wrap; font-family: inherit; }
-            .footer { margin-top: 40px; border-top: 1px solid #ddd; padding-top: 12px; font-size: 11px; color: #888; text-align: right; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1 class="title">📝 Maranth POS — Σημειώσεις Βάρδιας</h1>
-            <div class="meta">Ημερομηνία: <strong>${todayStr}</strong> | Ώρα Εκτύπωσης: <strong>${timeStr}</strong></div>
-          </div>
-          <div class="content">${noteText}</div>
-          <div class="footer">Maranth POS Store System</div>
-        </body>
-      </html>
-    `);
-
-    printWin.document.close();
-    printWin.focus();
-    setTimeout(() => {
-      printWin.print();
-      printWin.close();
-    }, 250);
-  }
-
-  public clearDailyNote(): void {
-    if (confirm('Θέλετε να διαγράψετε τις σημειώσεις της σημερινής ημέρας;')) {
-      this.dailyNote.set('');
-    }
+  public onLogout(): void {
+    this.salesService.logoutCashier();
+    this.router.navigate(['/login']);
   }
 }

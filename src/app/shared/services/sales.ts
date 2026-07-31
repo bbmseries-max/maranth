@@ -183,7 +183,7 @@ export class SalesService {
     return match && match.name ? match.name : `Category ${cleanId}`;
   }
 
-  public grandTotal = computed(() => {
+public grandTotal = computed(() => {
     return this.basket().reduce((acc, item) => {
       const lineGross = item.product.price * item.quantity;
       return acc + (item.isRefund ? -lineGross : lineGross);
@@ -382,7 +382,8 @@ export class SalesService {
     const queryLower = query.toLowerCase().trim();
     const found = this.products().find(p => 
       (p.barcode && p.barcode.toLowerCase() === queryLower) || 
-      (p.id && p.id.toString().toLowerCase() === queryLower)
+      (p.id && p.id.toString().toLowerCase() === queryLower) ||
+      (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase() === queryLower))
     );
 
     if (found) {

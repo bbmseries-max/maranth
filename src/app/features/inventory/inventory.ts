@@ -99,7 +99,7 @@ public extractRawTaxRate(obj: any): any {
   }
 
   // 🎯 Dynamic computed product list for the template
-   public filteredProducts = computed(() => {
+public filteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const status = this.filterStatus();
     const category = this.filterCategory();
@@ -123,7 +123,8 @@ public extractRawTaxRate(obj: any): any {
           const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
           const barcodeMatch = prod.barcode && prod.barcode.toLowerCase().includes(query);
           const idMatch = prod.id && prod.id.toString().toLowerCase().includes(query);
-          if (!nameMatch && !barcodeMatch && !idMatch) return false;
+          const altBarcodeMatch = prod.altBarcodes && prod.altBarcodes.some(alt => alt.toLowerCase().includes(query));
+          if (!nameMatch && !barcodeMatch && !idMatch && !altBarcodeMatch) return false;
         }
 
         return true; // Show ALL missing VAT products across active, inactive, and all categories!
@@ -142,7 +143,8 @@ public extractRawTaxRate(obj: any): any {
         const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
         const barcodeMatch = prod.barcode && prod.barcode.toLowerCase().includes(query);
         const idMatch = prod.id && prod.id.toString().toLowerCase().includes(query);
-        if (!nameMatch && !barcodeMatch && !idMatch) return false;
+        const altBarcodeMatch = prod.altBarcodes && prod.altBarcodes.some(alt => alt.toLowerCase().includes(query));
+        if (!nameMatch && !barcodeMatch && !idMatch && !altBarcodeMatch) return false;
       }
 
       return true;
