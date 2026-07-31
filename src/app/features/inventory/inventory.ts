@@ -55,30 +55,45 @@ export class InventoryComponent {
   // ==========================================
   // VAT / TAX NORMALIZATION HELPERS
   // ==========================================
-  public normalizeTaxRate(rate: any): number | undefined {
+public extractRawTaxRate(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+    return obj.taxRate ?? obj.vatRate ?? obj.FPA ?? obj.vat ?? obj.fpa ?? obj.tax 
+        ?? obj.vat_rate ?? obj.tax_rate ?? obj.vatPercent ?? obj.taxPercent 
+        ?? obj.fpa_rate ?? obj.fpaRate ?? obj.vat_percent ?? obj.vatPercent 
+        ?? obj.FPA_RATE ?? obj.VAT ?? obj.TAX;
+  }
+
+ public normalizeTaxRate(rate: any): number | undefined {
     if (rate === undefined || rate === null) return undefined;
-    const str = String(rate).trim();
+    let str = String(rate).trim().replace('%', '');
     if (str === '' || str === 'null' || str === 'undefined' || str === 'NaN') return undefined;
+    
     let num = Number(str);
     if (isNaN(num)) return undefined;
-    if (num > 1) num = num / 100; // e.g. 13 -> 0.13
-    return num;
+
+    // Handle tax divisor format (e.g. 1.24 -> 0.24, 1.13 -> 0.13, 1.0 -> 0)
+    if (num >= 1.0 && num <= 1.5) {
+      num = parseFloat((num - 1).toFixed(2));
+    } else if (num > 1.5) {
+      // Handle percentage format (e.g. 24 -> 0.24, 13 -> 0.13)
+      num = parseFloat((num / 100).toFixed(2));
+    } else {
+      num = parseFloat(num.toFixed(2));
+    }
+
+    // Strictly match valid Greek VAT rates (0.24, 0.13, 0.06, 0)
+    if (Math.abs(num - 0.24) < 0.01) return 0.24;
+    if (Math.abs(num - 0.13) < 0.01) return 0.13;
+    if (Math.abs(num - 0.06) < 0.01) return 0.06;
+    if (Math.abs(num - 0) < 0.01) return 0;
+
+    // Unrecognized or invalid rate -> treat as missing
+    return undefined;
   }
 
-  // 🎯 Centralized extraction checking ALL possible JSON keys
-  public extractRawTaxRate(p: any): number | undefined {
-    if (!p) return undefined;
-    const raw = p.taxRate ?? p.vatRate ?? p.FPA ?? p.vat ?? p.fpa ?? p.tax 
-             ?? p.vat_rate ?? p.tax_rate ?? p.vatPercent ?? p.taxPercent 
-             ?? p.fpa_rate ?? p.fpaRate ?? p.vat_percent ?? p.vatPercent 
-             ?? p.FPA_RATE ?? p.VAT ?? p.TAX;
-    return this.normalizeTaxRate(raw);
-  }
-
-  public formatVatLabel(rateOrProduct: any): string {
-    const norm = typeof rateOrProduct === 'object' 
-      ? this.extractRawTaxRate(rateOrProduct) 
-      : this.normalizeTaxRate(rateOrProduct);
+  public formatVatLabel(rate: any): string {
+    const rawRate = this.extractRawTaxRate(rate);
+    const norm = this.normalizeTaxRate(rawRate);
     if (norm === undefined) return '⚠️ NO VAT';
     return `${Math.round(norm * 100)}% VAT`;
   }

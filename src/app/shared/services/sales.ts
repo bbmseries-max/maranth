@@ -190,17 +190,23 @@ export class SalesService {
     }, 0);
   });
 
-  private getTaxDivisor(taxRate?: number): number {
-    if (taxRate === undefined || taxRate === null || isNaN(taxRate) || taxRate <= 0) {
+ private getTaxDivisor(taxRate?: number): number {
+    if (taxRate === undefined || taxRate === null || isNaN(taxRate)) {
       return 1.24;
     }
-    if (taxRate > 10) {
-      return 1 + (taxRate / 100);
+    let num = Number(taxRate);
+    if (isNaN(num)) return 1.24;
+
+    if (num >= 1.0 && num <= 1.5) {
+      return num; // Already a divisor e.g. 1.24
     }
-    if (taxRate < 1) {
-      return 1 + taxRate;
+    if (num > 1.5) {
+      return 1 + (num / 100); // Percentage e.g. 24 -> 1.24
     }
-    return taxRate;
+    if (num > 0) {
+      return 1 + num; // Decimal e.g. 0.24 -> 1.24
+    }
+    return 1.0; // 0% VAT
   }
 
   public netSubtotal = computed(() => {
