@@ -56,8 +56,10 @@ export class InventoryComponent {
   // VAT / TAX NORMALIZATION HELPERS
   // ==========================================
   public normalizeTaxRate(rate: any): number | undefined {
-    if (rate === undefined || rate === null || rate === '') return undefined;
-    let num = Number(rate);
+    if (rate === undefined || rate === null) return undefined;
+    const str = String(rate).trim();
+    if (str === '' || str === 'null' || str === 'undefined' || str === 'NaN') return undefined;
+    let num = Number(str);
     if (isNaN(num)) return undefined;
     if (num > 1) num = num / 100; // e.g. 13 -> 0.13
     return num;
@@ -79,12 +81,26 @@ export class InventoryComponent {
     const missingVatOnly = this.filterMissingVat();
 
     return this.products().filter(prod => {
-      const rawRate = prod.taxRate ?? (prod as any).vatRate ?? (prod as any).FPA ?? (prod as any).vat;
+      const p = prod as any;
+      // 🎯 Checks ALL possible property key variants from JSON imports
+      const rawRate = p.taxRate ?? p.vatRate ?? p.FPA ?? p.vat ?? p.fpa ?? p.tax ?? p.vat_rate ?? p.tax_rate ?? p.vatPercent ?? p.taxPercent;
       const normRate = this.normalizeTaxRate(rawRate);
 
-      // Filter for missing VAT
-      if (missingVatOnly && normRate !== undefined) {
-        return false;
+      // 🎯 GLOBAL AUDIT MODE: When Missing VAT is enabled, bypass Category & Status filters so NOTHING is hidden!
+      if (missingVatOnly) {
+        if (normRate !== undefined) {
+          return false; // Has a valid VAT rate -> hide it
+        }
+
+        // Apply search query if user typed a name/barcode while auditing
+        if (query) {
+          const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
+          const barcodeMatch = prod.barcode && prod.barcode.toLowerCase().includes(query);
+          const idMatch = prod.id && prod.id.toString().toLowerCase().includes(query);
+          if (!nameMatch && !barcodeMatch && !idMatch) return false;
+        }
+
+        return true; // Show ALL missing VAT products across active, inactive, and all categories!
       }
 
       if (status === 'active' && prod.isActive === false) return false;
@@ -97,7 +113,7 @@ export class InventoryComponent {
       if (expireDate && prod.expire !== expireDate) return false;
 
       if (query) {
-        const nameMatch = prod.name.toLowerCase().includes(query);
+        const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
         const barcodeMatch = prod.barcode && prod.barcode.toLowerCase().includes(query);
         const idMatch = prod.id && prod.id.toString().toLowerCase().includes(query);
         if (!nameMatch && !barcodeMatch && !idMatch) return false;
