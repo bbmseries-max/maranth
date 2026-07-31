@@ -183,29 +183,24 @@ export class SalesService {
     return match && match.name ? match.name : `Category ${cleanId}`;
   }
 
-public grandTotal = computed(() => {
+  public grandTotal = computed(() => {
     return this.basket().reduce((acc, item) => {
       const lineGross = item.product.price * item.quantity;
       return acc + (item.isRefund ? -lineGross : lineGross);
     }, 0);
   });
 
-  private getTaxDivisor(taxRate?: any): number {
-    if (taxRate === undefined || taxRate === null) return 1.24;
-    let str = String(taxRate).trim().replace('%', '');
-    let num = Number(str);
-    if (isNaN(num)) return 1.24;
-
-    if (num >= 1.0 && num <= 1.5) {
-      return num; // Already a divisor e.g. 1.24
+  private getTaxDivisor(taxRate?: number): number {
+    if (taxRate === undefined || taxRate === null || isNaN(taxRate) || taxRate <= 0) {
+      return 1.24;
     }
-    if (num > 1.5) {
-      return 1 + (num / 100); // Percentage e.g. 24 -> 1.24
+    if (taxRate > 10) {
+      return 1 + (taxRate / 100);
     }
-    if (num > 0) {
-      return 1 + num; // Decimal e.g. 0.24 -> 1.24
+    if (taxRate < 1) {
+      return 1 + taxRate;
     }
-    return 1.0; // 0% VAT
+    return taxRate;
   }
 
   public netSubtotal = computed(() => {
@@ -312,6 +307,8 @@ public grandTotal = computed(() => {
     const currentBasket = this.basket();
     if (currentBasket.length === 0) return;
 
+    const activeCashier = this.currentCashier() || 'Admin';
+
     const receipt: TransactionRecord = {
       id: 'TX-' + Math.random().toString(36).substring(2, 11).toUpperCase(),
       timestamp: new Date().toISOString(),
@@ -319,7 +316,9 @@ public grandTotal = computed(() => {
       subtotal: parseFloat(this.netSubtotal().toFixed(2)),
       taxAmount: parseFloat(this.taxAmount().toFixed(2)),
       grandTotal: parseFloat(this.grandTotal().toFixed(2)),
-      paymentMethod: method
+      paymentMethod: method,
+      cashier: activeCashier,
+      cashierId: activeCashier
     };
 
     currentBasket.forEach(item => {

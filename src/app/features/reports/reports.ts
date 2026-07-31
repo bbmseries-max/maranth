@@ -206,7 +206,7 @@ export class ReportsComponent {
   public staffPerformance = computed(() => {
     const staffMap = new Map<string, { name: string, tickets: number, revenue: number, avgTicket: number }>();
     this.filteredTransactions().forEach(tx => {
-      const cashierName = (tx as any).cashierId || (tx as any).cashierName || (tx as any).cashier || 'Admin';
+      const cashierName = tx.cashier || tx.cashierId || (tx as any).cashierName || 'Admin';
       if (!staffMap.has(cashierName)) {
         staffMap.set(cashierName, { name: cashierName, tickets: 0, revenue: 0, avgTicket: 0 });
       }
