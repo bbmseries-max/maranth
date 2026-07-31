@@ -11,6 +11,7 @@
     --text-muted: #64748b;    /* slate-500 */
     --border-line: #e2e8f0;   /* slate-200 */
     --card-hover: #f1f5f9;    /* slate-100 */
+    --border-input: #287be2;
   }
 
   /* ⛅ DIM THEME (Soft Dark) */
@@ -21,6 +22,7 @@
     --text-muted: #94a3b8;    /* slate-400 */
     --border-line: #475569;   /* slate-600 */
     --card-hover: #475569;    /* slate-600 */
+    --border-input: #91a6c4;
   }
 
   /* 🌙 DARK THEME (True Black/Deep Slate) */
@@ -31,6 +33,7 @@
     --text-muted: #94a3b8;    /* slate-400 */
     --border-line: #1e293b;   /* slate-800 */
     --card-hover: #1e293b;    /* slate-800 */
+    --border-input: #7ca6e1;
   }
 
   /* Apply the base theme variables to body directly */
@@ -67,4 +70,9 @@
     background: white !important;
     color: black !important;
   }
+  @layer components {
+  .app-input {
+    @apply bg-[var(--bg-input)] border border-[var(--border-input)] text-primary rounded-lg px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all;
+  }
+}
 }
