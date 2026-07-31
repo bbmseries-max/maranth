@@ -5,13 +5,12 @@ import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
-import { LogoComponent } from '../../shared/components/logo/logo.component'; // Adjust path if logo is in shared/logo/logo.component
 import { doc, setDoc } from 'firebase/firestore';
 
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, ShoppingBasketComponent, LogoComponent],
+  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, ShoppingBasketComponent],
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
