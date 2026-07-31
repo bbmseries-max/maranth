@@ -94,7 +94,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="9" y1="12" x2="16" y2="12"></line>
-          <polyline points="13" y1="9" x2="16" y2="12" p2="13" p3="15"></polyline>
+          <polyline points="13 9 16 12 13 15"></polyline>
         </svg>
       </button>
     </div>
@@ -102,6 +102,7 @@
 
   <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
     
+    <!-- LEFT SIDEBAR -->
     <aside class="w-full md:w-[280px] bg-slate-900 text-white flex-shrink-0 flex flex-col border-r border-slate-800 z-10 transition-all">
       
       <!-- 2. THE 3 QUICK ACTION BUTTONS -->
@@ -118,7 +119,7 @@
         </button>
         
         <!-- CLEAR BUTTON -->
-        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold uppercase transition-all shadow-sm border bg-red-500/10 border-red-700/30 text-primary hover:bg-red-500/20 hover:border-red-500/50 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+        <button class="flex-1 flex flex-col items-center justify-center py-2 rounded-xl text-xs font-bold uppercase transition-all shadow-sm border bg-red-500/10 border-red-500/30 text-primary hover:bg-red-500/20 hover:border-red-500/50 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                 (click)="salesService.clearBasket()" [disabled]="salesService.basket().length === 0">
           <span class="text-base mb-0.5">🗑️</span>
           <span>Clear</span>
@@ -168,7 +169,6 @@
         </div>
       </details>
 
-      <!-- 📝 DAILY SHIFT NOTES GADGET -->
       <div class="hidden md:flex md:flex-col flex-1 m-3 mobile-hide bg-panel rounded-xl p-4 shadow-sm border border-line transition-colors">
         <div class="flex justify-between items-center mb-2 flex-shrink-0">
           <div class="flex items-center gap-2">
@@ -192,8 +192,8 @@
         </textarea>
       </div>
 
-      <!-- 3. BOTTOM ANCHOR (Live Dashboard Widget) -->
-      <div class="mt-auto p-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 z-20">
+      <!-- 5. BOTTOM ANCHOR (Live Dashboard Widget) -->
+      <div class="mt-auto p-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 z-20 flex-shrink-0">
         <a routerLink="/reports" class="bg-gradient-to-r from-indigo-600 to-purple-600 p-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] cursor-pointer hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all active:scale-95 flex items-center justify-between group no-underline outline-none border-none">
           <div class="flex items-center gap-3">
             <span class="relative flex h-3 w-3">
@@ -239,7 +239,7 @@
                 </span>
                 
                 <span class="text-primary font-bold text-[13px] leading-tight uppercase text-center mt-1">
-                  {{ getProductDisplay(prod.name).text.length > 20 ? getProductDisplay(prod.name).text.substring(0, 20) + '..' : getProductDisplay(prod.name).text }}
+                  {{ getProductDisplay(prod.name).text.length > 12 ? getProductDisplay(prod.name).text.substring(0, 12) + '..' : getProductDisplay(prod.name).text }}
                 </span>
 
                 <span class="text-green-700 font-black text-sm mt-0.5">
@@ -287,7 +287,7 @@
                 </div>
               </div>
 
-              <!-- Expiration status badge using component helper -->
+              <!-- Expiration status badge -->
               <div class="text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide self-start mt-1"
                    [ngClass]="{
                      'bg-red-100 text-red-700': getExpireStatus(getLiveProduct(prod).expire) === 'danger',

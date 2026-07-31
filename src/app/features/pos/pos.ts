@@ -184,13 +184,15 @@ export class PosComponent implements OnInit, AfterViewInit {
     const categoryId = this.selectedCategoryId();
     let products = this.salesService.products().filter(p => p.isActive !== false);
 
-    if (categoryId !== 'ALL') {
+    // Filter by category if query is empty
+    if (categoryId !== 'ALL' && !query) {
       products = products.filter(p => p.categoryId === categoryId);
     }
 
+    // Filter by search query across name, barcode, ID, and altBarcodes
     if (query) {
       products = products.filter(p => 
-        p.name.toLowerCase().includes(query) || 
+        (p.name && p.name.toLowerCase().includes(query)) || 
         (p.barcode && p.barcode.toLowerCase().includes(query)) ||
         (p.id && p.id.toString().toLowerCase().includes(query)) ||
         (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase().includes(query)))
@@ -201,6 +203,7 @@ export class PosComponent implements OnInit, AfterViewInit {
   });
 
   public onSearchEnter(event: Event): void {
+    event.preventDefault(); // Prevent page refresh
     const inputEl = event.target as HTMLInputElement;
     const query = inputEl.value.trim();
     if (!query) return;
