@@ -190,11 +190,10 @@ export class SalesService {
     }, 0);
   });
 
- private getTaxDivisor(taxRate?: number): number {
-    if (taxRate === undefined || taxRate === null || isNaN(taxRate)) {
-      return 1.24;
-    }
-    let num = Number(taxRate);
+  private getTaxDivisor(taxRate?: any): number {
+    if (taxRate === undefined || taxRate === null) return 1.24;
+    let str = String(taxRate).trim().replace('%', '');
+    let num = Number(str);
     if (isNaN(num)) return 1.24;
 
     if (num >= 1.0 && num <= 1.5) {

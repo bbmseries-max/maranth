@@ -99,7 +99,7 @@ public extractRawTaxRate(obj: any): any {
   }
 
   // 🎯 Dynamic computed product list for the template
-  public filteredProducts = computed(() => {
+   public filteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const status = this.filterStatus();
     const category = this.filterCategory();
@@ -108,13 +108,14 @@ public extractRawTaxRate(obj: any): any {
     const missingVatOnly = this.filterMissingVat();
 
     return this.products().filter(prod => {
-      // 🎯 Uses centralized extractor
-      const normRate = this.extractRawTaxRate(prod);
+      // 🎯 Extracts AND normalizes raw rate to ensure empty/invalid rates are properly caught
+      const rawRate = this.extractRawTaxRate(prod);
+      const normRate = this.normalizeTaxRate(rawRate);
 
       // 🎯 GLOBAL AUDIT MODE: When Missing VAT is enabled, bypass Category & Status filters
       if (missingVatOnly) {
         if (normRate !== undefined) {
-          return false; // Has a valid VAT rate -> hide it
+          return false; // Has a valid normalized VAT rate -> hide it
         }
 
         // Apply search query if user typed a name/barcode while auditing
@@ -153,10 +154,13 @@ public extractRawTaxRate(obj: any): any {
       this.editingProductId = null;
     } else {
       this.editingProductId = prod.id;
-      // 🎯 Now checks all key variations in sync with the filter!
+      // 🎯 Normalizes the extracted rate so dropdown options (0.24, 0.13, etc.) auto-select correctly!
+      const rawRate = this.extractRawTaxRate(prod);
+      const normRate = this.normalizeTaxRate(rawRate);
+
       this.editForm = { 
         ...prod, 
-        taxRate: this.extractRawTaxRate(prod) 
+        taxRate: normRate 
       };
       setTimeout(() => {
         const el = document.getElementById('prod-card-' + prod.id);
