@@ -35,8 +35,8 @@ export class InventoryComponent {
   public filterStatus = signal<'active' | 'inactive' | 'all'>('active'); // Defaults to Active!
   public filterLowStock = signal<boolean>(false);
   public filterCategory = signal<string>('ALL');
-
-    // 🎯 Filter signal to find items missing a VAT rate
+  
+  // 🎯 Filter signal to find items missing a VAT rate
   public filterMissingVat = signal<boolean>(false);
 
   // Edit states
@@ -59,19 +59,17 @@ export class InventoryComponent {
     if (rate === undefined || rate === null || rate === '') return undefined;
     let num = Number(rate);
     if (isNaN(num)) return undefined;
-    if (num > 1) num = num / 100; // e.g. 13 -> 0.13, 24 -> 0.24
+    if (num > 1) num = num / 100; // e.g. 13 -> 0.13
     return num;
   }
 
   public formatVatLabel(rate: any): string {
-    if (rate === undefined || rate === null || rate === '') return '⚠️ NO VAT';
-    let num = Number(rate);
-    if (isNaN(num)) return '⚠️ NO VAT';
-    if (num > 1) num = num / 100;
-    return Math.round(num * 100) + '%';
+    const norm = this.normalizeTaxRate(rate);
+    if (norm === undefined) return '⚠️ NO VAT';
+    return `${Math.round(norm * 100)}% VAT`;
   }
 
- // 🎯 Dynamic computed product list for the template
+  // 🎯 Dynamic computed product list for the template
   public filteredProducts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const status = this.filterStatus();
@@ -114,7 +112,8 @@ export class InventoryComponent {
       this.editingProductId = null;
     } else {
       this.editingProductId = prod.id;
-      const rawRate = prod.taxRate ?? (prod as any).vatRate ?? (prod as any).FPA;
+      // 🎯 Extracts raw rate from whichever key your JSON uses
+      const rawRate = prod.taxRate ?? (prod as any).vatRate ?? (prod as any).FPA ?? (prod as any).vat;
       this.editForm = { 
         ...prod, 
         taxRate: this.normalizeTaxRate(rawRate) 
