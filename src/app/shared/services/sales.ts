@@ -127,6 +127,7 @@ export class SalesService {
       }
       const data = snapshot.docs.map(doc => doc.data());
       
+      // 🎯 Automatically sort transaction snapshots newest-first
       if (collectionName === 'transactions') {
         data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       }
@@ -204,7 +205,14 @@ export class SalesService {
 
   public netSubtotal = computed(() => {
     return this.basket().reduce((acc, item) => {
-      const taxDivisor = this.getTaxDivisor(item.product.taxRate); 
+      const p = item.product as any;
+      // 🎯 Complete key fallback list matching InventoryComponent
+      const rawRate = p.taxRate ?? p.vatRate ?? p.FPA ?? p.vat ?? p.fpa ?? p.tax 
+                   ?? p.vat_rate ?? p.tax_rate ?? p.vatPercent ?? p.taxPercent 
+                   ?? p.fpa_rate ?? p.fpaRate ?? p.vat_percent ?? p.vatPercent 
+                   ?? p.FPA_RATE ?? p.VAT ?? p.TAX;
+                   
+      const taxDivisor = this.getTaxDivisor(rawRate); 
       const lineGross = item.product.price * item.quantity;
       const lineNet = lineGross / taxDivisor;
       return acc + (item.isRefund ? -lineNet : lineNet);
@@ -299,11 +307,6 @@ export class SalesService {
     const currentBasket = this.basket();
     if (currentBasket.length === 0) return;
 
-    // Retrieve active cashier username
-    const activeCashier = this.currentCashier() || 
-      (typeof localStorage !== 'undefined' ? localStorage.getItem('maranth_active_cashier') : null) || 
-      'Admin';
-
     const receipt: TransactionRecord = {
       id: 'TX-' + Math.random().toString(36).substring(2, 11).toUpperCase(),
       timestamp: new Date().toISOString(),
@@ -311,15 +314,13 @@ export class SalesService {
       subtotal: parseFloat(this.netSubtotal().toFixed(2)),
       taxAmount: parseFloat(this.taxAmount().toFixed(2)),
       grandTotal: parseFloat(this.grandTotal().toFixed(2)),
-      paymentMethod: method,
-      cashierId: activeCashier,
-      cashier: activeCashier
+      paymentMethod: method
     };
 
     currentBasket.forEach(item => {
       const productIdStr = String(item.product.id);
       if (!productIdStr.startsWith('MISC-')) {
-        const product = this.products().find(p => String(p.id) === String(productIdStr));
+        const product = this.products().find(p => String(p.id) === productIdStr);
         if (product && this.db) {
           const currentStock = parseFloat(product.stockQuantity as any) || 0;
           const change = item.isRefund ? item.quantity : -item.quantity;

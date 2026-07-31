@@ -65,8 +65,20 @@ export class InventoryComponent {
     return num;
   }
 
-  public formatVatLabel(rate: any): string {
-    const norm = this.normalizeTaxRate(rate);
+  // 🎯 Centralized extraction checking ALL possible JSON keys
+  public extractRawTaxRate(p: any): number | undefined {
+    if (!p) return undefined;
+    const raw = p.taxRate ?? p.vatRate ?? p.FPA ?? p.vat ?? p.fpa ?? p.tax 
+             ?? p.vat_rate ?? p.tax_rate ?? p.vatPercent ?? p.taxPercent 
+             ?? p.fpa_rate ?? p.fpaRate ?? p.vat_percent ?? p.vatPercent 
+             ?? p.FPA_RATE ?? p.VAT ?? p.TAX;
+    return this.normalizeTaxRate(raw);
+  }
+
+  public formatVatLabel(rateOrProduct: any): string {
+    const norm = typeof rateOrProduct === 'object' 
+      ? this.extractRawTaxRate(rateOrProduct) 
+      : this.normalizeTaxRate(rateOrProduct);
     if (norm === undefined) return '⚠️ NO VAT';
     return `${Math.round(norm * 100)}% VAT`;
   }
@@ -81,12 +93,10 @@ export class InventoryComponent {
     const missingVatOnly = this.filterMissingVat();
 
     return this.products().filter(prod => {
-      const p = prod as any;
-      // 🎯 Checks ALL possible property key variants from JSON imports
-      const rawRate = p.taxRate ?? p.vatRate ?? p.FPA ?? p.vat ?? p.fpa ?? p.tax ?? p.vat_rate ?? p.tax_rate ?? p.vatPercent ?? p.taxPercent;
-      const normRate = this.normalizeTaxRate(rawRate);
+      // 🎯 Uses centralized extractor
+      const normRate = this.extractRawTaxRate(prod);
 
-      // 🎯 GLOBAL AUDIT MODE: When Missing VAT is enabled, bypass Category & Status filters so NOTHING is hidden!
+      // 🎯 GLOBAL AUDIT MODE: When Missing VAT is enabled, bypass Category & Status filters
       if (missingVatOnly) {
         if (normRate !== undefined) {
           return false; // Has a valid VAT rate -> hide it
@@ -128,11 +138,10 @@ export class InventoryComponent {
       this.editingProductId = null;
     } else {
       this.editingProductId = prod.id;
-      // 🎯 Extracts raw rate from whichever key your JSON uses
-      const rawRate = prod.taxRate ?? (prod as any).vatRate ?? (prod as any).FPA ?? (prod as any).vat;
+      // 🎯 Now checks all key variations in sync with the filter!
       this.editForm = { 
         ...prod, 
-        taxRate: this.normalizeTaxRate(rawRate) 
+        taxRate: this.extractRawTaxRate(prod) 
       };
       setTimeout(() => {
         const el = document.getElementById('prod-card-' + prod.id);
@@ -203,7 +212,11 @@ export class InventoryComponent {
 
   public saveEdit(): void {
     if (!this.editForm.id || !this.editForm.name || this.editForm.price === undefined) return;
-    this.salesService.saveProduct(this.editForm.id, this.editForm as Product);
+    const payload = {
+      ...this.editForm,
+      taxRate: this.editForm.taxRate
+    } as Product;
+    this.salesService.saveProduct(this.editForm.id, payload);
     this.editingProductId = null;
   }
 
