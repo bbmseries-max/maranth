@@ -9,7 +9,7 @@ import { doc, setDoc } from 'firebase/firestore';
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, DecimalPipe, DatePipe, RouterLink],
+  imports: [CommonModule, FormsModule, DatePipe, RouterLink],
   templateUrl: './reports.html',
   styleUrls: ['./reports.css']
 })
@@ -62,28 +62,28 @@ export class ReportsComponent {
     return this.filteredTransactions().reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
- // 1. Cash in drawer
+// 1. Cash collected
 public cashRevenue = computed(() => {
   return this.filteredTransactions()
     .filter(tx => tx.paymentMethod === 'Cash')
     .reduce((sum, tx) => sum + tx.grandTotal, 0);
 });
 
-// 2. Real Bank Card / POS Terminal
+// 2. Card / POS Terminal collected
 public cardRevenue = computed(() => {
   return this.filteredTransactions()
     .filter(tx => tx.paymentMethod === 'Card')
     .reduce((sum, tx) => sum + tx.grandTotal, 0);
 });
 
-// 3. Uncollected Store Credit (Τεφτέρι / Βερεσέ)
+// 3. Store Credit / Τεφτέρι (Unpaid customer tabs)
 public debitCreditRevenue = computed(() => {
   return this.filteredTransactions()
-    .filter(tx => tx.paymentMethod === 'Debit' || tx.paymentMethod === 'Credit')
+    .filter(tx => tx.paymentMethod === 'Debit')
     .reduce((sum, tx) => sum + tx.grandTotal, 0);
 });
 
-// 4. Actual Collected Revenue (Cash + Card only)
+// 4. Total Real Money Collected in Register/Bank
 public actualCollectedRevenue = computed(() => {
   return this.cashRevenue() + this.cardRevenue();
 });
