@@ -62,17 +62,31 @@ export class ReportsComponent {
     return this.filteredTransactions().reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
 
-  public cashRevenue = computed(() => {
-    return this.filteredTransactions()
-      .filter(tx => tx.paymentMethod === 'Cash')
-      .reduce((sum, tx) => sum + tx.grandTotal, 0);
-  });
+ // 1. Cash in drawer
+public cashRevenue = computed(() => {
+  return this.filteredTransactions()
+    .filter(tx => tx.paymentMethod === 'Cash')
+    .reduce((sum, tx) => sum + tx.grandTotal, 0);
+});
 
-  public cardRevenue = computed(() => {
-    return this.filteredTransactions()
-      .filter(tx => tx.paymentMethod === 'Card' || tx.paymentMethod === 'Debit')
-      .reduce((sum, tx) => sum + tx.grandTotal, 0);
-  });
+// 2. Real Bank Card / POS Terminal
+public cardRevenue = computed(() => {
+  return this.filteredTransactions()
+    .filter(tx => tx.paymentMethod === 'Card')
+    .reduce((sum, tx) => sum + tx.grandTotal, 0);
+});
+
+// 3. Uncollected Store Credit (Τεφτέρι / Βερεσέ)
+public debitCreditRevenue = computed(() => {
+  return this.filteredTransactions()
+    .filter(tx => tx.paymentMethod === 'Debit' || tx.paymentMethod === 'Credit')
+    .reduce((sum, tx) => sum + tx.grandTotal, 0);
+});
+
+// 4. Actual Collected Revenue (Cash + Card only)
+public actualCollectedRevenue = computed(() => {
+  return this.cashRevenue() + this.cardRevenue();
+});
 
   public totalSalesCount = computed(() => this.filteredTransactions().length);
 
