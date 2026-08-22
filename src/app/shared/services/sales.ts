@@ -225,58 +225,72 @@ export class SalesService {
 
   public totalItems = computed(() => this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0));
 
-  public addToBasket(product: Product, forceRefundState?: boolean, customQty?: number): void {
-    this.highlightedItemId.set(product.id);
-    setTimeout(() => this.highlightedItemId.set(null), 500);
+ public addToBasket(product: Product, forceRefundState?: boolean, customQty?: number): void {
+  const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
 
-    const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
-
-    if (!isRef) {
-      const liveProduct = this.products().find(p => String(p.id) === String(product.id)) || product;
-      const currentQtyInBasket = this.basket().find(item => String(item.product.id) === String(product.id) && !item.isRefund)?.quantity || 0;
-      
-      let intendedQty = 0;
-      if (currentQtyInBasket > 0) {
-        const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
-        intendedQty = parseFloat((currentQtyInBasket + incrementStep).toFixed(3));
-      } else {
-        intendedQty = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
-      }
-
-      const availableStock = parseFloat(liveProduct.stockQuantity as any) || 0;
-
-      if (!String(product.id).startsWith('MISC-')) {
-        if (availableStock <= 0 || intendedQty > availableStock) {
-          this.activeModal.set({
-            type: 'warning',
-            title: '⚠️ Insufficient Stock',
-            message: `Cannot add ${liveProduct.name} to the basket.\n\nAvailable in Store: ${availableStock}\nRequested Amount: ${intendedQty}`,
-            value: '',
-            onConfirm: () => {
-              this.closeModal();
-              this.triggerSearchFocus();
-            }
-          });
-          return; 
-        }
-      }
-    }
-
-    this.basket.update((currentBasket) => {
-      const existingIndex = currentBasket.findIndex(item => String(item.product.id) === String(product.id) && !!item.isRefund === !!isRef);
-      const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
-
-      if (existingIndex > -1) {
-        const updatedBasket = [...currentBasket];
-        const existingItem = updatedBasket[existingIndex];
-        updatedBasket[existingIndex] = { ...existingItem, quantity: parseFloat((existingItem.quantity + incrementStep).toFixed(3)) };
-        return updatedBasket;
-      } else {
-        const initialQuantity = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
-        return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
+  // ⛔ 1. Hard Guard: Block Expired Products (except on Refunds/Returns)
+  if (!isRef && this.isProductExpired(product.expire)) {
+    this.activeModal.set({
+      type: 'warning',
+      title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
+      message: `Το προϊόν "${product.name}" έχει λήξει στις ${product.expire}!\nΑπαγορεύεται η πώληση.`,
+      value: '',
+      onConfirm: () => {
+        this.closeModal();
+        this.triggerSearchFocus();
       }
     });
+    return; // Hard stop
   }
+
+  this.highlightedItemId.set(product.id);
+  setTimeout(() => this.highlightedItemId.set(null), 500);
+
+  if (!isRef) {
+    const liveProduct = this.products().find(p => String(p.id) === String(product.id)) || product;
+    const currentQtyInBasket = this.basket().find(item => String(item.product.id) === String(product.id) && !item.isRefund)?.quantity || 0;
+    
+    let intendedQty = 0;
+    if (currentQtyInBasket > 0) {
+      const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
+      intendedQty = parseFloat((currentQtyInBasket + incrementStep).toFixed(3));
+    } else {
+      intendedQty = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
+    }
+
+    const availableStock = parseFloat(liveProduct.stockQuantity as any) || 0;
+
+    if (!String(product.id).startsWith('MISC-')) {
+      if (availableStock <= 0 || intendedQty > availableStock) {
+        this.activeModal.set({
+          type: 'warning',
+          title: '⚠️ Insufficient Stock',
+          message: `Cannot add ${liveProduct.name} to the basket.\n\nAvailable in Store: ${availableStock}\nRequested Amount: ${intendedQty}`,
+          value: '',
+          onConfirm: () => {
+            this.closeModal();
+            this.triggerSearchFocus();
+          }
+        });
+        return; 
+      }
+    }
+  }
+  this.basket.update((currentBasket) => {
+    const existingIndex = currentBasket.findIndex(item => String(item.product.id) === String(product.id) && !!item.isRefund === !!isRef);
+    const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
+
+    if (existingIndex > -1) {
+      const updatedBasket = [...currentBasket];
+      const existingItem = updatedBasket[existingIndex];
+      updatedBasket[existingIndex] = { ...existingItem, quantity: parseFloat((existingItem.quantity + incrementStep).toFixed(3)) };
+      return updatedBasket;
+    } else {
+      const initialQuantity = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
+      return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
+    }
+  });
+}
 
   public removeFromBasket(product: Product, isRefund: boolean = false): void {
     this.basket.update((currentBasket) => {
@@ -378,32 +392,59 @@ export class SalesService {
   }
 
   public scanBarcodeExact(query: string): boolean {
-    const queryLower = query.toLowerCase().trim();
-    const found = this.products().find(p => 
-      (p.barcode && p.barcode.toLowerCase() === queryLower) || 
-      (p.id && p.id.toString().toLowerCase() === queryLower) ||
-      (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase() === queryLower))
-    );
+  const queryLower = query.toLowerCase().trim();
+  const found = this.products().find(p => 
+    (p.barcode && p.barcode.toLowerCase() === queryLower) || 
+    (p.id && p.id.toString().toLowerCase() === queryLower) || 
+    (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase() === queryLower))
+  );
 
-    if (found) {
-      const isScaled = found.isWeighted === true || String(found.isWeighted).toLowerCase() === 'true';
-      if (isScaled) {
-        this.activeModal.set({
-          type: 'prompt', title: '⚖️ Scale Weight (kg)', message: `Enter the measured weight for ${found.name}:`, value: '1.000',
-          onConfirm: (val) => {
-            const weight = parseFloat(val);
-            if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
-            this.closeModal();
-            this.triggerSearchFocus();
-          }
-        });
-      } else {
-        this.addToBasket(found);
-      }
+  if (found) {
+    // ⛔ Check expiry before prompting for scale or adding
+    if (!this.isRefundMode() && this.isProductExpired(found.expire)) {
+      this.activeModal.set({
+        type: 'warning',
+        title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
+        message: `Το προϊόν "${found.name}" έχει λήξει στις ${found.expire}!\nΑπαγορεύεται η πώληση.`,
+        value: '',
+        onConfirm: () => {
+          this.closeModal();
+          this.triggerSearchFocus();
+        }
+      });
       return true;
     }
-    return false;
+
+    const isScaled = found.isWeighted === true || String(found.isWeighted).toLowerCase() === 'true';
+    if (isScaled) {
+      this.activeModal.set({
+        type: 'prompt', 
+        title: '⚖️ Scale Weight (kg)', 
+        message: `Enter the measured weight for ${found.name}:`, 
+        value: '1.000',
+        onConfirm: (val) => {
+          const weight = parseFloat(val);
+          if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
+          this.closeModal();
+          this.triggerSearchFocus();
+        }
+      });
+    } else {
+      this.addToBasket(found);
+    }
+    return true;
   }
+  return false;
+}
+
+  private isProductExpired(expireDate?: string): boolean {
+  if (!expireDate) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const exp = new Date(expireDate);
+  exp.setHours(0, 0, 0, 0);
+  return !isNaN(exp.getTime()) && exp.getTime() <= today.getTime();
+}
 
   public topSellingProducts = computed(() => {
     const itemsMap = new Map<string, { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number }>();

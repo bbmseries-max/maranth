@@ -10,7 +10,7 @@ import { ThemeService } from '../../shared/services/theme.service';
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, CurrencyPipe, DatePipe, SlicePipe, ShoppingBasketComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DatePipe, SlicePipe, ShoppingBasketComponent],
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
@@ -156,6 +156,23 @@ export class PosComponent implements OnInit, AfterViewInit {
     return 'safe';
   }
 
+  public checkExpiredGuard(prod: Product): boolean {
+  if (this.getExpireStatus(prod.expire) === 'danger') {
+    this.salesService.activeModal.set({
+      type: 'warning',
+      title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
+      message: `Το προϊόν "${prod.name}" έχει λήξει στις ${prod.expire}! Απαγορεύεται η πώληση.`,
+      value: '',
+      onConfirm: () => {
+        this.salesService.closeModal();
+        setTimeout(() => this.salesService.triggerSearchFocus(), 100);
+      }
+    });
+    return false; // Block addition
+  }
+  return true; // Safe to proceed
+}
+
   public getProductDisplay(name: string): { icon: string, text: string } {
     const nameLower = (name || '').toLowerCase();
     let icon = '📦';
@@ -202,41 +219,59 @@ export class PosComponent implements OnInit, AfterViewInit {
     return products;
   });
 
-  public onSearchEnter(event: Event): void {
-    event.preventDefault(); // Prevent page refresh
-    const inputEl = event.target as HTMLInputElement;
-    const query = inputEl.value.trim();
-    if (!query) return;
+public onSearchEnter(event: Event): void {
+  event.preventDefault();
+  const inputEl = event.target as HTMLInputElement;
+  const query = inputEl.value.trim();
+  if (!query) return;
 
-    const matchedExact = this.salesService.scanBarcodeExact(query);
-    if (matchedExact) {
-      this.searchQuery.set('');
-      inputEl.value = '';
-    }
-  }
+  // Find the product first to check expiry
+  const matchedProd = this.salesService.products().find(p => 
+    p.barcode === query || 
+    p.id.toString() === query || 
+    (p.altBarcodes && p.altBarcodes.includes(query))
+  );
 
-  public handleProductClick(prod: Product): void {
+  if (matchedProd && !this.checkExpiredGuard(matchedProd)) {
     this.searchQuery.set('');
-    if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
-
-    const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
-    if (isScaled) {
-      this.salesService.activeModal.set({
-        type: 'prompt',
-        title: '⚖️ Scale Weight (kg)',
-        message: `Enter the measured weight for ${prod.name}:`,
-        value: '1.000',
-        onConfirm: (val) => {
-          const weight = parseFloat(val);
-          if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
-          this.salesService.closeModal();
-          setTimeout(() => this.salesService.triggerSearchFocus(), 100);
-        }
-      });
-    } else {
-      this.salesService.addToBasket(prod);
-    }
+    inputEl.value = '';
+    return; // Block scanned expired item
   }
+
+  const matchedExact = this.salesService.scanBarcodeExact(query);
+  if (matchedExact) {
+    this.searchQuery.set('');
+    inputEl.value = '';
+  }
+}
+
+ public handleProductClick(prod: Product): void {
+  // 1. Guard check: Block expired items immediately
+  if (!this.checkExpiredGuard(prod)) {
+    return;
+  }
+
+  this.searchQuery.set('');
+  if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
+
+  const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
+  if (isScaled) {
+    this.salesService.activeModal.set({
+      type: 'prompt',
+      title: '⚖️ Scale Weight (kg)',
+      message: `Enter the measured weight for ${prod.name}:`,
+      value: '1.000',
+      onConfirm: (val) => {
+        const weight = parseFloat(val);
+        if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
+        this.salesService.closeModal();
+        setTimeout(() => this.salesService.triggerSearchFocus(), 100);
+      }
+    });
+  } else {
+    this.salesService.addToBasket(prod);
+  }
+}
 
   public formatMoney(amount: any): string {
     const num = Number(amount);
