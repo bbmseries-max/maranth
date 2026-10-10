@@ -5,7 +5,7 @@ export interface Product {
   stockQuantity: number;
   categoryId?: string;
   isActive?: boolean;
-  expire?: string;              // <-- We will use this!
+  expire?: string;    
   barcode?: string;
   altBarcodes?: string[];
   sku?: string;
@@ -16,7 +16,7 @@ export interface Product {
   status?: string;
   statusDate?: string;
   supplierId?: string;
-  minStockWarning?: number;     // <-- We will use this!
+  minStockWarning?: number;
   notes?: string;
   isWeighted?: boolean;
   imageUrl?: string;
