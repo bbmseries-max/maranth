@@ -131,6 +131,11 @@ export class SalesService {
       if (collectionName === 'transactions') {
         data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       }
+      if (collectionName === 'products') {
+        data.forEach((p: any) => {
+          p.isWeighted = p.isWeighted === true || String(p.isWeighted).trim().toLowerCase() === 'true';
+        });
+      }
 
       targetSignal.set(data);
     });
@@ -290,6 +295,7 @@ export class SalesService {
       return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
     }
   });
+  this.triggerSearchFocus();
 }
 
   public removeFromBasket(product: Product, isRefund: boolean = false): void {
@@ -391,16 +397,55 @@ export class SalesService {
     }
   }
 
-  public scanBarcodeExact(query: string): boolean {
-  const queryLower = query.toLowerCase().trim();
-  const found = this.products().find(p => 
-    (p.barcode && p.barcode.toLowerCase() === queryLower) || 
-    (p.id && p.id.toString().toLowerCase() === queryLower) || 
-    (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase() === queryLower))
-  );
+  public isProductWeighted(product?: Product | null): boolean {
+    if (!product) return false;
+    const raw: unknown = product.isWeighted;
+    return raw === true || String(raw).trim().toLowerCase() === 'true';
+  }
 
-  if (found) {
-    // ⛔ Check expiry before prompting for scale or adding
+  public isQrCodePayload(raw: string): boolean {
+    const val = raw.trim();
+    if (/^(https?:\/\/|www\.|WIFI:|MATMSG:|SMSTO:|tel:|mailto:)/i.test(val)) return true;
+    if (/[\/:?&=<>]/.test(val)) return true;
+    if (val.length > 20) return true;
+    return false;
+  }
+
+  public scanBarcodeExact(query: string): 'added' | 'qr_blocked' | 'not_found' {
+    const clean = String(query ?? '').replace(/[\r\n\t\s]+/g, '');
+    if (!clean) return 'not_found';
+
+    if (this.isQrCodePayload(clean)) {
+      this.triggerSearchFocus();
+      return 'qr_blocked';
+    }
+
+    const queryLower = clean.toLowerCase();
+    const noLeadingZeros = queryLower.replace(/^0+/, '');
+
+    const found = this.products().find(p => {
+      if (p.isActive === false) return false;
+
+      const pBarcode = String(p.barcode ?? '').replace(/[\r\n\t\s]+/g, '').toLowerCase();
+      const pId = String(p.id ?? '').trim().toLowerCase();
+      const alts = Array.isArray(p.altBarcodes)
+        ? p.altBarcodes.map(a => String(a ?? '').replace(/[\r\n\t\s]+/g, '').toLowerCase())
+        : typeof p.altBarcodes === 'string'
+          ? (p.altBarcodes as string).split(',').map(a => a.replace(/[\r\n\t\s]+/g, '').toLowerCase())
+          : [];
+
+      const codes = [pBarcode, pId, ...alts].filter(Boolean);
+
+      return codes.some(code =>
+        code === queryLower ||
+        (noLeadingZeros.length >= 4 && code.replace(/^0+/, '') === noLeadingZeros)
+      );
+    });
+
+    if (!found) {
+      return 'not_found';
+    }
+
     if (!this.isRefundMode() && this.isProductExpired(found.expire)) {
       this.activeModal.set({
         type: 'warning',
@@ -412,15 +457,14 @@ export class SalesService {
           this.triggerSearchFocus();
         }
       });
-      return true;
+      return 'added';
     }
 
-    const isScaled = found.isWeighted === true || String(found.isWeighted).toLowerCase() === 'true';
-    if (isScaled) {
+    if (this.isProductWeighted(found)) {
       this.activeModal.set({
-        type: 'prompt', 
-        title: '⚖️ Scale Weight (kg)', 
-        message: `Enter the measured weight for ${found.name}:`, 
+        type: 'prompt',
+        title: '⚖️ Scale Weight (kg)',
+        message: `Enter the measured weight for ${found.name}:`,
         value: '1.000',
         onConfirm: (val) => {
           const weight = parseFloat(val);
@@ -432,10 +476,9 @@ export class SalesService {
     } else {
       this.addToBasket(found);
     }
-    return true;
+
+    return 'added';
   }
-  return false;
-}
 
   private isProductExpired(expireDate?: string): boolean {
   if (!expireDate) return false;

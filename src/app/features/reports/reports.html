@@ -91,6 +91,23 @@
           <div class="text-3xl font-black text-amber-500 mt-1">{{ formatMoney(zReportStats().totalProfit) }}</div>
         </div>
       </div>
+      <div class="bg-panel p-5 rounded-xl shadow-sm border border-line border-l-4 border-l-amber-500 flex flex-col no-print transition-colors">
+  <div class="flex items-center justify-between gap-2">
+    <div class="text-[11px] text-muted font-extrabold uppercase tracking-wider">Estimated Net Profit</div>
+    @if (missingCostCount() > 0) {
+      <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/30"
+            title="Some sold products have €0 cost price in Inventory">
+        ⚠️ {{ missingCostCount() }} no cost
+      </span>
+    }
+  </div>
+  <div class="text-3xl font-black text-amber-500 mt-1">{{ formatMoney(zReportStats().totalProfit) }}</div>
+  @if (zReportStats().spoilageLoss > 0) {
+    <div class="text-[11px] font-bold text-red-500 mt-1">
+      Includes -{{ formatMoney(zReportStats().spoilageLoss) }} waste loss
+    </div>
+  }
+</div>
 
       <!-- Z-Report & Product Leaderboard Split -->
       <div class="flex flex-col lg:flex-row gap-6 mb-6 z-report-print-area items-start">
@@ -108,27 +125,33 @@
             </button>
           </div>
           <div class="flex flex-col gap-2.5 text-sm text-primary">
-            <div class="flex justify-between items-center py-2 border-b border-line">
-              <span class="text-muted font-semibold">Gross Taxable Sales:</span>
-              <span class="font-black">{{ formatMoney(totalRevenue()) }}</span>
-            </div>
-            <div class="flex justify-between items-center py-2 border-b border-line">
-              <span class="text-muted font-semibold">Tax pool liability (24% VAT):</span>
-              <span class="font-black text-amber-500">{{ formatMoney(totalRevenue() * 0.1935) }}</span>
-            </div>
-            <div class="flex justify-between items-center py-2 border-b border-line">
-              <span class="text-muted font-semibold">Net Sales (Excl. VAT):</span>
-              <span class="font-black">{{ formatMoney(totalRevenue() * 0.8065) }}</span>
-            </div>
-            <div class="flex justify-between items-center p-3 bg-base rounded-lg mt-2 border border-line">
-              <span class="font-black">Total Drawer Cash drops:</span>
-              <span class="font-black text-emerald-500 text-lg">{{ formatMoney(cashRevenue()) }}</span>
-            </div>
-            <div class="flex justify-between items-center p-3 bg-base rounded-lg border border-line">
-              <span class="font-black">Total Electronic Settlements:</span>
-              <span class="font-black text-violet-500 text-lg">{{ formatMoney(cardRevenue()) }}</span>
-            </div>
-          </div>
+  <div class="flex justify-between items-center py-2 border-b border-line">
+    <span class="text-muted font-semibold">Gross Taxable Sales:</span>
+    <span class="font-black">{{ formatMoney(zReportFinancials().grossTotal) }}</span>
+  </div>
+  <div class="flex justify-between items-center py-2 border-b border-line">
+    <span class="text-muted font-semibold">Total Collected VAT (Mixed Rates):</span>
+    <span class="font-black text-amber-500">{{ formatMoney(zReportFinancials().vatTotal) }}</span>
+  </div>
+  <div class="flex justify-between items-center py-2 border-b border-line">
+    <span class="text-muted font-semibold">Net Sales (Excl. VAT):</span>
+    <span class="font-black">{{ formatMoney(zReportFinancials().netTotal) }}</span>
+  </div>
+  <div class="flex justify-between items-center p-3 bg-base rounded-lg mt-2 border border-line">
+    <span class="font-black">Total Drawer Cash Sales:</span>
+    <span class="font-black text-emerald-500 text-lg">{{ formatMoney(cashRevenue()) }}</span>
+  </div>
+  <div class="flex justify-between items-center p-3 bg-base rounded-lg border border-line">
+    <span class="font-black">Total Electronic Settlements:</span>
+    <span class="font-black text-violet-500 text-lg">{{ formatMoney(cardRevenue()) }}</span>
+  </div>
+  @if (debitCreditRevenue() !== 0) {
+    <div class="flex justify-between items-center p-3 bg-base rounded-lg border border-line">
+      <span class="font-black">Store Credit / Debt (Τεφτέρι):</span>
+      <span class="font-black text-amber-500 text-lg">{{ formatMoney(debitCreditRevenue()) }}</span>
+    </div>
+  }
+</div>
         </div>
 
         <!-- Product Leaderboard -->
@@ -224,7 +247,7 @@
               </div>
               
               <div class="flex flex-col gap-2 mb-4 pb-3 border-b border-dashed border-line">
-                @for (item of tx.items; track item.product.id) {
+                @for (item of tx.items; track item.product.id + '_' + !!item.isRefund) {
                   <div class="flex justify-between text-sm text-primary">
                     <span class="font-bold">{{ item.product.name }} <span class="text-muted">(x{{ item.quantity }})</span></span>
                     <span class="font-black">{{ formatMoney(item.product.price * item.quantity) }}</span>
@@ -233,7 +256,7 @@
               </div>
               
               <div class="flex flex-col gap-1 text-[13px] font-semibold text-muted text-right">
-                <div>Computed VAT (24%): {{ formatMoney(tx.taxAmount || 0) }}</div>
+                <div>Computed VAT : {{ formatMoney(tx.taxAmount || 0) }}</div>
                 <div class="text-base font-black text-primary mt-2 pt-2 border-t border-line">
                   Paid Total: <span class="text-emerald-500">{{ formatMoney(tx.grandTotal) }}</span>
                 </div>
@@ -333,25 +356,27 @@
           </div>
 
           <!-- Cash Activity Log -->
-          <div class="flex-1 overflow-y-auto border border-line rounded-xl p-2 bg-base mb-4 pr-1">
-            <div class="text-[10px] font-extrabold text-muted uppercase tracking-wider mb-2 ml-1">Today's Activity</div>
-            @for (log of cashLogs(); track log.id) {
-              <div class="flex justify-between items-center p-1.5 border-b border-line text-xs">
-                <div class="flex items-center gap-2">
-                  @if (log.type === 'IN') {
-                    <span class="text-green-500 font-black">+{{ formatMoney(log.amount) }}</span>
-                  }
-                  @if (log.type === 'OUT') {
-                    <span class="text-red-500 font-black">-{{ formatMoney(log.amount) }}</span>
-                  }
-                  <span class="text-primary font-bold">{{ log.reason }}</span>
-                </div>
-                <span class="text-[10px] font-bold text-muted">{{ log.timestamp | date:'HH:mm' }}</span>
-              </div>
-            } @empty {
-              <div class="text-center text-muted font-bold italic py-4 text-xs">No cash movements yet today.</div>
-            }
-          </div>
+<div class="flex-1 overflow-y-auto border border-line rounded-xl p-2 bg-base mb-4 pr-1">
+  <div class="text-[10px] font-extrabold text-muted uppercase tracking-wider mb-2 ml-1">
+    Activity ({{ selectedDate() }})
+  </div>
+  @for (log of filteredCashLogs(); track log.id) {
+    <div class="flex justify-between items-center p-1.5 border-b border-line text-xs">
+      <div class="flex items-center gap-2">
+        @if (log.type === 'IN') {
+          <span class="text-green-500 font-black">+{{ formatMoney(log.amount) }}</span>
+        }
+        @if (log.type === 'OUT') {
+          <span class="text-red-500 font-black">-{{ formatMoney(log.amount) }}</span>
+        }
+        <span class="text-primary font-bold">{{ log.reason }}</span>
+      </div>
+      <span class="text-[10px] font-bold text-muted">{{ log.timestamp | date:'HH:mm' }}</span>
+    </div>
+  } @empty {
+    <div class="text-center text-muted font-bold italic py-4 text-xs">No cash movements for this date.</div>
+  }
+</div>
 
           <!-- Action Buttons -->
           <div class="flex gap-2 mt-auto">

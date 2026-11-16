@@ -79,122 +79,145 @@ export class ShoppingBasketComponent {
 
   public closeReturnModal(): void {
     this.isReturnModalOpen.set(false);
+    this.salesService.triggerSearchFocus();
   }
 
   /**
    * Fires the return cart through the BroadcastChannel to Maranth Timologio
    */
-  public async dispatchToTimologio(): Promise<void> {
-  const basket = this.salesService.basket();
-  if (basket.length === 0) return;
+ public async dispatchToTimologio(): Promise<void> {
+    const basket = this.salesService.basket();
+    if (basket.length === 0) return;
 
-  this.isDispatching.set(true);
-  this.dispatchStatus.set('Σύνδεση με το Τιμολόγιο...');
+    this.isDispatching.set(true);
+    this.dispatchStatus.set('Σύνδεση με το Τιμολόγιο...');
 
-  const supplier: SupplierOption = this.customAfm().trim()
-    ? {
-        afm: this.customAfm().trim(),
-        legalName: this.customLegalName().trim() || 'ΠΡΟΜΗΘΕΥΤΗΣ',
-        doy: 'ΑΘΗΝΩΝ',
-        address: { street: 'Έδρα', number: '1', postalCode: '10000', city: 'Αθήνα' }
-      }
-    : this.selectedSupplier();
-
-  const tenantId = 'tenant_minimarket';
-  const messageId = crypto.randomUUID();
-
-  const payload = {
-    version: '1.0',
-    tenantId: tenantId,
-    messageId: messageId,
-    documentType: '9.1',
-    movementPurpose: 6, // 6 = Επιστροφή
-    supplier: supplier,
-    transport: {
-      vehiclePlate: '' // Stays empty to trigger validation check
-    },
-    items: basket.map((b) => ({
-      barcode: (b.product as any).barcode || '',
-      description: b.product.name + (b.isRefund ? ' (Επιστροφή)' : ''),
-      quantity: b.quantity,
-      unitPrice: Number(b.product.price || 0),
-      vatRate: (b.product as any).taxRate ?? 13,
-      reason: b.isRefund ? 'DEFECTIVE' : 'RETURN'
-    }))
-  };
-
-  // Resolve Timologio URL dynamically
-const isPosLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-// While Timologio is only local:
-const timologioOrigin = isPosLocal 
-  ? 'http://localhost:4201' 
-  : 'https://maranth-timologio.vercel.app'; // Once deployed on Vercel, change this to 'https://maranth-timologio.vercel.app'
-
-const encodedPayload = encodeURIComponent(
-  btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
-);
-
-const timologioWin = window.open(
-  `${timologioOrigin}/?handover=${encodedPayload}`,
-  'maranth_timologio'
-);
-  // 2. Setup the cross-port ACK promise with retry pulsing
-  let intervalId: any;
-
-const ackPromise = new Promise<boolean>((resolve, reject) => {
-    const handleAck = (event: MessageEvent) => {
-      if (event.origin !== timologioOrigin) return;
-
-      if (event.data?.type === 'MARANTH_HANDOVER_ACK' && event.data?.correlationId === messageId) {
-        clearInterval(intervalId);
-        window.removeEventListener('message', handleAck);
-        if (event.data.status === 'ACCEPTED') {
-          resolve(true);
-        } else {
-          reject(new Error(event.data.error || 'Απορρίφθηκε από το Τιμολόγιο'));
+    const supplier: SupplierOption = this.customAfm().trim()
+      ? {
+          afm: this.customAfm().trim(),
+          legalName: this.customLegalName().trim() || 'ΠΡΟΜΗΘΕΥΤΗΣ',
+          doy: 'ΑΘΗΝΩΝ',
+          address: { street: 'Έδρα', number: '1', postalCode: '10564', city: 'ΑΘΗΝΑ' }
         }
-      }
+      : this.selectedSupplier();
+
+    const tenantId = 'tenant_minimarket';
+    const messageId = crypto.randomUUID();
+
+    // Set documentType to 9.3 (Autonomous Dispatch Note for Supplier Returns)
+    const payload = {
+      version: '1.0',
+      tenantId: tenantId,
+      messageId: messageId,
+      documentType: '9.3',
+      movementPurpose: 4, // 4 = Επιστροφή in AADE table
+      supplier: supplier,
+      movement: {
+        movePurpose: 4,
+        dispatchDateTime: new Date().toISOString().substring(0, 16),
+        vehicleNumber: ''
+      },
+      transport: {
+        vehiclePlate: ''
+      },
+      items: basket.map((b) => ({
+        barcode: (b.product as any).barcode || '',
+        description: b.product.name + (b.isRefund ? ' (Επιστροφή)' : ''),
+        quantity: b.quantity,
+        unitPrice: Number(b.product.price || 0),
+        vatRate: (b.product as any).taxRate ?? 13,
+        reason: b.isRefund ? 'DEFECTIVE' : 'RETURN'
+      }))
     };
 
-    window.addEventListener('message', handleAck);
-
-    // Timeout safety (increased slightly to 6s for initial cold tab loads)
-    setTimeout(() => {
-      clearInterval(intervalId);
-      window.removeEventListener('message', handleAck);
-      reject(new Error('Το Maranth Timologio δεν αποκρίθηκε. Βεβαιωθείτε ότι είναι ανοιχτό στο ' + timologioOrigin));
-    }, 6000);
-  });
-
-  // 3. Pulse postMessage every 250ms until ACK arrives (handles tabs that are already open or still hydrating)
-  intervalId = setInterval(() => {
-    if (timologioWin) {
-      timologioWin.postMessage(
-        {
-          type: 'MARANTH_HANDOVER_REQUEST',
+    // 1. Dual Dispatch: BroadcastChannel (for already-open tabs) + Window Open (for fresh tab)
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const bus = new BroadcastChannel('maranth_cart_handover_bus');
+        bus.postMessage({
+          type: 'MARANTH_CART_HANDOVER',
           payload: payload,
           correlationId: messageId
-        },
-        timologioOrigin
-      );
-    }
-  }, 250);
-
-  try {
-    await ackPromise;
-    this.dispatchStatus.set('✓ Επιτυχής αποστολή!');
-
-    setTimeout(() => {
-      if (typeof (this.salesService as any).clearBasket === 'function') {
-        (this.salesService as any).clearBasket();
+        });
+        setTimeout(() => bus.close(), 10000);
+      } catch (e) {
+        console.warn('[Cart Dispatch] BroadcastChannel error:', e);
       }
+    }
+
+    // Resolve Timologio URL dynamically
+    const isPosLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const timologioOrigin = isPosLocal 
+      ? 'http://localhost:4201' 
+      : 'https://maranth-timologio.vercel.app';
+
+    const encodedPayload = encodeURIComponent(
+      btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+    );
+
+    const timologioWin = window.open(
+      `${timologioOrigin}/?handover=${encodedPayload}`,
+      'maranth_timologio'
+    );
+
+    // 2. Cross-Window ACK Listener with Retry Pulsing
+    let intervalId: any;
+
+    const ackPromise = new Promise<boolean>((resolve, reject) => {
+      const handleAck = (event: MessageEvent) => {
+        if (event.origin !== timologioOrigin && !event.origin.includes('localhost') && !event.origin.includes('127.0.0.1')) {
+          return;
+        }
+
+        if (event.data?.type === 'MARANTH_HANDOVER_ACK' && event.data?.correlationId === messageId) {
+          clearInterval(intervalId);
+          window.removeEventListener('message', handleAck);
+          if (event.data.status === 'ACCEPTED') {
+            resolve(true);
+          } else {
+            reject(new Error(event.data.error || 'Απορρίφθηκε από το Τιμολόγιο'));
+          }
+        }
+      };
+
+      window.addEventListener('message', handleAck);
+
+      // Timeout safety (6s for cold tab boot)
+      setTimeout(() => {
+        clearInterval(intervalId);
+        window.removeEventListener('message', handleAck);
+        reject(new Error('Το Maranth Timologio δεν αποκρίθηκε. Βεβαιωθείτε ότι είναι ανοιχτό στο ' + timologioOrigin));
+      }, 6000);
+    });
+
+    // 3. Pulse postMessage every 250ms until ACK arrives
+    intervalId = setInterval(() => {
+      if (timologioWin && !timologioWin.closed) {
+        timologioWin.postMessage(
+          {
+            type: 'MARANTH_HANDOVER_REQUEST',
+            payload: payload,
+            correlationId: messageId
+          },
+          timologioOrigin
+        );
+      }
+    }, 250);
+
+    try {
+      await ackPromise;
+      this.dispatchStatus.set('✓ Επιτυχής αποστολή!');
+
+      setTimeout(() => {
+        if (typeof (this.salesService as any).clearBasket === 'function') {
+          (this.salesService as any).clearBasket();
+        }
+        this.isDispatching.set(false);
+        this.closeReturnModal();
+      }, 800);
+    } catch (err: any) {
       this.isDispatching.set(false);
-      this.isReturnModalOpen.set(false);
-    }, 800);
-  } catch (err: any) {
-    this.isDispatching.set(false);
-    this.dispatchStatus.set(err.message || 'Σφάλμα διαβίβασης');
+      this.dispatchStatus.set(err.message || 'Σφάλμα διαβίβασης');
+    }
   }
-}
 }

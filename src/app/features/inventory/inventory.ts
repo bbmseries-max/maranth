@@ -1,19 +1,21 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, ElementRef, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product, Category, Supplier } from '../../shared/services/pos-data.models';
 import { ThemeService } from '../../shared/services/theme.service';
+import { PosSearchFocusDirective } from '../../shared/directives/pos-search-focus.directive';
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, PosSearchFocusDirective, RouterLink],
   templateUrl: './inventory.html',
   styleUrls: ['./inventory.css']
 })
-export class InventoryComponent {
+export class InventoryComponent implements AfterViewInit {
+  @ViewChild('invSearchInput') invSearchInput?: ElementRef<HTMLInputElement>;
   public salesService = inject(SalesService);
 
   // ⭐ TAB CONTROLLER
@@ -50,7 +52,54 @@ export class InventoryComponent {
   public editingSupplierId: string | null = null;
   public supplierForm: Partial<Supplier> = {};
 
+  public filteredSuppliers = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    if (!q) return this.suppliers();
+    return this.suppliers().filter(s =>
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.contact && s.contact.toLowerCase().includes(q)) ||
+      (s.phone && String(s.phone).toLowerCase().includes(q))
+    );
+  });
+
+  public filteredCategories = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    if (!q) return this.categories();
+    return this.categories().filter(c =>
+      (c.name && c.name.toLowerCase().includes(q)) ||
+      (c.id && String(c.id).toLowerCase().includes(q))
+    );
+  });
+
   constructor(public themeService: ThemeService) {}
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.invSearchInput?.nativeElement?.focus();
+    }, 100);
+  }
+
+  public isAnyEditFormOpen(): boolean {
+    return (
+      this.editingProductId !== null ||
+      this.editingCategoryId !== null ||
+      this.editingSupplierId !== null ||
+      this.editingStaffId() !== null
+    );
+  }
+
+  public onInventorySearchEnter(event: Event): void {
+    event.preventDefault();
+    const inputEl = event.target as HTMLInputElement;
+    const query = inputEl.value.trim();
+    if (!query) return;
+
+    // Block accidental QR code scans from polluting the search filter
+    if (this.salesService.isQrCodePayload(query)) {
+      this.searchQuery.set('');
+      inputEl.value = '';
+    }
+  }
 
   // ==========================================
   // VAT / TAX NORMALIZATION HELPERS
@@ -146,6 +195,14 @@ public filteredProducts = computed(() => {
         const altBarcodeMatch = prod.altBarcodes && prod.altBarcodes.some(alt => alt.toLowerCase().includes(query));
         if (!nameMatch && !barcodeMatch && !idMatch && !altBarcodeMatch) return false;
       }
+
+      if (query) {
+          const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
+          const barcodeMatch = prod.barcode && String(prod.barcode).toLowerCase().includes(query);
+          const idMatch = prod.id && String(prod.id).toLowerCase().includes(query);
+          const altBarcodeMatch = Array.isArray(prod.altBarcodes) && prod.altBarcodes.some(alt => String(alt).toLowerCase().includes(query));
+          if (!nameMatch && !barcodeMatch && !idMatch && !altBarcodeMatch) return false;
+        }
 
       return true;
     });
@@ -364,7 +421,7 @@ public filteredProducts = computed(() => {
   public promptLogWaste(product: any): void {
     const qtyStr = window.prompt(`🗑️ LOG WASTE: ${product.name}\n\nEnter the quantity wasted/lost:`);
     if (!qtyStr) return;
-    
+
     const quantity = parseFloat(qtyStr.replace(',', '.'));
     if (isNaN(quantity) || quantity <= 0) return;
 
@@ -375,10 +432,18 @@ public filteredProducts = computed(() => {
     }
 
     const reason = window.prompt('Enter the reason (e.g., Dropped, Expired, Rotten):') || 'Unspecified Spoilage';
+    const updatedStock = parseFloat((currentStock - quantity).toFixed(3));
 
     this.salesService.logSpoilage(product, quantity, reason);
-    product.stockQuantity = currentStock - quantity;
-    
+    product.stockQuantity = updatedStock;
+
+    if (product.id && product.id !== 'NEW') {
+      this.salesService.saveProduct(product.id, {
+        ...product,
+        stockQuantity: updatedStock
+      } as Product);
+    }
+
     alert(`✅ Logged ${quantity} of ${product.name} as waste.`);
   }
 
@@ -411,4 +476,129 @@ public filteredProducts = computed(() => {
     link.click();
     document.body.removeChild(link);
   }
+
+  public printInventoryCountSheet(): void {
+    const activeProducts = this.products()
+      .filter(p => p.isActive !== false)
+      .sort((a, b) => {
+        const catA = this.salesService.getCategoryName(a.categoryId);
+        const catB = this.salesService.getCategoryName(b.categoryId);
+        return catA.localeCompare(catB) || (a.name || '').localeCompare(b.name || '');
+      });
+
+    if (activeProducts.length === 0) {
+      alert('No active products available to print.');
+      return;
+    }
+
+    const escapeHtml = (str: any) =>
+      String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const totalSystemUnits = activeProducts.reduce((sum, p) => sum + (Number(p.stockQuantity) || 0), 0);
+    const totalCostValuation = activeProducts.reduce((sum, p) => {
+      const qty = Number(p.stockQuantity) || 0;
+      const cost = Number(p.costPrice ?? p.purchasePrice ?? 0) || 0;
+      return sum + qty * cost;
+    }, 0);
+
+    const rowsHtml = activeProducts
+      .map((p, index) => {
+        const unit = this.salesService.isProductWeighted(p) ? 'kg' : 'pcs';
+        const cost = Number(p.costPrice ?? p.purchasePrice ?? 0) || 0;
+        const qty = Number(p.stockQuantity) || 0;
+        const catName = this.salesService.getCategoryName(p.categoryId);
+
+        return `
+          <tr>
+            <td class="center">${index + 1}</td>
+            <td>${escapeHtml(catName)}</td>
+            <td class="mono">${escapeHtml(p.barcode || p.id)}</td>
+            <td><strong>${escapeHtml(p.name)}</strong></td>
+            <td class="right">${qty} ${unit}</td>
+            <td class="count-box"></td>
+            <td class="count-box"></td>
+            <td class="right">€${cost.toFixed(2)}</td>
+            <td class="right">€${(qty * cost).toFixed(2)}</td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const currentYear = new Date().getFullYear();
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Ετήσια Απογραφή Αποθήκης ${currentYear} - Maranth POS</title>
+          <style>
+            @page { size: A4 landscape; margin: 12mm; }
+            body { font-family: Arial, sans-serif; color: #111; font-size: 11px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 12px; }
+            .header h1 { margin: 0; font-size: 18px; }
+            .meta { text-align: right; font-size: 11px; line-height: 1.4; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #999; padding: 5px 6px; }
+            th { background: #f1f5f9; font-weight: bold; text-align: left; font-size: 10px; text-transform: uppercase; }
+            .center { text-align: center; }
+            .right { text-align: right; }
+            .mono { font-family: monospace; font-size: 10px; }
+            .count-box { width: 75px; background: #fafafa; }
+            .summary { margin-top: 14px; display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; border-top: 2px solid #111; padding-top: 8px; }
+            .signatures { margin-top: 28px; display: flex; justify-content: space-between; }
+            .sig-line { width: 220px; border-top: 1px solid #333; text-align: center; padding-top: 4px; font-size: 11px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1>🍊 MARANTH POS — ΦΥΛΛΟ ΕΤΗΣΙΑΣ ΑΠΟΓΡΑΦΗΣ (${currentYear})</h1>
+              <div>Σύνολο Ενεργών Κωδικών: <strong>${activeProducts.length}</strong></div>
+            </div>
+            <div class="meta">
+              <div><strong>Ημερομηνία Εκτύπωσης:</strong> ${new Date().toLocaleString('el-GR')}</div>
+              <div><strong>Υπεύθυνος:</strong> ${escapeHtml(this.salesService.currentCashier() || 'Admin')}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th class="center">#</th>
+                <th>Κατηγορία</th>
+                <th>Barcode / SKU</th>
+                <th>Περιγραφή Είδους</th>
+                <th class="right">Υπόλοιπο POS</th>
+                <th class="center">Φυσική Καταμέτρηση</th>
+                <th class="center">Διαφορά (+/-)</th>
+                <th class="right">Τιμή Κόστους</th>
+                <th class="right">Αξία Αποθέματος</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div class="summary">
+            <div>Συνολικές Μονάδες Συστήματος: ${totalSystemUnits.toFixed(2)}</div>
+            <div>Συνολική Αποτίμηση Κόστους: €${totalCostValuation.toFixed(2)}</div>
+          </div>
+
+          <div class="signatures">
+            <div class="sig-line">Υπογραφή Καταμετρητή</div>
+            <div class="sig-line">Υπογραφή Υπευθύνου Καταστήματος</div>
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }
+  
 }

@@ -1,30 +1,41 @@
-import { Component, OnInit, AfterViewInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe, SlicePipe } from '@angular/common';
+import { Component, AfterViewInit, inject, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
+import { CommonModule, DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
 import { ThemeService } from '../../shared/services/theme.service';
+import { PosSearchFocusDirective } from '../../shared/directives/pos-search-focus.directive';
 
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DatePipe, SlicePipe, ShoppingBasketComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    DatePipe,
+    SlicePipe,
+    ShoppingBasketComponent,
+    PosSearchFocusDirective
+  ],
   templateUrl: './pos.html',
   styleUrls: ['./pos.css']
 })
-export class PosComponent implements OnInit, AfterViewInit {
+export class PosComponent implements AfterViewInit {
   public salesService = inject(SalesService);
   public themeService = inject(ThemeService);
   public router = inject(Router);
 
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
+  @ViewChild(ShoppingBasketComponent) basketComponent?: ShoppingBasketComponent;
 
   public searchQuery = signal<string>('');
   public selectedCategoryId = signal<string>('ALL');
-  public isSidebarMobileOpen = signal<boolean>(false); 
+  public isSidebarMobileOpen = signal<boolean>(false);
   public isMobileBasketOpen = signal<boolean>(false);
+  private scanTimer: any = null;
 
   // Quick edit product modal state
   public editingProduct = signal<Product | null>(null);
@@ -38,46 +49,28 @@ export class PosComponent implements OnInit, AfterViewInit {
     typeof localStorage !== 'undefined' ? localStorage.getItem('maranth_daily_note') || '' : ''
   );
 
+  // Combined modal check for directive focus blocking
+  public isAnyLocalModalOpen = computed(() => {
+    return !!this.editingProduct() || !!this.basketComponent?.isReturnModalOpen();
+  });
+
   constructor() {
-    // Auto-save daily note to LocalStorage
     effect(() => {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('maranth_daily_note', this.dailyNote());
       }
     });
 
-    // Auto-focus search input when trigger changes
-    effect(() => {
-      const trigger = this.salesService.focusSearchTrigger();
-      if (trigger > 0 && !this.salesService.activeModal() && !this.editingProduct() && this.searchInput?.nativeElement) {
-        setTimeout(() => {
-          this.searchQuery.set('');
-          this.searchInput.nativeElement.value = '';
-          this.searchInput.nativeElement.focus();
-        }, 50);
-      }
-    });
-
-    // Auto-focus search input when basket becomes empty
     effect(() => {
       if (this.salesService.basket().length === 0) {
         this.isMobileBasketOpen.set(false);
-        setTimeout(() => {
-          this.searchQuery.set('');
-          if (this.searchInput?.nativeElement) {
-            this.searchInput.nativeElement.value = '';
-            this.searchInput.nativeElement.focus();
-          }
-        }, 50);
       }
-    }, { allowSignalWrites: true });
+    });
   }
-
-  ngOnInit(): void {}
 
   ngAfterViewInit(): void {
     setTimeout(() => {
-      if (this.searchInput?.nativeElement) this.searchInput.nativeElement.focus();
+      this.searchInput?.nativeElement?.focus();
     }, 100);
   }
 
@@ -85,6 +78,7 @@ export class PosComponent implements OnInit, AfterViewInit {
     this.selectedCategoryId.set(catId);
     this.searchQuery.set('');
     this.isSidebarMobileOpen.set(false);
+    this.salesService.triggerSearchFocus();
   }
 
   public openQuickEdit(prod: Product, event: Event): void {
@@ -96,6 +90,7 @@ export class PosComponent implements OnInit, AfterViewInit {
   public closeQuickEdit(): void {
     this.editingProduct.set(null);
     this.editForm = {};
+    this.salesService.triggerSearchFocus();
   }
 
   public saveQuickEdit(): void {
@@ -116,6 +111,11 @@ export class PosComponent implements OnInit, AfterViewInit {
   public printDailyNote(): void {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
+      const safeNote = (this.dailyNote() || 'Δεν υπάρχουν σημειώσεις.')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
       printWindow.document.write(`
         <html>
           <head>
@@ -130,7 +130,7 @@ export class PosComponent implements OnInit, AfterViewInit {
             <h2>🍊 Maranth POS - Σημειώσεις Βάρδιας / Ημέρας</h2>
             <p><strong>Ημερομηνία:</strong> ${new Date().toLocaleString('el-GR')}</p>
             <hr />
-            <pre>${this.dailyNote() || 'Δεν υπάρχουν σημειώσεις.'}</pre>
+            <pre>${safeNote}</pre>
           </body>
         </html>
       `);
@@ -157,23 +157,23 @@ export class PosComponent implements OnInit, AfterViewInit {
   }
 
   public checkExpiredGuard(prod: Product): boolean {
-  if (this.getExpireStatus(prod.expire) === 'danger') {
-    this.salesService.activeModal.set({
-      type: 'warning',
-      title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
-      message: `Το προϊόν "${prod.name}" έχει λήξει στις ${prod.expire}! Απαγορεύεται η πώληση.`,
-      value: '',
-      onConfirm: () => {
-        this.salesService.closeModal();
-        setTimeout(() => this.salesService.triggerSearchFocus(), 100);
-      }
-    });
-    return false; // Block addition
+    if (this.getExpireStatus(prod.expire) === 'danger') {
+      this.salesService.activeModal.set({
+        type: 'warning',
+        title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
+        message: `Το προϊόν "${prod.name}" έχει λήξει στις ${prod.expire}! Απαγορεύεται η πώληση.`,
+        value: '',
+        onConfirm: () => {
+          this.salesService.closeModal();
+          setTimeout(() => this.salesService.triggerSearchFocus(), 100);
+        }
+      });
+      return false;
+    }
+    return true;
   }
-  return true; // Safe to proceed
-}
 
-  public getProductDisplay(name: string): { icon: string, text: string } {
+  public getProductDisplay(name: string): { icon: string; text: string } {
     const nameLower = (name || '').toLowerCase();
     let icon = '📦';
     if (nameLower.includes('τοματ') || nameLower.includes('tomat')) icon = '🍅';
@@ -193,7 +193,9 @@ export class PosComponent implements OnInit, AfterViewInit {
   });
 
   public weightedProducts = computed(() => {
-    return this.salesService.products().filter(p => p.isActive !== false && (p.isWeighted === true || String(p.isWeighted) === 'true'));
+    return this.salesService.products().filter(
+      p => p.isActive !== false && this.salesService.isProductWeighted(p)
+    );
   });
 
   public filteredCatalogProducts = computed(() => {
@@ -201,77 +203,86 @@ export class PosComponent implements OnInit, AfterViewInit {
     const categoryId = this.selectedCategoryId();
     let products = this.salesService.products().filter(p => p.isActive !== false);
 
-    // Filter by category if query is empty
     if (categoryId !== 'ALL' && !query) {
       products = products.filter(p => p.categoryId === categoryId);
     }
 
-    // Filter by search query across name, barcode, ID, and altBarcodes
     if (query) {
-      products = products.filter(p => 
-        (p.name && p.name.toLowerCase().includes(query)) || 
-        (p.barcode && p.barcode.toLowerCase().includes(query)) ||
-        (p.id && p.id.toString().toLowerCase().includes(query)) ||
-        (p.altBarcodes && p.altBarcodes.some(alt => alt.toLowerCase().includes(query)))
+      products = products.filter(p =>
+        (p.name && p.name.toLowerCase().includes(query)) ||
+        (p.barcode && String(p.barcode).toLowerCase().includes(query)) ||
+        (p.id && String(p.id).toLowerCase().includes(query)) ||
+        (Array.isArray(p.altBarcodes) && p.altBarcodes.some(alt => String(alt).toLowerCase().includes(query)))
       );
     }
 
     return products;
   });
 
-public onSearchEnter(event: Event): void {
-  event.preventDefault();
-  const inputEl = event.target as HTMLInputElement;
-  const query = inputEl.value.trim();
-  if (!query) return;
+  public onSearchInput(value: string): void {
+    this.searchQuery.set(value);
 
-  // Find the product first to check expiry
-  const matchedProd = this.salesService.products().find(p => 
-    p.barcode === query || 
-    p.id.toString() === query || 
-    (p.altBarcodes && p.altBarcodes.includes(query))
-  );
+    if (this.scanTimer) clearTimeout(this.scanTimer);
+    const trimmed = value.trim();
+    if (trimmed.length < 4) return;
 
-  if (matchedProd && !this.checkExpiredGuard(matchedProd)) {
-    this.searchQuery.set('');
-    inputEl.value = '';
-    return; // Block scanned expired item
-  }
+    this.scanTimer = setTimeout(() => {
+      // Extract trailing barcode if old search text was sitting in front of a new scan
+      const trailingCode = trimmed.match(/([0-9A-Za-z\-]{4,})$/)?.[1] || trimmed;
+      const result = this.salesService.scanBarcodeExact(trailingCode);
 
-  const matchedExact = this.salesService.scanBarcodeExact(query);
-  if (matchedExact) {
-    this.searchQuery.set('');
-    inputEl.value = '';
-  }
-}
-
- public handleProductClick(prod: Product): void {
-  // 1. Guard check: Block expired items immediately
-  if (!this.checkExpiredGuard(prod)) {
-    return;
-  }
-
-  this.searchQuery.set('');
-  if (this.searchInput?.nativeElement) this.searchInput.nativeElement.value = '';
-
-  const isScaled = prod.isWeighted === true || String(prod.isWeighted).toLowerCase() === 'true';
-  if (isScaled) {
-    this.salesService.activeModal.set({
-      type: 'prompt',
-      title: '⚖️ Scale Weight (kg)',
-      message: `Enter the measured weight for ${prod.name}:`,
-      value: '1.000',
-      onConfirm: (val) => {
-        const weight = parseFloat(val);
-        if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
-        this.salesService.closeModal();
-        setTimeout(() => this.salesService.triggerSearchFocus(), 100);
+      if (result === 'added' || result === 'qr_blocked') {
+        this.searchQuery.set('');
+        if (this.searchInput?.nativeElement) {
+          this.searchInput.nativeElement.value = '';
+        }
+        this.salesService.triggerSearchFocus();
       }
-    });
-  } else {
-    this.salesService.addToBasket(prod);
+    }, 100);
   }
-}
+
+  public onSearchEnter(event: Event): void {
+    event.preventDefault();
+    if (this.scanTimer) clearTimeout(this.scanTimer);
+
+    const inputEl = event.target as HTMLInputElement;
+    const raw = inputEl.value.trim();
+    if (!raw) return;
+
+    const trailingCode = raw.match(/([0-9A-Za-z\-]{4,})$/)?.[1] || raw;
+    const result = this.salesService.scanBarcodeExact(trailingCode);
+
+    if (result === 'added' || result === 'qr_blocked' || /^\d{4,}$/.test(trailingCode)) {
+      this.searchQuery.set('');
+      inputEl.value = '';
+    }
+
+    this.salesService.triggerSearchFocus();
+  }
+
+  public handleProductClick(prod: Product): void {
+    if (!this.checkExpiredGuard(prod)) {
+      return;
+    }
+
+    // Keep searchQuery intact so multiple similar search results remain visible!
+    if (this.salesService.isProductWeighted(prod)) {
+      this.salesService.activeModal.set({
+        type: 'prompt',
+        title: '⚖️ Scale Weight (kg)',
+        message: `Enter the measured weight for ${prod.name}:`,
+        value: '1.000',
+        onConfirm: (val) => {
+          const weight = parseFloat(val);
+          if (!isNaN(weight) && weight > 0) this.salesService.addToBasket(prod, undefined, weight);
+          this.salesService.closeModal();
+          this.salesService.triggerSearchFocus();
+        }
+      });
+    } else {
+      this.salesService.addToBasket(prod);
+    }
+  }
 
   public formatMoney(amount: any): string {
     const num = Number(amount);

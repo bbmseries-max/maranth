@@ -53,14 +53,40 @@ export class ReportsComponent {
   public filteredTransactions = computed(() => {
     const dateFilter = this.selectedDate();
     return this.salesService.sortedTransactions().filter(tx => {
-      const txDate = new Date(tx.timestamp).toISOString().split('T')[0];
-      return txDate === dateFilter;
+      return this.toLocalDateStr(tx.timestamp) === dateFilter;
     });
   });
 
   public totalRevenue = computed(() => {
     return this.filteredTransactions().reduce((sum, tx) => sum + tx.grandTotal, 0);
   });
+
+  // 1. Local YYYY-MM-DD formatter (prevents UTC midnight shift in Greece)
+  private toLocalDateStr(dateInput: string | Date): string {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // 2. Unified Net Cost lookup (checks live catalog first, then transaction snapshot)
+  private getUnitNetCost(product: any): number {
+    if (!product) return 0;
+    const liveProd = this.salesService.products().find(p => String(p.id) === String(product.id)) as any;
+    const src = liveProd || product;
+    const rawCost =
+      src.costPrice ??
+      src.purchasePrice ??
+      src.wholesalePrice ??
+      src.buyingPrice ??
+      product.costPrice ??
+      product.purchasePrice ??
+      0;
+    const parsed = Number(rawCost);
+    return isNaN(parsed) ? 0 : parsed;
+  }
 
 // 1. Cash collected
 public cashRevenue = computed(() => {
@@ -91,18 +117,33 @@ public actualCollectedRevenue = computed(() => {
   public totalSalesCount = computed(() => this.filteredTransactions().length);
 
   public zReportStats = computed(() => {
-    let totalProfit = 0;
+    let salesProfit = 0;
+
     this.filteredTransactions().forEach(tx => {
       tx.items.forEach(item => {
-        const wholesale = item.product.purchasePrice || 0;
-        const grossRetail = item.product.price || 0;
+        const unitCost = this.getUnitNetCost(item.product);
+        const grossRetail = Number(item.product.price) || 0;
         const divisor = this.getTaxDivisor(item.product);
         const netRetail = grossRetail / divisor;
         const qty = item.isRefund ? -item.quantity : item.quantity;
-        totalProfit += (netRetail - wholesale) * qty;
+        salesProfit += (netRetail - unitCost) * qty;
       });
     });
-    return { totalProfit };
+
+    // Also deduct today's logged spoilage/waste cost
+    const targetDate = this.selectedDate();
+    let spoilageLoss = 0;
+    (this.salesService.spoilageLogs() || []).forEach((log: any) => {
+      if (log.timestamp && this.toLocalDateStr(log.timestamp) === targetDate) {
+        const prod = this.salesService.products().find(
+          p => String(p.id) === String(log.productId) || p.name === log.productName
+        );
+        spoilageLoss += (Number(log.quantity) || 0) * this.getUnitNetCost(prod);
+      }
+    });
+
+    const totalProfit = Math.round((salesProfit - spoilageLoss) * 100) / 100;
+    return { totalProfit, salesProfit, spoilageLoss };
   });
 
   public topSellingProducts = computed(() => {
@@ -184,7 +225,7 @@ public actualCollectedRevenue = computed(() => {
     const targetDate = this.selectedDate();
 
     this.salesService.cashLogs().forEach(log => {
-      const logDate = log.timestamp ? log.timestamp.split('T')[0] : '';
+      const logDate = log.timestamp ? this.toLocalDateStr(log.timestamp) === targetDate : '';
       if (logDate === targetDate) {
         if (log.type === 'IN') manualAdjustments += log.amount;
         if (log.type === 'OUT') manualAdjustments -= log.amount;
@@ -205,10 +246,10 @@ public actualCollectedRevenue = computed(() => {
         }
         const entry = catMap.get(catName)!;
         const qty = item.isRefund ? -item.quantity : item.quantity;
-        const grossRev = item.product.price * qty;
+        const grossRev = (Number(item.product.price) || 0) * qty;
         const divisor = this.getTaxDivisor(item.product);
         const netRev = grossRev / divisor;
-        const cost = (item.product.purchasePrice || 0) * qty;
+        const cost = this.getUnitNetCost(item.product) * qty;
 
         entry.revenue += grossRev;
         entry.profit += (netRev - cost);
@@ -238,9 +279,10 @@ public actualCollectedRevenue = computed(() => {
     let totalNetRetailValue = 0;
 
     this.salesService.products().forEach(p => {
-      const stock = p.stockQuantity || 0;
-      const wholesale = p.purchasePrice || 0;
-      const grossRetail = p.price || 0;
+      if (p.isActive === false) return;
+      const stock = Number(p.stockQuantity) || 0;
+      const wholesale = this.getUnitNetCost(p);
+      const grossRetail = Number(p.price) || 0;
       const divisor = this.getTaxDivisor(p);
       const netRetail = grossRetail / divisor;
 
@@ -254,6 +296,56 @@ public actualCollectedRevenue = computed(() => {
       totalRetailValue,
       expectedProfit: totalNetRetailValue - totalWholesaleValue
     };
+  });
+
+  // Exact Z-Report totals summed from each ticket's actual mixed-VAT calculation
+  public zReportFinancials = computed(() => {
+    let grossTotal = 0;
+    let netTotal = 0;
+    let vatTotal = 0;
+
+    this.filteredTransactions().forEach(tx => {
+      grossTotal += Number(tx.grandTotal) || 0;
+      if (tx.subtotal !== undefined && tx.taxAmount !== undefined) {
+        netTotal += Number(tx.subtotal) || 0;
+        vatTotal += Number(tx.taxAmount) || 0;
+      } else {
+        // Fallback for older receipts without saved subtotal/taxAmount
+        tx.items.forEach(item => {
+          const qty = item.isRefund ? -item.quantity : item.quantity;
+          const lineGross = (Number(item.product.price) || 0) * qty;
+          const lineNet = lineGross / this.getTaxDivisor(item.product);
+          netTotal += lineNet;
+          vatTotal += (lineGross - lineNet);
+        });
+      }
+    });
+
+    return {
+      grossTotal: Math.round(grossTotal * 100) / 100,
+      netTotal: Math.round(netTotal * 100) / 100,
+      vatTotal: Math.round(vatTotal * 100) / 100
+    };
+  });
+
+  public filteredCashLogs = computed(() => {
+    const targetDate = this.selectedDate();
+    return [...(this.salesService.cashLogs() || [])]
+      .filter(log => log.timestamp && this.toLocalDateStr(log.timestamp) === targetDate)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  });
+
+  // Track how many sold items had €0 costPrice so Estimated Profit isn't misleading
+  public missingCostCount = computed(() => {
+    const missingIds = new Set<string>();
+    this.filteredTransactions().forEach(tx => {
+      tx.items.forEach(item => {
+        if (this.getUnitNetCost(item.product) <= 0) {
+          missingIds.add(String(item.product.id));
+        }
+      });
+    });
+    return missingIds.size;
   });
 
   public securityAuditor = computed(() => {
