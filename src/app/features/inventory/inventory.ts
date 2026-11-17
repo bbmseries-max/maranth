@@ -33,7 +33,8 @@ export class InventoryComponent implements AfterViewInit {
   public categories = this.salesService.categories;
   public suppliers = this.salesService.suppliers;
 
-  public expireFilterDate = signal<string>('');
+  public expireStartDate = signal<string>('');
+  public expireEndDate = signal<string>('');
   public filterStatus = signal<'active' | 'inactive' | 'all'>('active'); // Defaults to Active!
   public filterLowStock = signal<boolean>(false);
   public filterCategory = signal<string>('ALL');
@@ -51,6 +52,23 @@ export class InventoryComponent implements AfterViewInit {
 
   public editingSupplierId: string | null = null;
   public supplierForm: Partial<Supplier> = {};
+
+  public clearExpireFilter(): void {
+    this.expireStartDate.set('');
+    this.expireEndDate.set('');
+  }
+
+  public setExpiringSoonRange(days: number): void {
+    const today = new Date();
+    const future = new Date();
+    future.setDate(today.getDate() + days);
+
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    this.expireStartDate.set(fmt(today));
+    this.expireEndDate.set(fmt(future));
+  }
 
   public filteredSuppliers = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -153,30 +171,25 @@ public filteredProducts = computed(() => {
     const status = this.filterStatus();
     const category = this.filterCategory();
     const lowStockOnly = this.filterLowStock();
-    const expireDate = this.expireFilterDate();
+    const expStart = this.expireStartDate();
+    const expEnd = this.expireEndDate();
     const missingVatOnly = this.filterMissingVat();
 
-    return this.products().filter(prod => {
-      // 🎯 Extracts AND normalizes raw rate to ensure empty/invalid rates are properly caught
+    const results = this.products().filter(prod => {
       const rawRate = this.extractRawTaxRate(prod);
       const normRate = this.normalizeTaxRate(rawRate);
 
-      // 🎯 GLOBAL AUDIT MODE: When Missing VAT is enabled, bypass Category & Status filters
+      // GLOBAL AUDIT MODE: Missing VAT
       if (missingVatOnly) {
-        if (normRate !== undefined) {
-          return false; // Has a valid normalized VAT rate -> hide it
-        }
-
-        // Apply search query if user typed a name/barcode while auditing
+        if (normRate !== undefined) return false;
         if (query) {
           const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
-          const barcodeMatch = prod.barcode && prod.barcode.toLowerCase().includes(query);
-          const idMatch = prod.id && prod.id.toString().toLowerCase().includes(query);
-          const altBarcodeMatch = prod.altBarcodes && prod.altBarcodes.some(alt => alt.toLowerCase().includes(query));
+          const barcodeMatch = prod.barcode && String(prod.barcode).toLowerCase().includes(query);
+          const idMatch = prod.id && String(prod.id).toLowerCase().includes(query);
+          const altBarcodeMatch = Array.isArray(prod.altBarcodes) && prod.altBarcodes.some(alt => String(alt).toLowerCase().includes(query));
           if (!nameMatch && !barcodeMatch && !idMatch && !altBarcodeMatch) return false;
         }
-
-        return true; // Show ALL missing VAT products across active, inactive, and all categories!
+        return true;
       }
 
       if (status === 'active' && prod.isActive === false) return false;
@@ -186,41 +199,49 @@ public filteredProducts = computed(() => {
 
       if (lowStockOnly && prod.stockQuantity > (prod.minStockWarning || 5)) return false;
 
-      if (expireDate && prod.expire !== expireDate) return false;
-
-      if (query) {
-        const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
-        const barcodeMatch = prod.barcode && prod.barcode.toLowerCase().includes(query);
-        const idMatch = prod.id && prod.id.toString().toLowerCase().includes(query);
-        const altBarcodeMatch = prod.altBarcodes && prod.altBarcodes.some(alt => alt.toLowerCase().includes(query));
-        if (!nameMatch && !barcodeMatch && !idMatch && !altBarcodeMatch) return false;
+      // EXPIRATION DATE RANGE FILTER (YYYY-MM-DD lexicographical comparison)
+      if (expStart || expEnd) {
+        if (!prod.expire) return false;
+        if (expStart && prod.expire < expStart) return false;
+        if (expEnd && prod.expire > expEnd) return false;
       }
 
       if (query) {
-          const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
-          const barcodeMatch = prod.barcode && String(prod.barcode).toLowerCase().includes(query);
-          const idMatch = prod.id && String(prod.id).toLowerCase().includes(query);
-          const altBarcodeMatch = Array.isArray(prod.altBarcodes) && prod.altBarcodes.some(alt => String(alt).toLowerCase().includes(query));
-          if (!nameMatch && !barcodeMatch && !idMatch && !altBarcodeMatch) return false;
-        }
+        const nameMatch = prod.name && prod.name.toLowerCase().includes(query);
+        const barcodeMatch = prod.barcode && String(prod.barcode).toLowerCase().includes(query);
+        const idMatch = prod.id && String(prod.id).toLowerCase().includes(query);
+        const altBarcodeMatch = Array.isArray(prod.altBarcodes) && prod.altBarcodes.some(alt => String(alt).toLowerCase().includes(query));
+        if (!nameMatch && !barcodeMatch && !idMatch && !altBarcodeMatch) return false;
+      }
 
       return true;
     });
+
+    // Sort soonest-expiring first whenever an expiration date range is active
+    if (expStart || expEnd) {
+      return [...results].sort((a, b) => (a.expire || '').localeCompare(b.expire || ''));
+    }
+
+    return results;
   });
 
   public toggleEdit(prod: Product): void {
     if (this.editingProductId === prod.id) {
       this.editingProductId = null;
+      this.newAltBarcode = '';
     } else {
       this.editingProductId = prod.id;
-      // 🎯 Normalizes the extracted rate so dropdown options (0.24, 0.13, etc.) auto-select correctly!
+      this.newAltBarcode = '';
       const rawRate = this.extractRawTaxRate(prod);
       const normRate = this.normalizeTaxRate(rawRate);
 
-      this.editForm = { 
-        ...prod, 
-        taxRate: normRate 
+      this.editForm = {
+        ...prod,
+        barcode: prod.barcode ? String(prod.barcode).trim() : '',
+        altBarcodes: Array.isArray(prod.altBarcodes) ? [...prod.altBarcodes] : [],
+        taxRate: normRate
       };
+
       setTimeout(() => {
         const el = document.getElementById('prod-card-' + prod.id);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -248,6 +269,7 @@ public filteredProducts = computed(() => {
       isWeighted: false,
       altBarcodes: [],
       isPinned: false,
+      excludeFromInventoryCount: false,
     };
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -289,13 +311,32 @@ public filteredProducts = computed(() => {
   }
 
   public saveEdit(): void {
-    if (!this.editForm.id || !this.editForm.name || this.editForm.price === undefined) return;
-    const payload = {
-      ...this.editForm,
-      taxRate: this.editForm.taxRate
-    } as Product;
-    this.salesService.saveProduct(this.editForm.id, payload);
+    if (!this.editForm.id) return;
+
+    const cleanName = (this.editForm.name || '').trim();
+    if (!cleanName) {
+      alert('Product name is required.');
+      return;
+    }
+
+    const payload: Product = {
+      ...(this.editForm as Product),
+      name: cleanName,
+      barcode: String(this.editForm.barcode ?? '').trim(),
+      price: Number(this.editForm.price) || 0,
+      costPrice: Number(this.editForm.costPrice) || 0,
+      stockQuantity: Number(this.editForm.stockQuantity) || 0,
+      minStockWarning: Number(this.editForm.minStockWarning) || 0,
+      taxRate: this.editForm.taxRate,
+      isWeighted: Boolean(this.editForm.isWeighted),
+      isActive: this.editForm.isActive !== false,
+      isPinned: Boolean(this.editForm.isPinned),
+      excludeFromInventoryCount: Boolean(this.editForm.excludeFromInventoryCount),
+    };
+
+    this.salesService.saveProduct(payload.id, payload);
     this.editingProductId = null;
+    this.newAltBarcode = '';
   }
 
   // ==========================================
@@ -479,7 +520,12 @@ public filteredProducts = computed(() => {
 
   public printInventoryCountSheet(): void {
     const activeProducts = this.products()
-      .filter(p => p.isActive !== false)
+      .filter(
+        p =>
+          p.isActive !== false &&
+          !p.excludeFromInventoryCount &&
+          !String(p.id).startsWith('MISC-')
+      )
       .sort((a, b) => {
         const catA = this.salesService.getCategoryName(a.categoryId);
         const catB = this.salesService.getCategoryName(b.categoryId);
@@ -601,4 +647,8 @@ public filteredProducts = computed(() => {
     printWindow.print();
   }
   
+  public adjustEditStock(amount: number): void {
+    const current = Number(this.editForm.stockQuantity) || 0;
+    this.editForm.stockQuantity = parseFloat((current + amount).toFixed(3));
+  }
 }

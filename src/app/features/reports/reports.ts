@@ -1,7 +1,7 @@
 import { Component, inject, computed, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
 import { TransactionRecord } from '../../shared/services/pos-data.models';
 import { doc, setDoc } from 'firebase/firestore';
@@ -22,6 +22,16 @@ export class ReportsComponent {
   public isShiftModalOpen = signal<boolean>(false);
   public selectedTxnId = signal<string | null>(null);
   public showOnlySpoiled = signal<boolean>(false);
+  private route = inject(ActivatedRoute);
+
+  constructor() {
+    this.route.queryParamMap.subscribe(params => {
+      const tab = params.get('tab');
+      if (tab === 'dashboard' || tab === 'analytics' || tab === 'zreport') {
+        this.activeTab.set(tab);
+      }
+    });
+  }
 
   // --- VAT DIVISOR HELPER ---
   private getTaxDivisor(product: any): number {
@@ -215,25 +225,25 @@ public actualCollectedRevenue = computed(() => {
 
   public todayProfit = computed(() => this.zReportStats().totalProfit);
 
-  public liveCashInDrawer = computed(() => {
-    let cashIn = 0;
-    this.filteredTransactions()
-      .filter(tx => tx.paymentMethod === 'Cash')
-      .forEach(tx => cashIn += tx.grandTotal);
-
-    let manualAdjustments = 0;
+  public manualCashNet = computed(() => {
     const targetDate = this.selectedDate();
+    let net = 0;
 
-    this.salesService.cashLogs().forEach(log => {
-      const logDate = log.timestamp ? this.toLocalDateStr(log.timestamp) === targetDate : '';
-      if (logDate === targetDate) {
-        if (log.type === 'IN') manualAdjustments += log.amount;
-        if (log.type === 'OUT') manualAdjustments -= log.amount;
-      }
+    (this.salesService.cashLogs() || []).forEach(log => {
+      if (!log.timestamp || this.toLocalDateStr(log.timestamp) !== targetDate) return;
+
+      const amt = Number(log.amount) || 0;
+      if (log.type === 'IN') net += amt;
+      if (log.type === 'OUT') net -= amt;
     });
 
-    const rawTotal = cashIn + manualAdjustments;
-    return Math.round(rawTotal * 100) / 100;
+    return Math.round(net * 100) / 100;
+  });
+
+  // Expected Cash in Drawer Today (Starts at €0.00 each new day)
+  public liveCashInDrawer = computed(() => {
+    const total = this.cashRevenue() + this.manualCashNet();
+    return Math.round(total * 100) / 100;
   });
 
   public categoryBreakdown = computed(() => {
@@ -277,24 +287,35 @@ public actualCollectedRevenue = computed(() => {
     let totalWholesaleValue = 0;
     let totalRetailValue = 0;
     let totalNetRetailValue = 0;
+    let countedSkuCount = 0;
 
     this.salesService.products().forEach(p => {
-      if (p.isActive === false) return;
+      // Match the exact physical items included in the Yearly Count PDF
+      if (
+        p.isActive === false ||
+        p.excludeFromInventoryCount === true ||
+        String(p.id).startsWith('MISC-')
+      ) {
+        return;
+      }
+
       const stock = Number(p.stockQuantity) || 0;
       const wholesale = this.getUnitNetCost(p);
       const grossRetail = Number(p.price) || 0;
       const divisor = this.getTaxDivisor(p);
       const netRetail = grossRetail / divisor;
 
+      countedSkuCount += 1;
       totalWholesaleValue += stock * wholesale;
       totalRetailValue += stock * grossRetail;
       totalNetRetailValue += stock * netRetail;
     });
 
     return {
-      totalWholesaleValue,
-      totalRetailValue,
-      expectedProfit: totalNetRetailValue - totalWholesaleValue
+      countedSkuCount,
+      totalWholesaleValue: Math.round(totalWholesaleValue * 100) / 100,
+      totalRetailValue: Math.round(totalRetailValue * 100) / 100,
+      expectedProfit: Math.round((totalNetRetailValue - totalWholesaleValue) * 100) / 100
     };
   });
 

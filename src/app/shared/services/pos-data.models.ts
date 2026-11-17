@@ -23,6 +23,7 @@ export interface Product {
   isFirstOfCategory?: boolean;
   displayCategoryName?: string;
   isPinned?: boolean;
+  excludeFromInventoryCount?: boolean;
 }
 
 export interface Category {

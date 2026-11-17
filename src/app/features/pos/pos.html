@@ -193,18 +193,20 @@
       </div>
 
       <!-- 5. BOTTOM ANCHOR (Live Dashboard Widget) -->
-      <div class="mt-auto p-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 z-20 flex-shrink-0">
-        <a routerLink="/reports" class="bg-gradient-to-r from-indigo-600 to-purple-600 p-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] cursor-pointer hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all active:scale-95 flex items-center justify-between group no-underline outline-none border-none">
-          <div class="flex items-center gap-3">
-            <span class="relative flex h-3 w-3">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-            </span>
-            <span class="font-bold text-sm text-white tracking-wide">Live Dashboard</span>
-          </div>
-          <span class="text-white/80 group-hover:translate-x-1 group-hover:text-white transition-all">➡️</span>
-        </a>
-      </div>
+<div class="mt-auto p-3 sticky bottom-0 bg-slate-900 border-t border-slate-800 z-20 flex-shrink-0">
+  <a routerLink="/reports"
+     [queryParams]="{ tab: 'dashboard' }"
+     class="bg-gradient-to-r from-indigo-600 to-purple-600 p-3.5 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] cursor-pointer hover:shadow-[0_0_20px_rgba(79,70,229,0.5)] transition-all active:scale-95 flex items-center justify-between group no-underline outline-none border-none">
+    <div class="flex items-center gap-3">
+      <span class="relative flex h-3 w-3">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+      </span>
+      <span class="font-bold text-sm text-white tracking-wide">Live Dashboard</span>
+    </div>
+    <span class="text-white/80 group-hover:translate-x-1 group-hover:text-white transition-all">➡️</span>
+  </a>
+</div>
     </aside>
 
     <section class="flex-1 flex flex-col bg-base relative overflow-hidden">
