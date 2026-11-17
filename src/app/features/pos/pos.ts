@@ -2,6 +2,7 @@ import { Component, AfterViewInit, inject, signal, computed, effect, ViewChild, 
 import { CommonModule, DatePipe, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { BarcodeService } from '../../shared/services/barcode.service';
 import { SalesService } from '../../shared/services/sales';
 import { Product } from '../../shared/services/pos-data.models';
 import { ShoppingBasketComponent } from './components/shopping-basket/shopping-basket';
@@ -27,6 +28,8 @@ export class PosComponent implements AfterViewInit {
   public salesService = inject(SalesService);
   public themeService = inject(ThemeService);
   public router = inject(Router);
+  public barcodeService = inject(BarcodeService);
+  private scanBurstTimer: any = null;
 
   @ViewChild('searchInput') searchInput!: ElementRef<HTMLInputElement>;
   @ViewChild(ShoppingBasketComponent) basketComponent?: ShoppingBasketComponent;
@@ -219,46 +222,141 @@ export class PosComponent implements AfterViewInit {
     return products;
   });
 
-  public onSearchInput(value: string): void {
-    this.searchQuery.set(value);
+  public onSearchInput(rawValue: string): void {
+  const value = rawValue ?? '';
+  const trimmed = value.trim();
 
-    if (this.scanTimer) clearTimeout(this.scanTimer);
-    const trimmed = value.trim();
-    if (trimmed.length < 4) return;
+  if (!trimmed) {
+    this.searchQuery.set('');
+    return;
+  }
 
-    this.scanTimer = setTimeout(() => {
-      // Extract trailing barcode if old search text was sitting in front of a new scan
-      const trailingCode = trimmed.match(/([0-9A-Za-z\-]{4,})$/)?.[1] || trimmed;
-      const result = this.salesService.scanBarcodeExact(trailingCode);
+  // 1. If this is a structured GS1 2D payload (URL or (01)... element string),
+  //    preserve EVERY character intact and wait briefly for the scanner burst/Enter to finish.
+  if (this.isStructuredGs1Input(trimmed)) {
+    this.searchQuery.set(trimmed);
 
-      if (result === 'added' || result === 'qr_blocked') {
-        this.searchQuery.set('');
-        if (this.searchInput?.nativeElement) {
-          this.searchInput.nativeElement.value = '';
-        }
+    if (this.scanBurstTimer) clearTimeout(this.scanBurstTimer);
+    this.scanBurstTimer = setTimeout(() => {
+      // Auto-submit if the handheld scanner didn't send a trailing Enter key
+      if (this.searchQuery().trim() === trimmed) {
+        this.onSearchEnter();
+      }
+    }, 120);
+    return;
+  }
+
+  // 2. If it's a non-product QR code (plain website, Wi-Fi, AADE receipt QR), block immediately
+  if (this.barcodeService.isNonProductQrPayload(trimmed)) {
+    this.searchQuery.set('');
+    this.salesService.activeModal.set({
+      type: 'warning',
+      title: '⚠️ Μη έγκυρο QR Code',
+      message: 'Σαρώθηκε απλός σύνδεσμος/QR που δεν αντιστοιχεί σε κωδικό προϊόντος GS1.',
+      value: '',
+      onConfirm: () => {
+        this.salesService.closeModal();
         this.salesService.triggerSearchFocus();
       }
-    }, 100);
+    });
+    return;
   }
 
-  public onSearchEnter(event: Event): void {
-    event.preventDefault();
-    if (this.scanTimer) clearTimeout(this.scanTimer);
+  // 3. Standard 1D barcode / manual text search
+  this.searchQuery.set(value);
 
-    const inputEl = event.target as HTMLInputElement;
-    const raw = inputEl.value.trim();
-    if (!raw) return;
-
-    const trailingCode = raw.match(/([0-9A-Za-z\-]{4,})$/)?.[1] || raw;
-    const result = this.salesService.scanBarcodeExact(trailingCode);
-
-    if (result === 'added' || result === 'qr_blocked' || /^\d{4,}$/.test(trailingCode)) {
+  // Auto-add standard 1D numeric barcodes (EAN-8, UPC-A, EAN-13, GTIN-14) on exact match
+  if (/^\d{8,14}$/.test(trimmed)) {
+    const status = this.salesService.scanBarcodeExact(trimmed);
+    if (status === 'added') {
       this.searchQuery.set('');
-      inputEl.value = '';
+    }
+  }
+}
+
+/**
+ * Checks whether the current input looks like a structured GS1 2D barcode
+ * (either a GS1 Digital Link URL or a parenthesized/FNC1 element string).
+ */
+private isStructuredGs1Input(val: string): boolean {
+  const s = val.trim();
+  return (
+    /^https?:\/\/.+\/01\/\d{14}/i.test(s) ||
+    /^\(?01\)?\d{14}/.test(s.replace(/[\x1D\u001d]/g, ''))
+  );
+}
+
+  public onSearchEnter(event?: Event): void {
+    if (event) {
+      event.preventDefault();
     }
 
-    this.salesService.triggerSearchFocus();
+    if (this.scanBurstTimer) {
+      clearTimeout(this.scanBurstTimer);
+      this.scanBurstTimer = null;
+    }
+
+    const trimmed = this.searchQuery().trim();
+    if (!trimmed) return;
+
+  // 1. Try exact 1D or full GS1 2D resolution first
+  const scanResult = this.salesService.scanBarcodeExact(trimmed);
+
+  if (scanResult === 'added') {
+    this.searchQuery.set('');
+    return;
   }
+
+  if (scanResult === 'qr_blocked') {
+    this.searchQuery.set('');
+    this.salesService.activeModal.set({
+      type: 'warning',
+      title: '⚠️ Μη έγκυρο QR Code',
+      message: 'Το QR code που σαρώθηκε δεν περιέχει έγκυρο κωδικό προϊόντος (GTIN).',
+      value: '',
+      onConfirm: () => {
+        this.salesService.closeModal();
+        this.salesService.triggerSearchFocus();
+      }
+    });
+    return;
+  }
+
+  // 2. If it was a valid GS1 2D barcode whose GTIN isn't in your catalog yet,
+  //    show the extracted EAN-13 (and expiration date if present) instead of failing silently
+  const gs1 = this.barcodeService.parseGs1Barcode(trimmed);
+  if (gs1) {
+    this.searchQuery.set('');
+    const expNote = gs1.expireDate ? `\nΗμ. Λήξης (AI 17): ${gs1.expireDate}` : '';
+    this.salesService.activeModal.set({
+      type: 'warning',
+      title: '🔍 Άγνωστο Προϊόν GS1 2D',
+      message: `Το προϊόν με EAN-13 ${gs1.ean13} δεν βρέθηκε στην αποθήκη.${expNote}`,
+      value: '',
+      onConfirm: () => {
+        this.salesService.closeModal();
+        this.salesService.triggerSearchFocus();
+      }
+    });
+    return;
+  }
+
+  // ✅ Self-contained fallback against active catalog products:
+  const q = trimmed.toLowerCase();
+  const matches = this.salesService.products().filter(p =>
+    p.isActive !== false &&
+    (
+      p.name.toLowerCase().includes(q) ||
+      String(p.barcode ?? '').toLowerCase() === q ||
+      (Array.isArray(p.altBarcodes) && p.altBarcodes.some(a => String(a).toLowerCase() === q))
+    )
+  );
+
+  if (matches.length === 1) {
+    this.salesService.addToBasket(matches[0]);
+    this.searchQuery.set('');
+  }
+}
 
   public handleProductClick(prod: Product): void {
     if (!this.checkExpiredGuard(prod)) {

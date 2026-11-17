@@ -1,17 +1,17 @@
+// auth.guard.ts
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { SalesService } from '../services/sales';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
-// Modern Angular functional route guard
-export const authGuard = () => {
-  const salesService = inject(SalesService);
+export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
   const router = inject(Router);
+  return auth.isAuthenticated() ? true : router.createUrlTree(['/login']);
+};
 
-  // If a cashier is logged in, let them through!
-  if (salesService.currentCashier()) {
-    return true;
-  }
-
-  // Otherwise, kick them back to the login screen
-  return router.parseUrl('/login');
+// admin.guard.ts
+export const adminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.isAdmin() ? true : router.createUrlTree(['/pos']);
 };

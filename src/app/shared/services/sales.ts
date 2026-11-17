@@ -1,6 +1,8 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
+import { Injectable, signal, inject, computed, effect } from '@angular/core';
 import { Product, BasketItem, Category, Supplier, TransactionRecord, POSModal } from './pos-data.models';
-
+import { BarcodeService } from './barcode.service';
+import { AuthService, UserRole } from './auth.service';
+import { CatalogService } from './catalog.service';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
@@ -18,21 +20,28 @@ const firebaseConfig = {
 })
 export class SalesService {
   public db: any;
+  public barcodeService = inject(BarcodeService);
+  public authService = inject(AuthService);
+  public catalogService = inject(CatalogService);
 
-  public registeredCashiers = signal<{username: string, pin: string, role: 'admin' | 'cashier', isApproved?: boolean}[]>([]);
+  // Sales-owned state
   public transactions = signal<TransactionRecord[]>([]);
-  public products = signal<Product[]>([]);
-  public categories = signal<Category[]>([]);
-  public suppliers = signal<Supplier[]>([]);
   public cashLogs = signal<any[]>([]);
-  public spoilageLogs = signal<any[]>([]);
 
-  public currentCashier = signal<string | null>(typeof window !== 'undefined' ? localStorage.getItem('maranth_active_cashier') : null);
-  public currentRole = signal<'admin' | 'cashier' | null>(typeof window !== 'undefined' ? localStorage.getItem('maranth_active_role') as any : null);
-  
+  // Read-only signal aliases from AuthService & CatalogService (keeps all existing templates & components working untouched)
+  public readonly registeredCashiers = this.authService.registeredCashiers;
+  public readonly currentCashier = this.authService.currentCashier;
+  public readonly currentRole = this.authService.currentRole;
+
+  public readonly products = this.catalogService.products;
+  public readonly categories = this.catalogService.categories;
+  public readonly suppliers = this.catalogService.suppliers;
+  public readonly spoilageLogs = this.catalogService.spoilageLogs;
+
+  // POS Basket & UI state
   public basket = signal<BasketItem[]>(this.loadLocalData('maranth_basket', []));
   public suspendedBasket = signal<BasketItem[] | null>(this.loadLocalData('maranth_suspended', null));
-  
+
   public isRefundMode = signal<boolean>(false);
   public highlightedItemId = signal<string | null>(null);
   public activeModal = signal<POSModal | null>(null);
@@ -42,7 +51,7 @@ export class SalesService {
    * 🏆 Computed signal to guarantee transactions are ALWAYS sorted newest-first (descending timestamp)
    */
   public sortedTransactions = computed(() => {
-    return [...this.transactions()].sort((a, b) => 
+    return [...this.transactions()].sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   });
@@ -52,20 +61,20 @@ export class SalesService {
       const app = initializeApp(firebaseConfig);
       this.db = getFirestore(app);
 
-      this.setupCloudSync('cashiers', this.registeredCashiers, 'maranth_cashiers');
-      this.setupCloudSync('products', this.products, 'maranth_products');
+      // Bind Firestore to extracted services
+      this.authService.bindFirestore(this.db);
+      this.catalogService.bindFirestore(this.db);
+
+      // Sync Sales-owned collections
       this.setupCloudSync('transactions', this.transactions, 'maranth_transactions');
-      this.setupCloudSync('categories', this.categories, 'maranth_categories');
-      this.setupCloudSync('suppliers', this.suppliers, 'maranth_suppliers');
       this.setupCloudSync('cashLogs', this.cashLogs, 'maranth_cashLogs');
-      this.setupCloudSync('spoilageLogs', this.spoilageLogs, 'maranth_spoilageLogs');
 
       effect(() => {
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('maranth_basket', JSON.stringify(this.basket()));
         }
       });
-      
+
       effect(() => {
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('maranth_suspended', JSON.stringify(this.suspendedBasket()));
@@ -74,23 +83,65 @@ export class SalesService {
     }
   }
 
-  public async setupDailyProductCache(): Promise<void> {
-    return Promise.resolve();
+  // --- AUTH FACADE DELEGATES ---
+
+  public loginWithPin(username: string, pin: string) {
+    return this.authService.loginWithPin(username, pin);
+  }
+
+  public registerNewCashier(username: string, pin: string, role: UserRole = 'cashier', autoApprove = false) {
+    return this.authService.registerNewCashier(username, pin, role, autoApprove);
+  }
+
+  public toggleCashierApproval(username: string, isApproved: boolean) {
+    return this.authService.toggleCashierApproval(username, isApproved);
+  }
+
+  public loginCashier(name: string): void {
+    const user = this.authService.registeredCashiers().find(
+      u => u.username.toLowerCase() === name.toLowerCase()
+    );
+    const role = user ? user.role : 'cashier';
+    const finalName = user ? user.username : name;
+    this.authService.setSession(finalName, role);
+  }
+
+  public logoutCashier(): void {
+    this.authService.logoutCashier();
+  }
+
+  // --- CATALOG FACADE DELEGATES ---
+
+  public getCategoryName(categoryId: string | undefined): string {
+    return this.catalogService.getCategoryName(categoryId);
+  }
+
+  public isProductWeighted(product?: Product | null): boolean {
+    return this.catalogService.isProductWeighted(product);
   }
 
   public logSpoilage(product: any, quantity: number, reason: string): void {
-    const log = {
-      id: 'SPOIL-' + Date.now(),
-      productId: product?.id || '',
-      productName: product?.name || 'Unknown',
-      quantity,
-      reason,
-      timestamp: new Date().toISOString()
-    };
-    this.spoilageLogs.update(logs => [...logs, log]);
-    if (this.db) {
-      setDoc(doc(this.db, 'spoilageLogs', log.id), log);
-    }
+    this.catalogService.logSpoilage(product, quantity, reason);
+  }
+
+  public updateProductExpiry(productId: string, newDate: string): void {
+    this.catalogService.updateProductExpiry(productId, newDate);
+  }
+
+  public saveProduct(productId: string, payload: Product): void {
+    this.catalogService.saveProduct(productId, payload);
+  }
+
+  public saveCategory(payload: Category): void {
+    this.catalogService.saveCategory(payload);
+  }
+
+  public saveSupplier(payload: Supplier): void {
+    this.catalogService.saveSupplier(payload);
+  }
+
+  public async setupDailyProductCache(): Promise<void> {
+    return Promise.resolve();
   }
 
   public triggerSearchFocus(): void {
@@ -114,7 +165,7 @@ export class SalesService {
               const docId = (item.id || item.username).toString();
               setDoc(doc(this.db, collectionName, docId), item);
             });
-            return; 
+            return;
           }
         }
         if (fallbackData.length > 0) {
@@ -125,68 +176,17 @@ export class SalesService {
           return;
         }
       }
-      const data = snapshot.docs.map(doc => doc.data());
-      
-      // 🎯 Automatically sort transaction snapshots newest-first
+      const data = snapshot.docs.map(d => d.data());
+
       if (collectionName === 'transactions') {
         data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      }
-      if (collectionName === 'products') {
-        data.forEach((p: any) => {
-          p.isWeighted = p.isWeighted === true || String(p.isWeighted).trim().toLowerCase() === 'true';
-        });
       }
 
       targetSignal.set(data);
     });
   }
 
-  public registerNewCashier(username: string, pin: string, role: 'admin' | 'cashier' = 'cashier'): boolean {
-    const existingUsers = this.registeredCashiers();
-    if (existingUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) return false; 
-    const isApproved = existingUsers.length === 0 ? true : false;
-    this.registeredCashiers.update(users => [...users, { username, pin, role, isApproved }]);
-    setDoc(doc(this.db, 'cashiers', username), { username, pin, role, isApproved });
-    return true; 
-  }
-
-  public toggleCashierApproval(username: string, isApproved: boolean): void {
-    const users = this.registeredCashiers();
-    const targetUser = users.find(u => u.username === username);
-    if (targetUser) {
-      const updatedUser = { ...targetUser, isApproved };
-      setDoc(doc(this.db, 'cashiers', username), updatedUser);
-    }
-  }
-
-  public loginCashier(name: string): void {
-    const user = this.registeredCashiers().find(u => u.username.toLowerCase() === name.toLowerCase());
-    const role = user ? user.role : 'cashier';
-    const finalName = user ? user.username : name;
-
-    this.currentCashier.set(finalName);
-    this.currentRole.set(role);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('maranth_active_cashier', finalName);
-      localStorage.setItem('maranth_active_role', role);
-    }
-  }
-
-  public logoutCashier(): void {
-    this.currentCashier.set(null);
-    this.currentRole.set(null);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('maranth_active_cashier');
-      localStorage.removeItem('maranth_active_role');
-    }
-  }
-
-  public getCategoryName(categoryId: string | undefined): string {
-    if (!categoryId) return 'Unassigned';
-    const cleanId = categoryId.toString().trim();
-    const match = this.categories().find(c => c.id.toString() === cleanId);
-    return match && match.name ? match.name : `Category ${cleanId}`;
-  }
+  // --- BASKET & VAT TOTALS ---
 
   public grandTotal = computed(() => {
     return this.basket().reduce((acc, item) => {
@@ -211,13 +211,12 @@ export class SalesService {
   public netSubtotal = computed(() => {
     return this.basket().reduce((acc, item) => {
       const p = item.product as any;
-      // 🎯 Complete key fallback list matching InventoryComponent
-      const rawRate = p.taxRate ?? p.vatRate ?? p.FPA ?? p.vat ?? p.fpa ?? p.tax 
-                   ?? p.vat_rate ?? p.tax_rate ?? p.vatPercent ?? p.taxPercent 
-                   ?? p.fpa_rate ?? p.fpaRate ?? p.vat_percent ?? p.vatPercent 
+      const rawRate = p.taxRate ?? p.vatRate ?? p.FPA ?? p.vat ?? p.fpa ?? p.tax
+                   ?? p.vat_rate ?? p.tax_rate ?? p.vatPercent ?? p.taxPercent
+                   ?? p.fpa_rate ?? p.fpaRate ?? p.vat_percent
                    ?? p.FPA_RATE ?? p.VAT ?? p.TAX;
-                   
-      const taxDivisor = this.getTaxDivisor(rawRate); 
+
+      const taxDivisor = this.getTaxDivisor(rawRate);
       const lineGross = item.product.price * item.quantity;
       const lineNet = lineGross / taxDivisor;
       return acc + (item.isRefund ? -lineNet : lineNet);
@@ -228,75 +227,80 @@ export class SalesService {
   public taxAmount = computed(() => this.grandTotal() - this.netSubtotal());
   public vatAmount = this.taxAmount;
 
-  public totalItems = computed(() => this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0));
+  public totalItems = computed(() =>
+    this.basket().reduce((acc, item) => acc + (item.product.isWeighted ? 1 : item.quantity), 0)
+  );
 
- public addToBasket(product: Product, forceRefundState?: boolean, customQty?: number): void {
-  const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
+  // --- BASKET OPERATIONS ---
 
-  // ⛔ 1. Hard Guard: Block Expired Products (except on Refunds/Returns)
-  if (!isRef && this.isProductExpired(product.expire)) {
-    this.activeModal.set({
-      type: 'warning',
-      title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
-      message: `Το προϊόν "${product.name}" έχει λήξει στις ${product.expire}!\nΑπαγορεύεται η πώληση.`,
-      value: '',
-      onConfirm: () => {
-        this.closeModal();
-        this.triggerSearchFocus();
+  public addToBasket(product: Product, forceRefundState?: boolean, customQty?: number): void {
+    const isRef = forceRefundState !== undefined ? forceRefundState : this.isRefundMode();
+
+    // ⛔ 1. Hard Guard: Block Expired Products (except on Refunds/Returns)
+    if (!isRef && this.catalogService.isProductExpired(product.expire)) {
+      this.activeModal.set({
+        type: 'warning',
+        title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
+        message: `Το προϊόν "${product.name}" έχει λήξει στις ${product.expire}!\nΑπαγορεύεται η πώληση.`,
+        value: '',
+        onConfirm: () => {
+          this.closeModal();
+          this.triggerSearchFocus();
+        }
+      });
+      return;
+    }
+
+    this.highlightedItemId.set(product.id);
+    setTimeout(() => this.highlightedItemId.set(null), 500);
+
+    if (!isRef) {
+      const liveProduct = this.products().find(p => String(p.id) === String(product.id)) || product;
+      const currentQtyInBasket = this.basket().find(item => String(item.product.id) === String(product.id) && !item.isRefund)?.quantity || 0;
+
+      let intendedQty = 0;
+      if (currentQtyInBasket > 0) {
+        const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
+        intendedQty = parseFloat((currentQtyInBasket + incrementStep).toFixed(3));
+      } else {
+        intendedQty = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
+      }
+
+      const availableStock = parseFloat(liveProduct.stockQuantity as any) || 0;
+
+      if (!String(product.id).startsWith('MISC-') && !liveProduct.excludeFromInventoryCount) {
+        if (availableStock <= 0 || intendedQty > availableStock) {
+          this.activeModal.set({
+            type: 'warning',
+            title: '⚠️ Insufficient Stock',
+            message: `Cannot add ${liveProduct.name} to the basket.\n\nAvailable in Store: ${availableStock}\nRequested Amount: ${intendedQty}`,
+            value: '',
+            onConfirm: () => {
+              this.closeModal();
+              this.triggerSearchFocus();
+            }
+          });
+          return;
+        }
+      }
+    }
+
+    this.basket.update((currentBasket) => {
+      const existingIndex = currentBasket.findIndex(item => String(item.product.id) === String(product.id) && !!item.isRefund === !!isRef);
+      const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
+
+      if (existingIndex > -1) {
+        const updatedBasket = [...currentBasket];
+        const existingItem = updatedBasket[existingIndex];
+        updatedBasket[existingIndex] = { ...existingItem, quantity: parseFloat((existingItem.quantity + incrementStep).toFixed(3)) };
+        return updatedBasket;
+      } else {
+        const initialQuantity = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
+        return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
       }
     });
-    return; // Hard stop
+    this.triggerSearchFocus();
   }
-
-  this.highlightedItemId.set(product.id);
-  setTimeout(() => this.highlightedItemId.set(null), 500);
-
-  if (!isRef) {
-    const liveProduct = this.products().find(p => String(p.id) === String(product.id)) || product;
-    const currentQtyInBasket = this.basket().find(item => String(item.product.id) === String(product.id) && !item.isRefund)?.quantity || 0;
-    
-    let intendedQty = 0;
-    if (currentQtyInBasket > 0) {
-      const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
-      intendedQty = parseFloat((currentQtyInBasket + incrementStep).toFixed(3));
-    } else {
-      intendedQty = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
-    }
-
-    const availableStock = parseFloat(liveProduct.stockQuantity as any) || 0;
-
-    if (!String(product.id).startsWith('MISC-')) {
-      if (availableStock <= 0 || intendedQty > availableStock) {
-        this.activeModal.set({
-          type: 'warning',
-          title: '⚠️ Insufficient Stock',
-          message: `Cannot add ${liveProduct.name} to the basket.\n\nAvailable in Store: ${availableStock}\nRequested Amount: ${intendedQty}`,
-          value: '',
-          onConfirm: () => {
-            this.closeModal();
-            this.triggerSearchFocus();
-          }
-        });
-        return; 
-      }
-    }
-  }
-  this.basket.update((currentBasket) => {
-    const existingIndex = currentBasket.findIndex(item => String(item.product.id) === String(product.id) && !!item.isRefund === !!isRef);
-    const incrementStep = customQty !== undefined ? customQty : (product.isWeighted ? 0.100 : 1);
-
-    if (existingIndex > -1) {
-      const updatedBasket = [...currentBasket];
-      const existingItem = updatedBasket[existingIndex];
-      updatedBasket[existingIndex] = { ...existingItem, quantity: parseFloat((existingItem.quantity + incrementStep).toFixed(3)) };
-      return updatedBasket;
-    } else {
-      const initialQuantity = customQty !== undefined ? customQty : (product.isWeighted ? 0.500 : 1);
-      return [...currentBasket, { product, quantity: initialQuantity, isRefund: isRef }];
-    }
-  });
-  this.triggerSearchFocus();
-}
 
   public removeFromBasket(product: Product, isRefund: boolean = false): void {
     this.basket.update((currentBasket) => {
@@ -343,18 +347,9 @@ export class SalesService {
 
     currentBasket.forEach(item => {
       const productIdStr = String(item.product.id);
-      if (!productIdStr.startsWith('MISC-')) {
-        const product = this.products().find(p => String(p.id) === productIdStr);
-        if (product && this.db) {
-          const currentStock = parseFloat(product.stockQuantity as any) || 0;
-          const change = item.isRefund ? item.quantity : -item.quantity;
-          const newQuantity = parseFloat((currentStock + change).toFixed(3));
-          
-          setDoc(doc(this.db, 'products', productIdStr), { 
-            ...product, 
-            stockQuantity: newQuantity 
-          });
-        }
+      if (!productIdStr.startsWith('MISC-') && !item.product.excludeFromInventoryCount) {
+        const change = item.isRefund ? item.quantity : -item.quantity;
+        this.catalogService.adjustProductStock(productIdStr, change);
       }
     });
 
@@ -362,12 +357,12 @@ export class SalesService {
 
     this.clearBasket();
     this.isRefundMode.set(false);
-    
+
     this.activeModal.set({
-      type: 'success', 
-      title: '✅ Transaction Processed', 
-      message: `Ticket ${receipt.id} processed €${receipt.grandTotal.toFixed(2)} via ${method}.`, 
-      value: '', 
+      type: 'success',
+      title: '✅ Transaction Processed',
+      message: `Ticket ${receipt.id} processed €${receipt.grandTotal.toFixed(2)} via ${method}.`,
+      value: '',
       onConfirm: () => {
         this.closeModal();
         this.triggerSearchFocus();
@@ -397,97 +392,40 @@ export class SalesService {
     }
   }
 
-  public isProductWeighted(product?: Product | null): boolean {
-    if (!product) return false;
-    const raw: unknown = product.isWeighted;
-    return raw === true || String(raw).trim().toLowerCase() === 'true';
-  }
+  // --- BARCODE DELEGATES ---
 
   public isQrCodePayload(raw: string): boolean {
-    const val = raw.trim();
-    if (/^(https?:\/\/|www\.|WIFI:|MATMSG:|SMSTO:|tel:|mailto:)/i.test(val)) return true;
-    if (/[\/:?&=<>]/.test(val)) return true;
-    if (val.length > 20) return true;
-    return false;
+    return this.barcodeService.isNonProductQrPayload(raw);
   }
 
-  public scanBarcodeExact(query: string): 'added' | 'qr_blocked' | 'not_found' {
-    const clean = String(query ?? '').replace(/[\r\n\t\s]+/g, '');
-    if (!clean) return 'not_found';
+  public scanBarcodeExact(rawInput: string): 'added' | 'qr_blocked' | 'not_found' {
+    const result = this.barcodeService.resolveScan(rawInput, this.products());
 
-    if (this.isQrCodePayload(clean)) {
-      this.triggerSearchFocus();
-      return 'qr_blocked';
+    if (result.status === 'qr_blocked') return 'qr_blocked';
+    if (result.status !== 'matched' || !result.product) return 'not_found';
+
+    if (result.effectiveExpireDate) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (result.effectiveExpireDate <= todayStr) {
+        this.activeModal.set({
+          type: 'warning',
+          title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
+          message: `Το προϊόν "${result.product.name}" έχει λήξει στις ${result.effectiveExpireDate}! Απαγορεύεται η πώληση.`,
+          value: '',
+          onConfirm: () => {
+            this.closeModal();
+            this.triggerSearchFocus();
+          }
+        });
+        return 'added';
+      }
     }
 
-    const queryLower = clean.toLowerCase();
-    const noLeadingZeros = queryLower.replace(/^0+/, '');
-
-    const found = this.products().find(p => {
-      if (p.isActive === false) return false;
-
-      const pBarcode = String(p.barcode ?? '').replace(/[\r\n\t\s]+/g, '').toLowerCase();
-      const pId = String(p.id ?? '').trim().toLowerCase();
-      const alts = Array.isArray(p.altBarcodes)
-        ? p.altBarcodes.map(a => String(a ?? '').replace(/[\r\n\t\s]+/g, '').toLowerCase())
-        : typeof p.altBarcodes === 'string'
-          ? (p.altBarcodes as string).split(',').map(a => a.replace(/[\r\n\t\s]+/g, '').toLowerCase())
-          : [];
-
-      const codes = [pBarcode, pId, ...alts].filter(Boolean);
-
-      return codes.some(code =>
-        code === queryLower ||
-        (noLeadingZeros.length >= 4 && code.replace(/^0+/, '') === noLeadingZeros)
-      );
-    });
-
-    if (!found) {
-      return 'not_found';
-    }
-
-    if (!this.isRefundMode() && this.isProductExpired(found.expire)) {
-      this.activeModal.set({
-        type: 'warning',
-        title: '⛔ ΛΗΓΜΕΝΟ ΠΡΟΪΟΝ (EXPIRED)',
-        message: `Το προϊόν "${found.name}" έχει λήξει στις ${found.expire}!\nΑπαγορεύεται η πώληση.`,
-        value: '',
-        onConfirm: () => {
-          this.closeModal();
-          this.triggerSearchFocus();
-        }
-      });
-      return 'added';
-    }
-
-    if (this.isProductWeighted(found)) {
-      this.activeModal.set({
-        type: 'prompt',
-        title: '⚖️ Scale Weight (kg)',
-        message: `Enter the measured weight for ${found.name}:`,
-        value: '1.000',
-        onConfirm: (val) => {
-          const weight = parseFloat(val);
-          if (!isNaN(weight) && weight > 0) this.addToBasket(found, undefined, weight);
-          this.closeModal();
-          this.triggerSearchFocus();
-        }
-      });
-    } else {
-      this.addToBasket(found);
-    }
-
+    this.addToBasket(result.product);
     return 'added';
   }
 
-  private isProductExpired(expireDate?: string): boolean {
-  if (!expireDate) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const exp = new Date(expireDate);
-  exp.setHours(0, 0, 0, 0);
-  return !isNaN(exp.getTime()) && exp.getTime() <= today.getTime();
-}
+  // --- ANALYTICS & LEDGER ---
 
   public topSellingProducts = computed(() => {
     const itemsMap = new Map<string, { id: string, name: string, unitsSold: number, totalRevenue: number, stockQuantity: number }>();
@@ -507,7 +445,7 @@ export class SalesService {
   });
 
   public hourlyHeatmapMetrics = computed(() => {
-    const hours = Array.from({length: 24}, (_, i) => ({
+    const hours = Array.from({ length: 24 }, (_, i) => ({
       hour: i, hourLabel: `${i.toString().padStart(2, '0')}:00`, revenue: 0, ticketCount: 0, intensityPercentage: 0
     }));
 
@@ -524,23 +462,6 @@ export class SalesService {
 
   public linkCloudFolder() {
     this.activeModal.set({ type: 'success', title: '✅ Live Cloud Sync Active', message: 'The system is successfully linked to Google Firebase!', value: '', onConfirm: () => this.closeModal() });
-  }
-
-  public updateProductExpiry(productId: string, newDate: string): void {
-    const product = this.products().find(p => String(p.id) === String(productId));
-    if (product && this.db) setDoc(doc(this.db, 'products', productId.toString()), { ...product, expire: newDate });
-  }
-
-  public saveProduct(productId: string, payload: Product): void {
-    if (this.db) setDoc(doc(this.db, 'products', productId.toString()), payload);
-  }
-
-  public saveCategory(payload: Category): void {
-    if (this.db) setDoc(doc(this.db, 'categories', payload.id.toString()), payload);
-  }
-
-  public saveSupplier(payload: Supplier): void {
-    if (this.db) setDoc(doc(this.db, 'suppliers', payload.id.toString()), payload);
   }
 
   public clearLedger(): void {

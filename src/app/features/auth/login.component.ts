@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SalesService } from '../../shared/services/sales';
+import { AuthService } from '../../shared/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -14,6 +15,7 @@ import { SalesService } from '../../shared/services/sales';
 export class LoginComponent {
   public router = inject(Router);
   public salesService = inject(SalesService);
+  public authService = inject(AuthService);
 
   public username = signal<string>('');
   public password = signal<string>('');
@@ -33,24 +35,24 @@ export class LoginComponent {
       return;
     }
 
-    const registeredUsers = this.salesService.registeredCashiers();
+    const registeredUsers = this.authService.registeredCashiers();
     const validUser = registeredUsers.find(
       u => u.username.toLowerCase() === user.toLowerCase() && u.pin === pass
     );
 
     if (validUser) {
       if (validUser.isApproved === false) {
-         this.salesService.activeModal.set({
-            type: 'warning',
-            title: '⏳ Approval Pending',
-            message: 'Your account has been registered but is waiting for a Store Admin to approve it.',
-            value: '',
-            onConfirm: () => this.salesService.closeModal()
-         });
-         return;
+        this.salesService.activeModal.set({
+          type: 'warning',
+          title: '⏳ Approval Pending',
+          message: 'Your account has been registered but is waiting for a Store Admin to approve it.',
+          value: '',
+          onConfirm: () => this.salesService.closeModal()
+        });
+        return;
       }
-      
-      this.salesService.loginCashier(validUser.username);
+
+      this.authService.setSession(validUser.username, validUser.role);
       this.router.navigate(['/pos']);
     } else {
       this.salesService.activeModal.set({
@@ -60,8 +62,8 @@ export class LoginComponent {
         value: '',
         onConfirm: () => this.salesService.closeModal()
       });
-      
-      this.password.set(''); 
+
+      this.password.set('');
     }
   }
 }
